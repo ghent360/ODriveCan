@@ -441,15 +441,10 @@ private:
   Callback cb_;
 };
 
-SAME51_CAN can;
-
-void SendCmd(uint8_t nodeId, uint8_t cmdId, uint8_t len = 0, uint8_t *buf = NULL) {
-  uint32_t canId = (nodeId << 5) | (cmdId & 0x1f);
-  can.sendMsgBuf(canId, 0, len, buf);
-}
-
 class ODriveAxis {
-public:  
+public:
+  typedef void (*const CanSendMsg)(uint32_t msgId, uint8_t len, uint8_t* buf);
+
   uint8_t             node_id;
   Heartbeat           hb;
   EncoderEstimate     enc_est;
@@ -461,7 +456,7 @@ public:
   MotorError          mot_err;
   VbusVoltage         vbus;
 
-  ODriveAxis(uint8_t nodeId) : node_id(nodeId) {}
+  ODriveAxis(uint8_t nodeId, CanSendMsg canSend) : node_id(nodeId), can_send_(canSend) {}
 
   bool Parse(uint8_t cmdId, uint8_t dataLen, const CanMsgData& msg) {
     if (hb.Parse(*this, cmdId, dataLen, msg)) return true;
@@ -477,40 +472,40 @@ public:
   }
 
   void EStop() {
-    SendCmd(node_id, MSG_ODRIVE_ESTOP);
+    SendCmd(MSG_ODRIVE_ESTOP);
   }
 
   void RequestMotorError() {
-    SendCmd(node_id, MSG_GET_MOTOR_ERROR);
+    SendCmd(MSG_GET_MOTOR_ERROR);
   }
 
   void RequestEncoderError() {
-    SendCmd(node_id, MSG_GET_ENCODER_ERROR);
+    SendCmd(MSG_GET_ENCODER_ERROR);
   }
 
   void RequestSensorlessError() {
-    SendCmd(node_id, MSG_GET_SENSORLESS_ERROR);
+    SendCmd(MSG_GET_SENSORLESS_ERROR);
   }
 
   void SetState(AxisState newState) {
     uint8_t buf[4];
     can_setSignal<uint32_t>(buf, newState, 0, 32, true);
-    SendCmd(node_id, MSG_SET_AXIS_REQUESTED_STATE, 4, buf);
+    SendCmd(MSG_SET_AXIS_REQUESTED_STATE, 4, buf);
   }
 
   void RequestEncoderEstimates() {
-    SendCmd(node_id, MSG_GET_ENCODER_ESTIMATES);
+    SendCmd(MSG_GET_ENCODER_ESTIMATES);
   }
 
   void RequestEncoderCount() {
-    SendCmd(node_id, MSG_GET_ENCODER_COUNT);
+    SendCmd(MSG_GET_ENCODER_COUNT);
   }
 
   void SetControlerModes(ControlMode crtlMode, InputMode inputMode) {
     uint8_t buf[8];
     can_setSignal<int32_t>(buf, crtlMode, 0, 32, true);
     can_setSignal<int32_t>(buf, inputMode, 32, 32, true);
-    SendCmd(node_id, MSG_SET_CONTROLLER_MODES, 8, buf);
+    SendCmd(MSG_SET_CONTROLLER_MODES, 8, buf);
   }
 
   void SetInputPos(float inputPos, float velFf = 0, float torqueFf = 0) {
@@ -518,118 +513,136 @@ public:
     can_setSignal<float>(buf, inputPos, 0, 32, true);
     can_setSignal<int16_t>(buf, velFf, 32, 16, true, 0.001, 0);
     can_setSignal<int16_t>(buf, torqueFf, 48, 16, true, 0.001, 0);
-    SendCmd(node_id, MSG_SET_INPUT_POS, 8, buf);
+    SendCmd(MSG_SET_INPUT_POS, 8, buf);
   }
 
   void SetInputVel(float velocity, float torqueFf = 0) {
     uint8_t buf[8];
     can_setSignal<float>(buf, velocity, 0, 32, true);
     can_setSignal<float>(buf, torqueFf, 32, 32, true);
-    SendCmd(node_id, MSG_SET_INPUT_VEL, 8, buf);
+    SendCmd(MSG_SET_INPUT_VEL, 8, buf);
   }
 
   void SetInputTorque(float torque) {
     uint8_t buf[4];
     can_setSignal<float>(buf, torque, 0, 32, true);
-    SendCmd(node_id, MSG_SET_INPUT_TORQUE, 4, buf);
+    SendCmd(MSG_SET_INPUT_TORQUE, 4, buf);
   }
 
   void SetLimits(float velLimit, float currentLimit) {
     uint8_t buf[8];
     can_setSignal<float>(buf, velLimit, 0, 32, true);
     can_setSignal<float>(buf, currentLimit, 32, 32, true);
-    SendCmd(node_id, MSG_SET_LIMITS, 8, buf);
+    SendCmd(MSG_SET_LIMITS, 8, buf);
   }
 
   void StartAnticogging() {
-    SendCmd(node_id, MSG_START_ANTICOGGING);
+    SendCmd(MSG_START_ANTICOGGING);
   }
 
   void SetTrajVelLimit(float velLimit) {
     uint8_t buf[4];
     can_setSignal<float>(buf, velLimit, 0, 32, true);
-    SendCmd(node_id, MSG_SET_TRAJ_VEL_LIMIT, 4, buf);
+    SendCmd(MSG_SET_TRAJ_VEL_LIMIT, 4, buf);
   }
 
   void SetTrajAccelLimit(float accelLimit, float decelLimit) {
     uint8_t buf[8];
     can_setSignal<float>(buf, accelLimit, 0, 32, true);
     can_setSignal<float>(buf, decelLimit, 32, 32, true);
-    SendCmd(node_id, MSG_SET_TRAJ_ACCEL_LIMITS, 8, buf);
+    SendCmd(MSG_SET_TRAJ_ACCEL_LIMITS, 8, buf);
   }
 
   void SetTrajInertia(float inertia) {
     uint8_t buf[4];
     can_setSignal<float>(buf, inertia, 0, 32, true);
-    SendCmd(node_id, MSG_SET_TRAJ_INERTIA, 4, buf);
+    SendCmd(MSG_SET_TRAJ_INERTIA, 4, buf);
   }
 
   void RequestIq() {
-    SendCmd(node_id, MSG_GET_IQ);
+    SendCmd(MSG_GET_IQ);
   }
   
   void RequestSensorlessEstimates() {
-    SendCmd(node_id, MSG_GET_SENSORLESS_ESTIMATES);
+    SendCmd(MSG_GET_SENSORLESS_ESTIMATES);
   }
   
   void ResetODrive() {
-    SendCmd(node_id, MSG_RESET_ODRIVE);
+    SendCmd(MSG_RESET_ODRIVE);
   }
   
   void ClearErrors() {
-    SendCmd(node_id, MSG_CLEAR_ERRORS);
+    SendCmd(MSG_CLEAR_ERRORS);
   }
   
   void RequestVbusVoltage() {
-    SendCmd(node_id, MSG_GET_VBUS_VOLTAGE);
+    SendCmd(MSG_GET_VBUS_VOLTAGE);
   }
 
   void SetLinearCount(int32_t linearCount) {
     uint8_t buf[4];
     can_setSignal<int32_t>(buf, linearCount, 0, 32, true);
-    SendCmd(node_id, MSG_SET_LINEAR_COUNT, 4, buf);
+    SendCmd(MSG_SET_LINEAR_COUNT, 4, buf);
   }
 
   void SetPosGain(float posGain) {
     uint8_t buf[4];
     can_setSignal<float>(buf, posGain, 0, 32, true);
-    SendCmd(node_id, MSG_SET_POS_GAIN, 4, buf);
+    SendCmd(MSG_SET_POS_GAIN, 4, buf);
   }
 
   void SetVelGains(float velGain, float velIntegratorGain) {
     uint8_t buf[8];
     can_setSignal<float>(buf, velGain, 0, 32, true);
     can_setSignal<float>(buf, velIntegratorGain, 32, 32, true);
-    SendCmd(node_id, MSG_SET_VEL_GAINS, 4, buf);
+    SendCmd(MSG_SET_VEL_GAINS, 4, buf);
   }
+
+private:
+  void SendCmd(uint8_t cmdId, uint8_t len = 0, uint8_t *buf = NULL) {
+    uint32_t canId = (node_id << 5) | (cmdId & 0x1f);
+    if (can_send_) {
+      can_send_(canId, len, buf);
+    }
+  }
+
+  CanSendMsg can_send_;
 };
 
-ODriveAxis axes[] = {
-  ODriveAxis(1),
-  ODriveAxis(3),
-  ODriveAxis(5),
-  ODriveAxis(7),
-  ODriveAxis(9),
-  ODriveAxis(11),
-};
-
+template<int N>
 bool ParseCanMsg(
-    uint8_t axisId,
-    uint8_t cmdId,
+    ODriveAxis (&axes)[N],
+    uint32_t msgId,
     uint8_t dataLen,
     const CanMsgData& buf) {
+  uint8_t axisId = (uint8_t)(msgId >> 5);
+  uint8_t cmdId = (uint8_t)(msgId & 0x1f);
   for(auto& axis : axes) {
     if (axis.node_id == axisId) {
-      if (axis.Parse(cmdId, dataLen, buf)) return true;
-      break;
+      return axis.Parse(cmdId, dataLen, buf);
     }
   }
   return false;
 }
 
+SAME51_CAN can;
+
+static void SendCmdCh0(uint32_t canId, uint8_t len, uint8_t *buf) {
+  can.sendMsgBuf(canId, 0, len, buf);
+}
+
+ODriveAxis axesCh0[] = {
+  ODriveAxis(1, SendCmdCh0),
+  ODriveAxis(3, SendCmdCh0),
+  ODriveAxis(5, SendCmdCh0),
+  ODriveAxis(7, SendCmdCh0),
+  ODriveAxis(9, SendCmdCh0),
+  ODriveAxis(11, SendCmdCh0),
+};
+
 PeriodicTimer timers[] = {
   PeriodicTimer(150, [](uint32_t)->void {
-    for(auto& axis : axes) {
+    for(auto& axis : axesCh0) {
       axis.hb.PeriodicCheck(axis);
       if (axis.hb.error != 0) {
         Serial.print("Error axis ");
@@ -641,8 +654,8 @@ PeriodicTimer timers[] = {
   }),
   PeriodicTimer(1000, [](uint32_t)->void {
     static uint8_t axis = 0;
-    if (axes[axis].hb.alive) {
-      axes[axis].RequestVbusVoltage();
+    if (axesCh0[axis].hb.alive) {
+      axesCh0[axis].RequestVbusVoltage();
     }
     axis++;
     if (axis > 5) axis = 0;
@@ -662,14 +675,10 @@ void CheckAllTimers(uint32_t time) {
 }
 
 void ProcessCanMessage(uint32_t id, uint8_t len, const CanMsgData& buf) {
-  uint8_t axisId = (uint8_t)(id >> 5);
-  uint8_t cmdId = (uint8_t)(id & 0x1f);
-  bool parseSuccess = ParseCanMsg(axisId, cmdId, len, buf);
+  bool parseSuccess = ParseCanMsg(axesCh0, id, len, buf);
   if (!parseSuccess) {
-    Serial.print("Axis: ");
-    Serial.print(axisId);
-    Serial.print(" Cmd: ");
-    Serial.print(cmdId);
+    Serial.print("Id: ");
+    Serial.print(id);
     Serial.print(" Len: ");
     Serial.print(len);
     Serial.print(" Data: ");
@@ -695,7 +704,7 @@ void setup() {
       Serial.println("Error Initializing CAN...");
       while(1);
   }
-  for(auto& axis : axes) {
+  for(auto& axis : axesCh0) {
     axis.vbus.SetCallback([](ODriveAxis& axis, VbusVoltage& v) { 
       Serial.print("Axis ");
       Serial.print(axis.node_id);

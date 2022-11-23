@@ -29,6 +29,20 @@ private:
   const timer_cb lambda_;
 };
 
+template<int N>
+void StartAllTimers(PeriodicTimer (&timers)[N], uint32_t time) {
+  for(auto& timer : timers) {
+    timer.Start(time);
+  }
+}
+
+template<int N>
+void CheckAllTimers(PeriodicTimer (&timers)[N], uint32_t time) {
+  for(auto& timer : timers) {
+    timer.Check(time);
+  }
+}
+
 typedef uint8_t CanMsgData[8];
 
 enum ODriveCanCMD {
@@ -640,7 +654,7 @@ ODriveAxis axesCh0[] = {
   ODriveAxis(11, SendCmdCh0),
 };
 
-PeriodicTimer timers[] = {
+PeriodicTimer myTimers[] = {
   PeriodicTimer(150, [](uint32_t)->void {
     for(auto& axis : axesCh0) {
       axis.hb.PeriodicCheck(axis);
@@ -661,18 +675,6 @@ PeriodicTimer timers[] = {
     if (axis > 5) axis = 0;
   })
 };
-
-void StartAllTimers(uint32_t time) {
-  for(auto& timer:timers) {
-    timer.Start(time);
-  }
-}
-
-void CheckAllTimers(uint32_t time) {
-  for(auto& timer:timers) {
-    timer.Check(time);
-  }
-}
 
 void ProcessCanMessage(uint32_t id, uint8_t len, const CanMsgData& buf) {
   bool parseSuccess = ParseCanMsg(axesCh0, id, len, buf);
@@ -718,7 +720,7 @@ void setup() {
     });
   }
   startTime = millis();
-  StartAllTimers(startTime);
+  StartAllTimers(myTimers, startTime);
 }
 
 void loop() {
@@ -728,7 +730,7 @@ void loop() {
   uint8_t buf[8];
   uint8_t i;
 
-  CheckAllTimers(millis());
+  CheckAllTimers(myTimers, millis());
   ret = can.readMsgBuf(&id, &len, buf);
   if (ret == CAN_OK) {
     ProcessCanMessage(id, len, buf);

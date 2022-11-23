@@ -3,11 +3,11 @@
 
 class PeriodicTimer {
 public:
-  typedef void (*timer_cb)(uint32_t);
+  typedef void (*TimerCallback)(uint32_t);
 
   PeriodicTimer(
-    uint32_t interval, const timer_cb lambda)
-    : interval_(interval), lambda_(lambda) {
+    uint32_t interval, const TimerCallback cb)
+    : interval_(interval), cb_(cb) {
   }
 
   void Start(uint32_t time) {
@@ -16,9 +16,8 @@ public:
 
   void Check(uint32_t time) {
     if (time - last_ > interval_) {
-      if (lambda_) {
-        //Serial.println(500);
-        lambda_(time);
+      if (cb_) {
+        cb_(time);
       }
       last_ = time;
     }
@@ -26,7 +25,7 @@ public:
 private:
   uint32_t last_;
   const uint32_t interval_;
-  const timer_cb lambda_;
+  const TimerCallback cb_;
 };
 
 template<int N>
@@ -459,7 +458,7 @@ class ODriveAxis {
 public:
   typedef void (*const CanSendMsg)(uint32_t msgId, uint8_t len, uint8_t* buf);
 
-  uint8_t             node_id;
+  uint32_t            node_id;
   Heartbeat           hb;
   EncoderEstimate     enc_est;
   EncoderCount        enc_count;
@@ -470,7 +469,7 @@ public:
   MotorError          mot_err;
   VbusVoltage         vbus;
 
-  ODriveAxis(uint8_t nodeId, CanSendMsg canSend) : node_id(nodeId), can_send_(canSend) {}
+  ODriveAxis(uint32_t nodeId, CanSendMsg canSend) : node_id(nodeId), can_send_(canSend) {}
 
   bool Parse(uint8_t cmdId, uint8_t dataLen, const CanMsgData& msg) {
     if (hb.Parse(*this, cmdId, dataLen, msg)) return true;
@@ -629,7 +628,7 @@ bool ParseCanMsg(
     uint32_t msgId,
     uint8_t dataLen,
     const CanMsgData& buf) {
-  uint8_t axisId = (uint8_t)(msgId >> 5);
+  uint32_t axisId = (msgId >> 5);
   uint8_t cmdId = (uint8_t)(msgId & 0x1f);
   for(auto& axis : axes) {
     if (axis.node_id == axisId) {
@@ -676,19 +675,23 @@ PeriodicTimer myTimers[] = {
   })
 };
 
+void PrintCanMessage(uint32_t id, uint8_t len, const CanMsgData& buf) {
+  Serial.print("Id: ");
+  Serial.print(id);
+  Serial.print(" Len: ");
+  Serial.print(len);
+  Serial.print(" Data: ");
+  for (uint8_t i = 0; i < len; i++) {
+    Serial.print(buf[i], HEX);
+    Serial.print(", ");
+  }
+  Serial.println();
+}
+
 void ProcessCanMessage(uint32_t id, uint8_t len, const CanMsgData& buf) {
   bool parseSuccess = ParseCanMsg(axesCh0, id, len, buf);
   if (!parseSuccess) {
-    Serial.print("Id: ");
-    Serial.print(id);
-    Serial.print(" Len: ");
-    Serial.print(len);
-    Serial.print(" Data: ");
-    for (uint8_t i = 0; i < len; i++) {
-      Serial.print(buf[i], HEX);
-      Serial.print(", ");
-    }
-    Serial.println();
+    PrintCanMessage(id, len, buf);
   }
 }
 

@@ -45,15 +45,15 @@ TEST_SUITE("TaskManager")
         // Order should ne node2->node1->node3
         TaskNode* firstNode = tm.find([](TaskNode*){ return true; });
         CHECK(firstNode != nullptr);
-        CHECK(firstNode->Id() == 2);
+        CHECK(firstNode->id() == 2);
         tm.remove(firstNode);
         firstNode = tm.find([](TaskNode*){ return true; });
         CHECK(firstNode != nullptr);
-        CHECK(firstNode->Id() == 1);
+        CHECK(firstNode->id() == 1);
         tm.remove(firstNode);
         firstNode = tm.find([](TaskNode*){ return true; });
         CHECK(firstNode != nullptr);
-        CHECK(firstNode->Id() == 3);
+        CHECK(firstNode->id() == 3);
         tm.remove(firstNode);
     }
 
@@ -68,25 +68,25 @@ TEST_SUITE("TaskManager")
         tm.addBack(node3);
         TaskNode* execNode = tm.findNext(1000);
         CHECK(execNode != nullptr);
-        CHECK(execNode->Id() == 2);
+        CHECK(execNode->id() == 2);
         execNode = tm.findNext(999);
         CHECK(execNode != nullptr);
-        CHECK(execNode->Id() == 3);
+        CHECK(execNode->id() == 3);
         execNode = tm.findNext(799);
         CHECK(execNode == nullptr);
         tm.remove(node1);
         execNode = tm.findNext(1000);
         CHECK(execNode != nullptr);
-        CHECK(execNode->Id() == 2);
+        CHECK(execNode->id() == 2);
         execNode = tm.findNext(999);
         CHECK(execNode != nullptr);
-        CHECK(execNode->Id() == 3);
+        CHECK(execNode->id() == 3);
         execNode = tm.findNext(799);
         CHECK(execNode == nullptr);
         tm.remove(node2);
         execNode = tm.findNext(1000);
         CHECK(execNode != nullptr);
-        CHECK(execNode->Id() == 3);
+        CHECK(execNode->id() == 3);
         execNode = tm.findNext(799);
         CHECK(execNode == nullptr);
     }

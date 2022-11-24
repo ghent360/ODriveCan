@@ -4,9 +4,9 @@ class TaskNode {
 public:
   typedef void (*Callback)(uint32_t);
 
-  uint32_t Id() const { return id_; }
-  uint32_t Time() const { return time_; }
-  void Run(uint32_t timeNow) const {
+  uint32_t id() const { return id_; }
+  uint32_t time() const { return time_; }
+  void run(uint32_t timeNow) const {
     if (cb_) {
       cb_(timeNow);
     }

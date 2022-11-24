@@ -5,7 +5,6 @@ public:
   typedef void (*Callback)(uint32_t);
 
   uint32_t id() const { return id_; }
-  uint32_t time() const { return time_; }
   void run(uint32_t timeNow) const {
     if (cb_) {
       cb_(timeNow);
@@ -18,7 +17,8 @@ private:
   TaskNode *prev_;
   TaskNode *next_;
   uint32_t id_;
-  uint32_t time_;
+  uint32_t sched_time_;
+  uint32_t interval_;
   Callback cb_;
 };
 
@@ -36,12 +36,16 @@ public:
   }
 
   TaskNode* newTask(
-      uint32_t id, uint32_t time, TaskNode::Callback cb) {
+      uint32_t id,
+      uint32_t timeNow,
+      uint32_t interval,
+      TaskNode::Callback cb) {
     for(auto& node : pool_) {
       if (!node.in_use_) {
         node.in_use_ = true;
         node.id_ = id;
-        node.time_ = time;
+        node.sched_time_ = timeNow;
+        node.interval_ = interval;
         node.cb_ = cb;
         node.prev_ = nullptr;
         node.next_ = nullptr;
@@ -55,7 +59,8 @@ public:
   void freeTask(TaskNode* node) {
     if (node) {
       node->in_use_ = false;
-      node->time_ = 0;
+      node->sched_time_ = 0;
+      node->interval_ = 0;
       node->cb_ = nullptr;
       node->prev_ = nullptr;
       node->next_ = nullptr;
@@ -135,7 +140,7 @@ public:
 
   TaskNode* findNext(uint32_t time) {
     return findFirst([time](const TaskNode* node) {
-      return node->time_ <= time;
+      return ((time - node->sched_time_) >= node->interval_);
     });
   }
 private:

@@ -17,21 +17,21 @@ TEST_SUITE("TaskManager")
         TaskManager tm;
         TaskNode* node;
         for(int i = 0; i < 32; i++) {
-            node = tm.newTask(0, 0, nullptr);
+            node = tm.newTask(0, 0, 0, nullptr);
             CHECK(node != nullptr);
         }
-        CHECK(tm.newTask(0, 0, nullptr) == nullptr);
+        CHECK(tm.newTask(0, 0, 0, nullptr) == nullptr);
         tm.freeTask(node);
-        CHECK(tm.newTask(0, 0, nullptr) != nullptr);
-        CHECK(tm.newTask(0, 0, nullptr) == nullptr);
+        CHECK(tm.newTask(0, 0, 0, nullptr) != nullptr);
+        CHECK(tm.newTask(0, 0, 0, nullptr) == nullptr);
     }
 
     TEST_CASE("list OPs")
     {
         TaskManager tm;
-        TaskNode* node1 = tm.newTask(1, 1000, nullptr);
-        TaskNode* node2 = tm.newTask(2, 1000, nullptr);
-        TaskNode* node3 = tm.newTask(3, 800, nullptr);
+        TaskNode* node1 = tm.newTask(1, 0, 1000, nullptr);
+        TaskNode* node2 = tm.newTask(2, 0, 1000, nullptr);
+        TaskNode* node3 = tm.newTask(3, 0, 800, nullptr);
         tm.addFront(node1);
         CHECK(tm.findById(1) != nullptr);
         tm.remove(node1);
@@ -60,9 +60,9 @@ TEST_SUITE("TaskManager")
     TEST_CASE("findNext test")
     {
         TaskManager tm;
-        TaskNode* node1 = tm.newTask(1, 1000, nullptr);
-        TaskNode* node2 = tm.newTask(2, 1000, nullptr);
-        TaskNode* node3 = tm.newTask(3, 800, nullptr);
+        TaskNode* node1 = tm.newTask(1, 0, 1000, nullptr);
+        TaskNode* node2 = tm.newTask(2, 0, 1000, nullptr);
+        TaskNode* node3 = tm.newTask(3, 0, 800, nullptr);
         tm.addFront(node1);
         tm.addFront(node2);
         tm.addBack(node3);
@@ -90,4 +90,17 @@ TEST_SUITE("TaskManager")
         execNode = tm.findNext(799);
         CHECK(execNode == nullptr);
     }
+
+    TEST_CASE("findNext Time Overflow")
+    {
+        TaskManager tm;
+        TaskNode* node1 = tm.newTask(1, 0xfffffffe, 5, nullptr);
+        tm.addFront(node1);
+        CHECK(tm.findNext(0xfffffffe) == nullptr);
+        CHECK(tm.findNext(0xffffffff) == nullptr);
+        CHECK(tm.findNext(0) == nullptr);
+        CHECK(tm.findNext(1) == nullptr);
+        CHECK(tm.findNext(2) == nullptr);
+        CHECK(tm.findNext(3) != nullptr);
+   }
 }

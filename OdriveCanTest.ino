@@ -1,5 +1,11 @@
 /*
  * Copyright (c) 2022 ghent360. See LICENSE file for details.
+ *
+ * This is a very basic example of communicating with 3 ODrive boards
+ * over CAN on SAME51 board. The example would request vbus voltage from
+ * each axis and print it on the serial console. It would also verify
+ * heartbeat messages are received from each axis or it will print that
+ * the axis is unavailable.
 */
 #include <same51_can.h>
 #include "ODriveCan.hpp"
@@ -37,9 +43,12 @@ static void PrintCanMessage(uint32_t id, uint8_t len, const CanMsgData& buf) {
 // different CAN bus, you would need separate callback for each bus. For
 // example SendCmdCh1.
 //
-// It is requered to have unique node_id even if some axis are on a
+// It is required to have unique node_id even if some axis are on a
 // separate CAN bus. Otherwise the parsing code has to be modified to 
 // process each CAN bus separately.
+//
+// On my setup the axes have even node_ids starting with 1. These have to
+// be configured using the odrivetool.
 ODriveAxis axesCh0[] = {
   ODriveAxis(1, SendCmdCh0),
   ODriveAxis(3, SendCmdCh0),
@@ -53,7 +62,7 @@ ODriveAxis axesCh0[] = {
 // these are no handled in interrupts, just comparing the
 // current time reported by millis() in the main loop.
 PeriodicTimer myTimers[] = {
-  // Check that hearthbeat message was received every 150ms.
+  // Check that heartbeat message was received every 150ms.
   PeriodicTimer(150, [](uint32_t)->void {
     for(auto& axis : axesCh0) {
       axis.hb.PeriodicCheck(axis);
@@ -85,6 +94,8 @@ void setup() {
   while(!Serial);
   
   uint8_t ret;
+  // The default ODrive speed is 250kbps. In this example I use
+  // 1mbps, but this has to be configured on each board with the odrivetool.
   ret = can.begin(MCP_ANY, CAN_1000KBPS, MCAN_MODE_CAN);
   if (ret == CAN_OK) {
       Serial.println("CAN Initialized Successfully!");
@@ -92,7 +103,7 @@ void setup() {
       Serial.println("Error Initializing CAN...");
       while(1);
   }
-  // Setup callbacks, when asix becomes unavailable or
+  // Setup callbacks, when axis becomes unavailable or
   // when we receive the vbus voltage data.
   for(auto& axis : axesCh0) {
     axis.vbus.SetCallback([](ODriveAxis& axis, VbusVoltage& v) { 

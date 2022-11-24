@@ -9,7 +9,7 @@ TEST_SUITE("TaskManager")
     {
         TaskManager tm;
         CHECK(tm.findById(1) == nullptr);
-        CHECK(tm.find([](TaskNode*){ return true; }) == nullptr);
+        CHECK(tm.findFirst([](TaskNode*){ return true; }) == nullptr);
     }
 
     TEST_CASE("allocator OOM")
@@ -43,15 +43,15 @@ TEST_SUITE("TaskManager")
         tm.addFront(node2);
         tm.addBack(node3);
         // Order should ne node2->node1->node3
-        TaskNode* firstNode = tm.find([](TaskNode*){ return true; });
+        TaskNode* firstNode = tm.findFirst([](TaskNode*){ return true; });
         CHECK(firstNode != nullptr);
         CHECK(firstNode->id() == 2);
         tm.remove(firstNode);
-        firstNode = tm.find([](TaskNode*){ return true; });
+        firstNode = tm.findFirst([](TaskNode*){ return true; });
         CHECK(firstNode != nullptr);
         CHECK(firstNode->id() == 1);
         tm.remove(firstNode);
-        firstNode = tm.find([](TaskNode*){ return true; });
+        firstNode = tm.findFirst([](TaskNode*){ return true; });
         CHECK(firstNode != nullptr);
         CHECK(firstNode->id() == 3);
         tm.remove(firstNode);

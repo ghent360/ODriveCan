@@ -24,9 +24,12 @@ private:
 
 class TaskManager {
 public:    
-  TaskManager() 
-    : task_list_start_(nullptr),
-      task_list_end_(nullptr) {
+  TaskManager() {
+    reset();
+  }
+
+  void reset() {
+    task_list_start_ = task_list_end_ = nullptr;
     for(auto& node: pool_) {
       node.in_use_ = false;
     }
@@ -101,7 +104,7 @@ public:
   }
 
   template<typename Functor>
-  TaskNode* find(Functor cond) {
+  TaskNode* findFirst(Functor cond) {
     TaskNode* node = task_list_start_;
     while (node) {
       if (cond(node)) {
@@ -112,14 +115,26 @@ public:
     return nullptr;
   }
 
+  template<typename Functor>
+  TaskNode* findLast(Functor cond) {
+    TaskNode* node = task_list_end_;
+    while (node) {
+      if (cond(node)) {
+        return node;
+      }
+      node = node->prev_;
+    }
+    return nullptr;
+  }
+
   TaskNode* findById(uint32_t id) {
-    return find([id](const TaskNode* node) {
+    return findFirst([id](const TaskNode* node) {
       return node->id_ == id;
     });
   }
 
   TaskNode* findNext(uint32_t time) {
-    return find([time](const TaskNode* node) {
+    return findFirst([time](const TaskNode* node) {
       return node->time_ <= time;
     });
   }

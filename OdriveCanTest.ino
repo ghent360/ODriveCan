@@ -49,6 +49,9 @@ ODriveAxis axesCh0[] = {
   ODriveAxis(11, SendCmdCh0),
 };
 
+// Some code that we want to execute periodically. Note
+// these are no handled in interrupts, just comparing the
+// current time reported by millis() in the main loop.
 PeriodicTimer myTimers[] = {
   // Check that hearthbeat message was received every 150ms.
   PeriodicTimer(150, [](uint32_t)->void {
@@ -68,7 +71,7 @@ PeriodicTimer myTimers[] = {
   })
 };
 
-// Helper to parse incomming CAN messages or print if parsing was
+// Helper to parse incoming CAN messages or print if parsing was
 // nos successful.
 void ProcessCanMessage(uint32_t id, uint8_t len, const CanMsgData& buf) {
   bool parseSuccess = ParseCanMsg(axesCh0, id, len, buf);
@@ -89,7 +92,7 @@ void setup() {
       Serial.println("Error Initializing CAN...");
       while(1);
   }
-  // Setup callbcaks, when asix becomes unavailable or
+  // Setup callbacks, when asix becomes unavailable or
   // when we receive the vbus voltage data.
   for(auto& axis : axesCh0) {
     axis.vbus.SetCallback([](ODriveAxis& axis, VbusVoltage& v) { 

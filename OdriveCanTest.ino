@@ -1,7 +1,10 @@
 #include <same51_can.h>
 #include "ODriveCan.hpp"
+#include "PeriodicTimer.hpp"
 
+using odrive::CanMsgData;
 using odrive::ODriveAxis;
+using odrive::VbusVoltage;
 
 SAME51_CAN can;
 

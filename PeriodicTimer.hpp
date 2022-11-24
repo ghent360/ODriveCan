@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) 2022 ghent360. See LICENSE file for details.
+*/
 #include <stdint.h>
 
 class PeriodicTimer {

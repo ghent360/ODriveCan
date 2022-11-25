@@ -136,6 +136,16 @@ void checkAllAxesArePresent(TaskNode* self, uint32_t timeNow) {
     }
   }
   if (allAlive) {
+    // We have all axes available, if there are any error states clear them.
+    for(auto& axis: axes) {
+      if (axis.hb.error != 0) {
+        Serial.print("Axis ");
+        Serial.print(axis.node_id);
+        Serial.print(" error: 0x");
+        Serial.println(axis.hb.error, HEX);
+        axis.ClearErrors();
+      }
+    }
     // Switch to second state
     tm.addBack(tm.newPeriodicTask(1, 150, checkAxisConnection));
     for(auto& axis: axes) {

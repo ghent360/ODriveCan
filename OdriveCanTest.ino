@@ -61,7 +61,7 @@ ODriveAxis axes[] = {
 
 #define NUM_AXES (sizeof(axes)/sizeof(axes[0]))
 
-void readAndProcessCan() {
+static void readAndProcessCan() {
   uint32_t id;
   uint8_t len;
   static uint8_t buf[8];
@@ -86,16 +86,16 @@ void readAndProcessCan() {
  *   checkAxisVbusVoltage - periodically request the vbus voltage for each axis
  *                          at the moment this just prints to voltage.
  */
-void checkAllAxesArePresent(TaskNode* self, uint32_t timeNow);
+static void checkAllAxesArePresent(TaskNode* self, uint32_t timeNow);
 
-void axisVbusValueCheck(ODriveAxis& axis, VbusVoltage& v) {
+static void axisVbusValueCheck(ODriveAxis& axis, VbusVoltage& v) {
   Serial.print("Axis ");
   Serial.print(axis.node_id);
   Serial.print(" vbus=");
   Serial.println(v.val);
 }
 
-void checkAxisVbusVoltage(TaskNode* self, uint32_t timeNow) {
+static void checkAxisVbusVoltage(TaskNode* self, uint32_t timeNow) {
   static uint8_t axisIdx = 0;
   if (axes[axisIdx].hb.alive) {
     axes[axisIdx].RequestVbusVoltage();
@@ -106,7 +106,7 @@ void checkAxisVbusVoltage(TaskNode* self, uint32_t timeNow) {
   }
 }
 
-void checkAxisConnection(TaskNode* self, uint32_t timeNow) {
+static void checkAxisConnection(TaskNode* self, uint32_t timeNow) {
   bool allAlive = true;
   for(auto& axis: axes) {
     axis.hb.PeriodicCheck(axis);
@@ -127,7 +127,7 @@ void checkAxisConnection(TaskNode* self, uint32_t timeNow) {
   }
 }
 
-void checkAllAxesArePresent(TaskNode* self, uint32_t timeNow) {
+static void checkAllAxesArePresent(TaskNode* self, uint32_t timeNow) {
   bool allAlive = true;
   for(auto& axis: axes) {
     if (!axis.hb.alive) {

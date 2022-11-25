@@ -74,6 +74,18 @@ void readAndProcessCan() {
   }
 }
 
+/*
+ * The following code is a basic two state machine. We start with the state
+ * where we wait for all axes to become alive. The first state is implemented
+ * in the checkAllAxesArePresent periodical task. When all axes become available
+ * we switch to the second state.
+ * 
+ * In the secomd state we execute two periodical tasks:
+ *   checkAxisConnection - check if axes are loosing heartbeat and if so revert
+ *                         to the fisrt state.
+ *   checkAxisVbusVoltage - periodically request the vbus voltage for each axis
+ *                          at the moment this just prints to voltage.
+ */
 void checkAllAxesArePresent(TaskNode* self, uint32_t timeNow);
 
 void axisVbusValueCheck(ODriveAxis& axis, VbusVoltage& v) {
@@ -105,8 +117,12 @@ void checkAxisConnection(TaskNode* self, uint32_t timeNow) {
     }
   }
   if (!allAlive) {
+    // Switch back to first state
+    for(auto& axis: axes) {
+      axis.vbus.SetCallback(nullptr);
+    }
     tm.remove(tm.findById(2), true);
-    tm.addBack(tm.newPeriodicTask(1, 100, checkAllAxesArePresent));
+    tm.addBack(tm.newPeriodicTask(0, 100, checkAllAxesArePresent));
     tm.remove(self, true);
   }
 }
@@ -120,6 +136,7 @@ void checkAllAxesArePresent(TaskNode* self, uint32_t timeNow) {
     }
   }
   if (allAlive) {
+    // Switch to second state
     tm.addBack(tm.newPeriodicTask(1, 150, checkAxisConnection));
     for(auto& axis: axes) {
       axis.vbus.SetCallback(axisVbusValueCheck);
@@ -141,6 +158,7 @@ void setup() {
       Serial.println("Error Initializing CAN...");
       while(1);
   }
+  // Start in state one
   tm.addFront(tm.newPeriodicTask(0, 100, checkAllAxesArePresent));
 }
 

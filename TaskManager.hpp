@@ -182,10 +182,12 @@ public:
     TaskNode *next = findNext(time);
     if (next) {
       next->run(time);
-      if (next->is_periodic_) {
-        next->sched_time_ = time;
-      } else {
-        remove(next, true);
+      if (next->in_use_) { // Check if the task has not been freed
+        if (next->is_periodic_) {
+          next->sched_time_ = time;
+        } else {
+          remove(next, true);
+        }
       }
     } else {
       last_idle_time_ = time;

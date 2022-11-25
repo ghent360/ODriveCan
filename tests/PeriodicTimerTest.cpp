@@ -5,8 +5,7 @@
 
 #include "doctest.h"
 
-int numFired;
-
+static int numFired;
 static void FireCounter(uint32_t) {
   numFired++;
 }

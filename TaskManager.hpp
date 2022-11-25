@@ -3,14 +3,17 @@
 */
 #include <stdint.h>
 
+// Returns the current time in milliseconds
+extern "C" uint32_t millis();
+
 class TaskNode {
 public:
-  typedef void (*Callback)(uint32_t);
+  typedef void (*Callback)(TaskNode* self, uint32_t);
 
   uint32_t id() const { return id_; }
-  void run(uint32_t timeNow) const {
+  void run(uint32_t timeNow) {
     if (cb_) {
-      cb_(timeNow);
+      cb_(this, timeNow);
     }
   }
 
@@ -22,6 +25,7 @@ private:
   uint32_t id_;
   uint32_t sched_time_;
   uint32_t interval_;
+  bool is_periodic_;
   Callback cb_;
 };
 
@@ -33,6 +37,7 @@ public:
 
   void reset() {
     task_list_start_ = task_list_end_ = nullptr;
+    last_idle_time_ = 0;
     for(auto& node: pool_) {
       node.in_use_ = false;
     }
@@ -42,6 +47,7 @@ public:
       uint32_t id,
       uint32_t timeNow,
       uint32_t interval,
+      bool isPeriodic,
       TaskNode::Callback cb) {
     for(auto& node : pool_) {
       if (!node.in_use_) {
@@ -50,13 +56,28 @@ public:
         node.sched_time_ = timeNow;
         node.interval_ = interval;
         node.cb_ = cb;
+        node.is_periodic_ = isPeriodic;
         node.prev_ = nullptr;
         node.next_ = nullptr;
         return &node;
       }
     }
-    HandleError("Task pool is full");
+    HandleOOM("Task pool is full");
     return nullptr;
+  }
+
+  TaskNode* newSimpleTask(
+      uint32_t id,
+      uint32_t interval,
+      TaskNode::Callback cb) {
+    return newTask(id, millis(), interval, false, cb);
+  }
+
+  TaskNode* newPeriodicTask(
+      uint32_t id,
+      uint32_t interval,
+      TaskNode::Callback cb) {
+    return newTask(id, millis(), interval, true, cb);
   }
 
   void freeTask(TaskNode* node) {
@@ -94,7 +115,8 @@ public:
     }
   }
 
-  void remove(TaskNode* node) {
+  // Remove a task from the queue and optionally free it.
+  void remove(TaskNode* node, bool free = false) {
     if (node->prev_) {
       node->prev_->next_ = node->next_;
     }
@@ -109,6 +131,9 @@ public:
     }
     node->next_ = nullptr;
     node->prev_ = nullptr;
+    if (free) {
+      freeTask(node);
+    }
   }
 
   template<typename Functor>
@@ -141,16 +166,38 @@ public:
     });
   }
 
+  // Finds the next task that can me scheduled at this time or return
+  // nullptr if no such task exists.
   TaskNode* findNext(uint32_t time) {
     return findFirst([time](const TaskNode* node) {
       return ((time - node->sched_time_) >= node->interval_);
     });
   }
+
+  // Run the first task that can be scheduled. If the task is periodic, re-schedule
+  // it for the next time. If not, remove the task from the queue and free it.
+  //
+  // Return the time in ms since we could not schedule any tasks.
+  uint32_t runNext(uint32_t time) {
+    TaskNode *next = findNext(time);
+    if (next) {
+      next->run(time);
+      if (next->is_periodic_) {
+        next->sched_time_ = time;
+      } else {
+        remove(next, true);
+      }
+    } else {
+      last_idle_time_ = time;
+    }
+    return time - last_idle_time_;
+  }
 private:
-  void HandleError(const char*) {
+  void HandleOOM(const char*) {
   }
  
   TaskNode pool_[32];
   TaskNode *task_list_start_;
   TaskNode *task_list_end_;
+  uint32_t last_idle_time_;
 };

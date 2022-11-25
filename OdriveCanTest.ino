@@ -9,7 +9,7 @@
 */
 #include <same51_can.h>
 #include "ODriveCan.hpp"
-#include "PeriodicTimer.hpp"
+#include "TaskManager.hpp"
 
 using odrive::CanMsgData;
 using odrive::ODriveAxis;
@@ -17,15 +17,16 @@ using odrive::ParseCanMsg;
 using odrive::VbusVoltage;
 
 SAME51_CAN can;
+TaskManager tm;
 
 // Function that interfaces ODrive with our can hardware. If you want to
 // use multiple CAN buses you would need one for each bus.
-static void SendCmdCh0(uint32_t canId, uint8_t len, uint8_t *buf) {
+static void sendCmdCh0(uint32_t canId, uint8_t len, uint8_t *buf) {
   can.sendMsgBuf(canId, 0, len, buf);
 }
 
 // Helper to print CAN messages we can not parse.
-static void PrintCanMessage(uint32_t id, uint8_t len, const CanMsgData& buf) {
+static void printCanMessage(uint32_t id, uint8_t len, const CanMsgData& buf) {
   Serial.print("Id: ");
   Serial.print(id);
   Serial.print(" Len: ");
@@ -49,43 +50,82 @@ static void PrintCanMessage(uint32_t id, uint8_t len, const CanMsgData& buf) {
 //
 // On my setup the axes have even node_ids starting with 1. These have to
 // be configured using the odrivetool.
-ODriveAxis axesCh0[] = {
-  ODriveAxis(1, SendCmdCh0),
-  ODriveAxis(3, SendCmdCh0),
-  ODriveAxis(5, SendCmdCh0),
-  ODriveAxis(7, SendCmdCh0),
-  ODriveAxis(9, SendCmdCh0),
-  ODriveAxis(11, SendCmdCh0),
+ODriveAxis axes[] = {
+  ODriveAxis(1, sendCmdCh0),
+  ODriveAxis(3, sendCmdCh0),
+  ODriveAxis(5, sendCmdCh0),
+  ODriveAxis(7, sendCmdCh0),
+  ODriveAxis(9, sendCmdCh0),
+  ODriveAxis(11, sendCmdCh0),
 };
 
-// Some code that we want to execute periodically. Note
-// these are no handled in interrupts, just comparing the
-// current time reported by millis() in the main loop.
-PeriodicTimer myTimers[] = {
-  // Check that heartbeat message was received every 150ms.
-  PeriodicTimer(150, [](uint32_t)->void {
-    for(auto& axis : axesCh0) {
-      axis.hb.PeriodicCheck(axis);
-    }
-  }),
-  // Request each axis vbus voltage every second and cycle trough
-  // the axes. Only request vbus voltage is the axis is alive.
-  PeriodicTimer(1000, [](uint32_t)->void {
-    static uint8_t axis = 0;
-    if (axesCh0[axis].hb.alive) {
-      axesCh0[axis].RequestVbusVoltage();
-    }
-    axis++;
-    if (axis > 5) axis = 0;
-  })
-};
+#define NUM_AXES (sizeof(axes)/sizeof(axes[0]))
 
-// Helper to parse incoming CAN messages or print if parsing was
-// nos successful.
-void ProcessCanMessage(uint32_t id, uint8_t len, const CanMsgData& buf) {
-  bool parseSuccess = ParseCanMsg(axesCh0, id, len, buf);
-  if (!parseSuccess) {
-    PrintCanMessage(id, len, buf);
+void readAndProcessCan() {
+  uint32_t id;
+  uint8_t len;
+  static uint8_t buf[8];
+
+  if (can.readMsgBuf(&id, &len, buf) == CAN_OK) {
+    bool parseSuccess = ParseCanMsg(axes, id, len, buf);
+    if (!parseSuccess) {
+      printCanMessage(id, len, buf);
+    }
+  }
+}
+
+void checkAllAxesArePresent(TaskNode* self, uint32_t timeNow);
+
+void axisVbusValueCheck(ODriveAxis& axis, VbusVoltage& v) {
+  Serial.print("Axis ");
+  Serial.print(axis.node_id);
+  Serial.print(" vbus=");
+  Serial.println(v.val);
+}
+
+void checkAxisVbusVoltage(TaskNode* self, uint32_t timeNow) {
+  static uint8_t axisIdx = 0;
+  if (axes[axisIdx].hb.alive) {
+    axes[axisIdx].RequestVbusVoltage();
+  }
+  axisIdx++;
+  if (axisIdx >= NUM_AXES) {
+    axisIdx = 0;
+  }
+}
+
+void checkAxisConnection(TaskNode* self, uint32_t timeNow) {
+  bool allAlive = true;
+  for(auto& axis: axes) {
+    axis.hb.PeriodicCheck(axis);
+    if (!axis.hb.alive) {
+      Serial.print("Lost connection to axis ");
+      Serial.println(axis.node_id);
+      allAlive = false;
+    }
+  }
+  if (!allAlive) {
+    tm.remove(tm.findById(2), true);
+    tm.addBack(tm.newPeriodicTask(1, 100, checkAllAxesArePresent));
+    tm.remove(self, true);
+  }
+}
+
+void checkAllAxesArePresent(TaskNode* self, uint32_t timeNow) {
+  bool allAlive = true;
+  for(auto& axis: axes) {
+    if (!axis.hb.alive) {
+      allAlive = false;
+      break;
+    }
+  }
+  if (allAlive) {
+    tm.addBack(tm.newPeriodicTask(1, 150, checkAxisConnection));
+    for(auto& axis: axes) {
+      axis.vbus.SetCallback(axisVbusValueCheck);
+    }
+    tm.addBack(tm.newPeriodicTask(2, 1000, checkAxisVbusVoltage));
+    tm.remove(self, true);
   }
 }
 
@@ -94,8 +134,6 @@ void setup() {
   while(!Serial);
   
   uint8_t ret;
-  // The default ODrive speed is 250kbps. In this example I use
-  // 1mbps, but this has to be configured on each board with the odrivetool.
   ret = can.begin(MCP_ANY, CAN_1000KBPS, MCAN_MODE_CAN);
   if (ret == CAN_OK) {
       Serial.println("CAN Initialized Successfully!");
@@ -103,33 +141,10 @@ void setup() {
       Serial.println("Error Initializing CAN...");
       while(1);
   }
-  // Setup callbacks, when axis becomes unavailable or
-  // when we receive the vbus voltage data.
-  for(auto& axis : axesCh0) {
-    axis.vbus.SetCallback([](ODriveAxis& axis, VbusVoltage& v) { 
-      Serial.print("Axis ");
-      Serial.print(axis.node_id);
-      Serial.print(" vbus = ");
-      Serial.println(v.val);
-    });
-    axis.hb.SetUnreachableCallback([](ODriveAxis& axis) {
-      Serial.print("Axis ");
-      Serial.print(axis.node_id);
-      Serial.println(" unreachable");
-    });
-  }
-  StartAllTimers(myTimers, millis());
+  tm.addFront(tm.newPeriodicTask(0, 100, checkAllAxesArePresent));
 }
 
 void loop() {
-  uint32_t id;
-  uint8_t len;
-  uint8_t buf[8];
-
-  // process periodic timers
-  CheckAllTimers(myTimers, millis());
-  // check for CAN messages and precess them.
-  if (can.readMsgBuf(&id, &len, buf) == CAN_OK) {
-    ProcessCanMessage(id, len, buf);
-  }
+  readAndProcessCan();
+  tm.runNext(millis());
 }

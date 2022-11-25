@@ -117,6 +117,7 @@ public:
 
   // Remove a task from the queue and optionally free it.
   void remove(TaskNode* node, bool free = false) {
+    if (!node) return;
     if (node->prev_) {
       node->prev_->next_ = node->next_;
     }

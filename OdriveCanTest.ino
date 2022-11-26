@@ -11,6 +11,7 @@
 #include "ODriveCan.hpp"
 #include "TaskManager.hpp"
 
+using odrive::AxisState;
 using odrive::CanMsgData;
 using odrive::ODriveAxis;
 using odrive::ParseCanMsg;
@@ -22,7 +23,20 @@ TaskManager tm;
 // Function that interfaces ODrive with our can hardware. If you want to
 // use multiple CAN buses you would need one for each bus.
 static void sendCmdCh0(uint32_t canId, uint8_t len, uint8_t *buf) {
-  can.sendMsgBuf(canId, 0, len, buf);
+  uint8_t ret;
+  do {
+    ret = can.sendMsgBuf(canId, 0, len, buf);
+    if (ret == CAN_FAILTX) {  // TX queue is full, wait a bit.
+      delayMicroseconds(200); // Time to transmit 200 bits @ 1MBit/s
+    }
+  } while (ret == CAN_FAILTX);
+
+  if (ret != CAN_OK) {
+    Serial.print("Failed to send message ID ");
+    Serial.print(canId, HEX);
+    Serial.print(" error ");
+    Serial.println(ret);
+  }
 }
 
 // Helper to print CAN messages we can not parse.
@@ -39,6 +53,23 @@ static void printCanMessage(uint32_t id, uint8_t len, const CanMsgData& buf) {
   Serial.println();
 }
 
+// AXIS class definitions:
+enum AxisClass {
+  CLASS_KNEE = 0x1,
+  CLASS_HIP  = 0x2,
+  CLASS_SHOULDER = 0x3
+};
+
+enum AxisSide {
+  SIDE_LEFT = 0x10,
+  SIDE_RIGHT = 0x20
+};
+
+enum AxisLocation {
+  LOC_FRONT = 0x100,
+  LOC_BACK  = 0x200
+};
+
 // We communicate with 3 ODrive boards, each board has 2 axes. Each axis
 // has to be setup separately. If you have boards that are connected to a
 // different CAN bus, you would need separate callback for each bus. For
@@ -51,12 +82,12 @@ static void printCanMessage(uint32_t id, uint8_t len, const CanMsgData& buf) {
 // On my setup the axes have even node_ids starting with 1. These have to
 // be configured using the odrivetool.
 ODriveAxis axes[] = {
-  ODriveAxis(1, sendCmdCh0),
-  ODriveAxis(3, sendCmdCh0),
-  ODriveAxis(5, sendCmdCh0),
-  ODriveAxis(7, sendCmdCh0),
-  ODriveAxis(9, sendCmdCh0),
-  ODriveAxis(11, sendCmdCh0),
+  ODriveAxis( 1, SIDE_LEFT | LOC_FRONT | CLASS_SHOULDER, sendCmdCh0),
+  ODriveAxis( 3, SIDE_LEFT | LOC_FRONT | CLASS_HIP, sendCmdCh0),
+  ODriveAxis( 5, SIDE_LEFT | LOC_BACK  | CLASS_KNEE, sendCmdCh0),
+  ODriveAxis( 7, SIDE_LEFT | LOC_FRONT | CLASS_KNEE, sendCmdCh0),
+  ODriveAxis( 9, SIDE_LEFT | LOC_BACK  | CLASS_SHOULDER, sendCmdCh0),
+  ODriveAxis(11, SIDE_LEFT | LOC_BACK  | CLASS_HIP, sendCmdCh0),
 };
 
 #define NUM_AXES (sizeof(axes)/sizeof(axes[0]))
@@ -95,11 +126,48 @@ static void readAndProcessCan() {
  */
 static void checkAllAxesArePresent(TaskNode*, uint32_t);
 
+static void printHelp() {
+  Serial.println("Help:");
+  Serial.println("  '?' or 'h' - print this message.");
+  Serial.println("  'l'        - set limits and enter closed loop control mode.");
+  Serial.println("  'i'        - enter idle mode.");
+}
+
+static void setAxisLimitsAndStart() {
+  for(auto& axis: axes) {
+    axis.SetLimits(60.0f, 10.0f); // Should be 6000.0f, 20.0f
+    axis.SetState(AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL);
+  }
+}
+
+static void setAxisIdle() {
+  for(auto& axis: axes) {
+    axis.SetState(AxisState::AXIS_STATE_IDLE);
+  }
+}
+
 static void checkSerialInput(TaskNode*, uint32_t) {
   if (Serial.available()) {
     auto ch = Serial.read();
     if (ch < 32) return;
     Serial.println((char)ch); // Echo the incomming character.
+    switch(ch) {
+      default:
+          Serial.print("Unknown command '");
+          Serial.print((char)ch);
+          Serial.println("'");
+          // Fall trough.
+      case '?':
+      case 'h':
+          printHelp();
+          break;
+      case 'l':
+          setAxisLimitsAndStart();
+          break;
+      case 'i':
+          setAxisIdle();
+          break;
+    }
   }
 }
 
@@ -120,9 +188,7 @@ static void axisVbusValueCheck(ODriveAxis&, VbusVoltage& v) {
 
 static void checkAxisVbusVoltage(TaskNode*, uint32_t) {
   static uint8_t axisIdx = 0;
-  if (axes[axisIdx].hb.alive) {
-    axes[axisIdx].RequestVbusVoltage();
-  }
+  axes[axisIdx].RequestVbusVoltage();
   axisIdx++;
   if (axisIdx >= NUM_AXES) {
     axisIdx = 0;
@@ -191,6 +257,7 @@ static void clearErrorsAndSwitchToStateThree(TaskNode* self, uint32_t) {
   }
   // All is good switch to state three.
   Serial.println("All odrives active...");
+  printHelp();
   // Switch to second state
   tm.addBack(tm.newPeriodicTask(1, 150, checkAxisConnection));
   for(auto& axis: axes) {

@@ -17,6 +17,23 @@ using odrive::ODriveAxis;
 using odrive::ParseCanMsg;
 using odrive::VbusVoltage;
 
+// AXIS class definitions:
+enum AxisClass {
+  CLASS_KNEE = 0x1,
+  CLASS_HIP  = 0x2,
+  CLASS_SHOULDER = 0x3
+};
+
+enum AxisSide {
+  SIDE_LEFT = 0x10,
+  SIDE_RIGHT = 0x20
+};
+
+enum AxisLocation {
+  LOC_FRONT = 0x100,
+  LOC_BACK  = 0x200
+};
+
 SAME51_CAN can;
 TaskManager tm;
 
@@ -57,22 +74,33 @@ static void printCanMessage(uint32_t id, uint8_t len, const CanMsgData& buf) {
   Serial.println();
 }
 
-// AXIS class definitions:
-enum AxisClass {
-  CLASS_KNEE = 0x1,
-  CLASS_HIP  = 0x2,
-  CLASS_SHOULDER = 0x3
-};
+AxisClass getAxisClass(uint32_t userId) {
+  switch (userId & 0xf) {
+    case 0x1: return CLASS_KNEE;
+    case 0x2: return CLASS_HIP;
+    case 0x3:
+    default:
+      return CLASS_SHOULDER;
+  }
+}
 
-enum AxisSide {
-  SIDE_LEFT = 0x10,
-  SIDE_RIGHT = 0x20
-};
+AxisSide getAxisSide(uint32_t userId) {
+  switch (userId & 0xf0) {
+    case 0x10: return SIDE_LEFT;
+    case 0x20:
+    default:
+      return SIDE_RIGHT;
+  }
+}
 
-enum AxisLocation {
-  LOC_FRONT = 0x100,
-  LOC_BACK  = 0x200
-};
+AxisLocation getAxisLocation(uint32_t userId) {
+  switch (userId & 0xf00) {
+    case 0x100: return LOC_FRONT;
+    case 0x200:
+    default:
+      return LOC_BACK;
+  }
+}
 
 // We communicate with 3 ODrive boards, each board has 2 axes. Each axis
 // has to be setup separately. If you have boards that are connected to a
@@ -86,12 +114,12 @@ enum AxisLocation {
 // On my setup the axes have even node_ids starting with 1. These have to
 // be configured using the odrivetool.
 ODriveAxis axes[] = {
-  ODriveAxis( 1, SIDE_LEFT | LOC_FRONT | CLASS_SHOULDER, sendCmdCh0),
-  ODriveAxis( 3, SIDE_LEFT | LOC_FRONT | CLASS_HIP, sendCmdCh0),
+  ODriveAxis( 1, SIDE_LEFT | LOC_FRONT | CLASS_HIP, sendCmdCh0),
+  ODriveAxis( 3, SIDE_LEFT | LOC_FRONT | CLASS_SHOULDER, sendCmdCh0),
   ODriveAxis( 5, SIDE_LEFT | LOC_BACK  | CLASS_KNEE, sendCmdCh0),
   ODriveAxis( 7, SIDE_LEFT | LOC_FRONT | CLASS_KNEE, sendCmdCh0),
-  ODriveAxis( 9, SIDE_LEFT | LOC_BACK  | CLASS_SHOULDER, sendCmdCh0),
-  ODriveAxis(11, SIDE_LEFT | LOC_BACK  | CLASS_HIP, sendCmdCh0),
+  ODriveAxis( 9, SIDE_LEFT | LOC_BACK  | CLASS_HIP, sendCmdCh0),
+  ODriveAxis(11, SIDE_LEFT | LOC_BACK  | CLASS_SHOULDER, sendCmdCh0),
 };
 
 #define NUM_AXES (sizeof(axes)/sizeof(axes[0]))

@@ -75,16 +75,23 @@ static void readAndProcessCan() {
 }
 
 /*
- * The following code is a basic two state machine. We start with the state
+ * The following code is a basic three state machine. We start with the state
  * where we wait for all axes to become alive. The first state is implemented
  * in the checkAllAxesArePresent periodical task. When all axes become available
  * we switch to the second state.
  * 
- * In the secomd state we execute two periodical tasks:
- *   checkAxisConnection - check if axes are loosing heartbeat and if so revert
- *                         to the fisrt state.
+ * The second state is implemented in the clearErrorsAndSwitchToStateThree periodical
+ * task. It checks all axis error states, if any axis reports an error it calls 
+ * ClearErrors and tries again. When all axes report error free state it switches to
+ * state three. Also it checks if any asix gets disconnected it switches back to state
+ * one.
+ * 
+ * In the third state we execute three periodical tasks:
+ *   checkAxisConnection  - check if axes are loosing heartbeat and if so revert
+ *                          to the fisrt state.
  *   checkAxisVbusVoltage - periodically request the vbus voltage for each axis
- *                          at the moment this just prints to voltage.
+ *                          if the coltage is too low it calls EStop on all axes.
+ *   checkSerialInput     - read serial input and perform actions.
  */
 static void checkAllAxesArePresent(TaskNode*, uint32_t);
 
@@ -92,14 +99,14 @@ static void checkSerialInput(TaskNode*, uint32_t) {
   if (Serial.available()) {
     auto ch = Serial.read();
     if (ch < 32) return;
-    Serial.println((char)ch);
+    Serial.println((char)ch); // Echo the incomming character.
   }
 }
 
 static void axisVbusValueCheck(ODriveAxis&, VbusVoltage& v) {
-  if (v.val < 19.3f) { // Cut off voltage for 6S battery.
+  if (v.val < 19.4f) { // Cut off voltage for 6S battery.
     for(auto& axis: axes) {
-      axis.EStop();
+      axis.EStop(); // Call EStop to reduce the axis power consumption.
     }
     Serial.println("Battery voltage low.");
   }
@@ -139,37 +146,56 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
     }
   }
   if (!allAlive) {
-    // Switch back to first state
+    // Switch back to first state:
+    tm.remove(tm.findById(3), true); // Remove the checkSerialInput task.
+    // Remove the voltage checking callbacks.
     for(auto& axis: axes) {
       axis.vbus.SetCallback(nullptr);
     }
-    tm.remove(tm.findById(2), true);
-    tm.remove(tm.findById(3), true);
+    tm.remove(tm.findById(2), true); // Remove the checkAxisVbusVoltage task.
     Serial.println("Waiting for odrives to connect...");
     tm.addBack(tm.newPeriodicTask(0, 100, checkAllAxesArePresent));
-    tm.remove(self, true);
+    tm.remove(self, true); // Remove the checkAxisConnection task.
   }
 }
 
-static void waitAndSwitchToStateTwo(TaskNode* self, uint32_t) {
+static void clearErrorsAndSwitchToStateThree(TaskNode* self, uint32_t) {
   // We have all axes available, if there are any error states clear them.
+  bool allClear = true;
   for(auto& axis: axes) {
+    axis.hb.PeriodicCheck(axis);
+    if (!axis.hb.alive) {
+      Serial.print("Lost connection to axis ");
+      Serial.println(axis.node_id);
+      // Lost axis connection, back to square one:
+      Serial.println("Waiting for odrives to connect...");
+      tm.addBack(tm.newPeriodicTask(0, 100, checkAllAxesArePresent));
+      tm.remove(self, true);
+      return;
+    }
     if (axis.hb.error != 0) {
       Serial.print("Axis ");
       Serial.print(axis.node_id);
       Serial.print(" error: 0x");
       Serial.println(axis.hb.error, HEX);
       axis.ClearErrors();
+      allClear = false;
     }
   }
+  if (!allClear) {
+    // We cleared some axis errors, wait and try again.
+    return;
+  }
+  // All is good switch to state two.
   Serial.println("All odrives active...");
   // Switch to second state
   tm.addBack(tm.newPeriodicTask(1, 150, checkAxisConnection));
-  tm.addBack(tm.newPeriodicTask(3, 10, checkSerialInput));
   for(auto& axis: axes) {
     axis.vbus.SetCallback(axisVbusValueCheck);
   }
   tm.addBack(tm.newPeriodicTask(2, 1000, checkAxisVbusVoltage));
+  tm.addBack(tm.newPeriodicTask(3, 10, checkSerialInput));
+  tm.remove(self, true);
 }
 
 static void checkAllAxesArePresent(TaskNode* self, uint32_t) {
@@ -181,9 +207,10 @@ static void checkAllAxesArePresent(TaskNode* self, uint32_t) {
     }
   }
   if (allAlive) {
-    // Delay 200ms so the axes can fully initialize. Then switch to state two.
-    tm.addBack(tm.newSimpleTask(1, 200, waitAndSwitchToStateTwo));
-    tm.remove(self, true);
+    // Delay 200ms so the axes can fully initialize. Clear any startup errors,
+    // then switch to state two.
+    tm.addBack(tm.newPeriodicTask(1000, 200, clearErrorsAndSwitchToStateThree));
+    tm.remove(self, true); // Remove the checkAllAxesArePresent task.
   }
 }
 

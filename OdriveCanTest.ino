@@ -34,6 +34,18 @@ enum AxisLocation {
   LOC_BACK  = 0x200
 };
 
+enum PeriodicTaskId {
+  StateOne,
+  StateTwo,
+  StateThreeConnection,
+  StateThreeVoltage,
+  StateThreeSerial,
+};
+
+enum SimpleTaskId {
+  PrintPosition = 1000
+};
+
 SAME51_CAN can;
 TaskManager tm;
 
@@ -174,6 +186,17 @@ static void setAxisLimitsAndStart() {
     axis.SetLimits(60.0f, 10.0f); // Should be 6000.0f, 20.0f
     axis.SetState(AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL);
   }
+  // Print axis positions after 5 seconds.
+  tm.addBack(tm.newSimpleTask(PrintPosition, 5000, [] (TaskNode*, uint32_t) {
+    for(auto& axis: axes) {
+      Serial.print("Axis ");
+      Serial.print(axis.node_id);
+      Serial.print(" position ");
+      Serial.print(axis.enc_est.pos);
+      Serial.print(" velocity ");
+      Serial.println(axis.enc_est.vel);
+    }
+  }));
 }
 
 static void setAxisIdle() {
@@ -249,14 +272,14 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
   }
   if (!allAlive) {
     // Switch back to first state:
-    tm.remove(tm.findById(3), true); // Remove the checkSerialInput task.
+    tm.remove(tm.findById(StateThreeSerial), true); // Remove the checkSerialInput task.
     // Remove the voltage checking callbacks.
     for(auto& axis: axes) {
       axis.vbus.SetCallback(nullptr);
     }
-    tm.remove(tm.findById(2), true); // Remove the checkAxisVbusVoltage task.
+    tm.remove(tm.findById(StateThreeVoltage), true); // Remove the checkAxisVbusVoltage task.
     Serial.println("Waiting for odrives to connect...");
-    tm.addBack(tm.newPeriodicTask(0, 100, checkAllAxesArePresent));
+    tm.addBack(tm.newPeriodicTask(StateOne, 100, checkAllAxesArePresent));
     tm.remove(self, true); // Remove the checkAxisConnection task.
   }
 }
@@ -274,7 +297,7 @@ static void clearErrorsAndSwitchToStateThree(TaskNode* self, uint32_t) {
       Serial.println(axis.node_id);
       // Lost axis connection, back to square one:
       Serial.println("Waiting for odrives to connect...");
-      tm.addBack(tm.newPeriodicTask(0, 100, checkAllAxesArePresent));
+      tm.addBack(tm.newPeriodicTask(StateOne, 100, checkAllAxesArePresent));
       tm.remove(self, true);
       return;
     }
@@ -295,12 +318,12 @@ static void clearErrorsAndSwitchToStateThree(TaskNode* self, uint32_t) {
   Serial.println("All odrives active...");
   printHelp();
   // Switch to second state
-  tm.addBack(tm.newPeriodicTask(1, 150, checkAxisConnection));
+  tm.addBack(tm.newPeriodicTask(StateThreeConnection, 150, checkAxisConnection));
   for(auto& axis: axes) {
     axis.vbus.SetCallback(axisVbusValueCheck);
   }
-  tm.addBack(tm.newPeriodicTask(2, 1000, checkAxisVbusVoltage));
-  tm.addBack(tm.newPeriodicTask(3, 10, checkSerialInput));
+  tm.addBack(tm.newPeriodicTask(StateThreeVoltage, 1000, checkAxisVbusVoltage));
+  tm.addBack(tm.newPeriodicTask(StateThreeSerial, 10, checkSerialInput));
   tm.remove(self, true); // Remove the clearErrorsAndSwitchToStateThree task.
 }
 
@@ -316,7 +339,7 @@ static void checkAllAxesArePresent(TaskNode* self, uint32_t) {
   }
   if (allAlive) {
     // Switch to state two.
-    tm.addBack(tm.newPeriodicTask(1000, 200, clearErrorsAndSwitchToStateThree));
+    tm.addBack(tm.newPeriodicTask(StateTwo, 200, clearErrorsAndSwitchToStateThree));
     tm.remove(self, true); // Remove the checkAllAxesArePresent task.
   }
 }
@@ -335,7 +358,7 @@ void setup() {
   }
   Serial.println("Waiting for odrives to connect...");
   // Start in state one
-  tm.addFront(tm.newPeriodicTask(0, 100, checkAllAxesArePresent));
+  tm.addFront(tm.newPeriodicTask(StateOne, 100, checkAllAxesArePresent));
 }
 
 void loop() {

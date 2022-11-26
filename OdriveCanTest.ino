@@ -86,7 +86,7 @@ static void printCanMessage(uint32_t id, uint8_t len, const CanMsgData& buf) {
   Serial.println();
 }
 
-AxisClass getAxisClass(uint32_t userId) {
+static AxisClass getAxisClass(uint32_t userId) {
   switch (userId & 0xf) {
     case 0x1: return CLASS_KNEE;
     case 0x2: return CLASS_HIP;
@@ -96,7 +96,7 @@ AxisClass getAxisClass(uint32_t userId) {
   }
 }
 
-AxisSide getAxisSide(uint32_t userId) {
+static AxisSide getAxisSide(uint32_t userId) {
   switch (userId & 0xf0) {
     case 0x10: return SIDE_LEFT;
     case 0x20:
@@ -105,7 +105,7 @@ AxisSide getAxisSide(uint32_t userId) {
   }
 }
 
-AxisLocation getAxisLocation(uint32_t userId) {
+static AxisLocation getAxisLocation(uint32_t userId) {
   switch (userId & 0xf00) {
     case 0x100: return LOC_FRONT;
     case 0x200:
@@ -113,6 +113,18 @@ AxisLocation getAxisLocation(uint32_t userId) {
       return LOC_BACK;
   }
 }
+
+static const struct {
+  uint32_t node_id;
+  float home_pos;
+} axesHomePosition[] = {
+  {1, 0.31},
+  {3, -0.08},
+  {5, -0.18},
+  {7, 0.22},
+  {9, 0.27},
+  {11, -0.06}
+};
 
 // We communicate with 3 ODrive boards, each board has 2 axes. Each axis
 // has to be setup separately. If you have boards that are connected to a
@@ -176,9 +188,11 @@ static void checkAllAxesArePresent(TaskNode*, uint32_t);
 
 static void printHelp() {
   Serial.println("Help:");
-  Serial.println("  '?' or 'h' - print this message.");
-  Serial.println("  'l'        - set limits and enter closed loop control mode.");
-  Serial.println("  'i'        - enter idle mode.");
+  Serial.println("  '?' - print this message.");
+  Serial.println("  'l' - set limits and enter closed loop control mode.");
+  Serial.println("  'i' - enter idle mode.");
+  Serial.println("  'h' - move all axis to 'home' position.");
+  Serial.println("  'g' - modify gains.");
 }
 
 static void setAxisLimitsAndStart() {
@@ -186,22 +200,46 @@ static void setAxisLimitsAndStart() {
     axis.SetLimits(60.0f, 10.0f); // Should be 6000.0f, 20.0f
     axis.SetState(AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL);
   }
-  // Print axis positions after 5 seconds.
-  tm.addBack(tm.newSimpleTask(PrintPosition, 5000, [] (TaskNode*, uint32_t) {
-    for(auto& axis: axes) {
-      Serial.print("Axis ");
-      Serial.print(axis.node_id);
-      Serial.print(" position ");
-      Serial.print(axis.enc_est.pos);
-      Serial.print(" velocity ");
-      Serial.println(axis.enc_est.vel);
-    }
-  }));
 }
 
 static void setAxisIdle() {
   for(auto& axis: axes) {
     axis.SetState(AxisState::AXIS_STATE_IDLE);
+  }
+}
+
+static void axesGoHome() {
+  for(auto& axis: axes) {
+    for(auto& pos: axesHomePosition) {
+      if (pos.node_id == axis.node_id) {
+        if (axis.hb.state == AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL) {
+          axis.SetInputPos(pos.home_pos);
+        }
+        break;
+      }
+    }
+  }
+}
+
+static void modifyGains() {
+  const float posGainKnee = 20.0f;
+  const float posGainHips = 60.0f;
+  const float posGainShoulder = 20.0f;
+  const float velGain = 0.1f;
+  const float integrator = 0.2f;
+  for(auto& axis: axes) {
+    switch(getAxisClass(axis.user_id)) {
+      case CLASS_HIP:
+        axis.SetPosGain(posGainHips);
+        break;
+      case CLASS_KNEE:
+        axis.SetPosGain(posGainKnee);
+        break;
+      case CLASS_SHOULDER:
+        axis.SetPosGain(posGainShoulder);
+        break;
+    }
+    axis.SetVelGains(velGain, integrator);
   }
 }
 
@@ -217,7 +255,6 @@ static void checkSerialInput(TaskNode*, uint32_t) {
           Serial.println("'");
           // Fall trough.
       case '?':
-      case 'h':
           printHelp();
           break;
       case 'l':
@@ -225,6 +262,12 @@ static void checkSerialInput(TaskNode*, uint32_t) {
           break;
       case 'i':
           setAxisIdle();
+          break;
+      case 'h':
+          axesGoHome();
+          break;
+      case 'g':
+          modifyGains();
           break;
     }
   }

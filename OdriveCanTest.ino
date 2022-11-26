@@ -83,14 +83,14 @@ static void readAndProcessCan() {
  * The second state is implemented in the clearErrorsAndSwitchToStateThree periodical
  * task. It checks all axis error states, if any axis reports an error it calls 
  * ClearErrors and tries again. When all axes report error free state it switches to
- * state three. Also it checks if any asix gets disconnected it switches back to state
+ * state three. Also it checks if any axis gets disconnected it switches back to state
  * one.
  * 
  * In the third state we execute three periodical tasks:
  *   checkAxisConnection  - check if axes are loosing heartbeat and if so revert
- *                          to the fisrt state.
+ *                          to the first state.
  *   checkAxisVbusVoltage - periodically request the vbus voltage for each axis
- *                          if the coltage is too low it calls EStop on all axes.
+ *                          if the voltage is too low it calls EStop on all axes.
  *   checkSerialInput     - read serial input and perform actions.
  */
 static void checkAllAxesArePresent(TaskNode*, uint32_t);
@@ -160,7 +160,7 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
 }
 
 // Sometimes we get axis errors on startup. Clear the errors, if all axes
-// are error free swith to state three. If we loose any axis switch to
+// are error free switch to state three. If we loose any axis switch to
 // state one.
 static void clearErrorsAndSwitchToStateThree(TaskNode* self, uint32_t) {
   // We have all axes available, if there are any error states clear them.
@@ -201,7 +201,7 @@ static void clearErrorsAndSwitchToStateThree(TaskNode* self, uint32_t) {
   tm.remove(self, true); // Remove the clearErrorsAndSwitchToStateThree task.
 }
 
-// This function implements state one - we wait untill we receive heartbeat
+// This function implements state one - we wait until we receive heartbeat
 // message from each axis in the list, then we switch to state two.
 static void checkAllAxesArePresent(TaskNode* self, uint32_t) {
   bool allAlive = true;

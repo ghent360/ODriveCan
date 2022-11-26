@@ -159,6 +159,9 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
   }
 }
 
+// Sometimes we get axis errors on startup. Clear the errors, if all axes
+// are error free swith to state three. If we loose any axis switch to
+// state one.
 static void clearErrorsAndSwitchToStateThree(TaskNode* self, uint32_t) {
   // We have all axes available, if there are any error states clear them.
   bool allClear = true;
@@ -186,7 +189,7 @@ static void clearErrorsAndSwitchToStateThree(TaskNode* self, uint32_t) {
     // We cleared some axis errors, wait and try again.
     return;
   }
-  // All is good switch to state two.
+  // All is good switch to state three.
   Serial.println("All odrives active...");
   // Switch to second state
   tm.addBack(tm.newPeriodicTask(1, 150, checkAxisConnection));
@@ -195,9 +198,11 @@ static void clearErrorsAndSwitchToStateThree(TaskNode* self, uint32_t) {
   }
   tm.addBack(tm.newPeriodicTask(2, 1000, checkAxisVbusVoltage));
   tm.addBack(tm.newPeriodicTask(3, 10, checkSerialInput));
-  tm.remove(self, true);
+  tm.remove(self, true); // Remove the clearErrorsAndSwitchToStateThree task.
 }
 
+// This function implements state one - we wait untill we receive heartbeat
+// message from each axis in the list, then we switch to state two.
 static void checkAllAxesArePresent(TaskNode* self, uint32_t) {
   bool allAlive = true;
   for(auto& axis: axes) {
@@ -207,8 +212,7 @@ static void checkAllAxesArePresent(TaskNode* self, uint32_t) {
     }
   }
   if (allAlive) {
-    // Delay 200ms so the axes can fully initialize. Clear any startup errors,
-    // then switch to state two.
+    // Switch to state two.
     tm.addBack(tm.newPeriodicTask(1000, 200, clearErrorsAndSwitchToStateThree));
     tm.remove(self, true); // Remove the checkAllAxesArePresent task.
   }

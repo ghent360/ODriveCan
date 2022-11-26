@@ -86,16 +86,32 @@ static void readAndProcessCan() {
  *   checkAxisVbusVoltage - periodically request the vbus voltage for each axis
  *                          at the moment this just prints to voltage.
  */
-static void checkAllAxesArePresent(TaskNode* self, uint32_t timeNow);
+static void checkAllAxesArePresent(TaskNode*, uint32_t);
 
-static void axisVbusValueCheck(ODriveAxis& axis, VbusVoltage& v) {
+static void checkSerialInput(TaskNode*, uint32_t) {
+  if (Serial.available()) {
+    auto ch = Serial.read();
+    if (ch < 32) return;
+    Serial.println((char)ch);
+  }
+}
+
+static void axisVbusValueCheck(ODriveAxis&, VbusVoltage& v) {
+  if (v.val < 19.3f) { // Cut off voltage for 6S battery.
+    for(auto& axis: axes) {
+      axis.EStop();
+    }
+    Serial.println("Battery voltage low.");
+  }
+/*
   Serial.print("Axis ");
   Serial.print(axis.node_id);
   Serial.print(" vbus=");
   Serial.println(v.val);
+*/  
 }
 
-static void checkAxisVbusVoltage(TaskNode* self, uint32_t timeNow) {
+static void checkAxisVbusVoltage(TaskNode*, uint32_t) {
   static uint8_t axisIdx = 0;
   if (axes[axisIdx].hb.alive) {
     axes[axisIdx].RequestVbusVoltage();
@@ -106,7 +122,7 @@ static void checkAxisVbusVoltage(TaskNode* self, uint32_t timeNow) {
   }
 }
 
-static void checkAxisConnection(TaskNode* self, uint32_t timeNow) {
+static void checkAxisConnection(TaskNode* self, uint32_t) {
   bool allAlive = true;
   for(auto& axis: axes) {
     axis.hb.PeriodicCheck(axis);
@@ -115,6 +131,12 @@ static void checkAxisConnection(TaskNode* self, uint32_t timeNow) {
       Serial.println(axis.node_id);
       allAlive = false;
     }
+    if (axis.hb.error != 0) {
+      Serial.print("Axis ");
+      Serial.print(axis.node_id);
+      Serial.print(" error: 0x");
+      Serial.println(axis.hb.error, HEX);
+    }
   }
   if (!allAlive) {
     // Switch back to first state
@@ -122,12 +144,35 @@ static void checkAxisConnection(TaskNode* self, uint32_t timeNow) {
       axis.vbus.SetCallback(nullptr);
     }
     tm.remove(tm.findById(2), true);
+    tm.remove(tm.findById(3), true);
+    Serial.println("Waiting for odrives to connect...");
     tm.addBack(tm.newPeriodicTask(0, 100, checkAllAxesArePresent));
     tm.remove(self, true);
   }
 }
 
-static void checkAllAxesArePresent(TaskNode* self, uint32_t timeNow) {
+static void waitAndSwitchToStateTwo(TaskNode* self, uint32_t) {
+  // We have all axes available, if there are any error states clear them.
+  for(auto& axis: axes) {
+    if (axis.hb.error != 0) {
+      Serial.print("Axis ");
+      Serial.print(axis.node_id);
+      Serial.print(" error: 0x");
+      Serial.println(axis.hb.error, HEX);
+      axis.ClearErrors();
+    }
+  }
+  Serial.println("All odrives active...");
+  // Switch to second state
+  tm.addBack(tm.newPeriodicTask(1, 150, checkAxisConnection));
+  tm.addBack(tm.newPeriodicTask(3, 10, checkSerialInput));
+  for(auto& axis: axes) {
+    axis.vbus.SetCallback(axisVbusValueCheck);
+  }
+  tm.addBack(tm.newPeriodicTask(2, 1000, checkAxisVbusVoltage));
+}
+
+static void checkAllAxesArePresent(TaskNode* self, uint32_t) {
   bool allAlive = true;
   for(auto& axis: axes) {
     if (!axis.hb.alive) {
@@ -136,22 +181,8 @@ static void checkAllAxesArePresent(TaskNode* self, uint32_t timeNow) {
     }
   }
   if (allAlive) {
-    // We have all axes available, if there are any error states clear them.
-    for(auto& axis: axes) {
-      if (axis.hb.error != 0) {
-        Serial.print("Axis ");
-        Serial.print(axis.node_id);
-        Serial.print(" error: 0x");
-        Serial.println(axis.hb.error, HEX);
-        axis.ClearErrors();
-      }
-    }
-    // Switch to second state
-    tm.addBack(tm.newPeriodicTask(1, 150, checkAxisConnection));
-    for(auto& axis: axes) {
-      axis.vbus.SetCallback(axisVbusValueCheck);
-    }
-    tm.addBack(tm.newPeriodicTask(2, 1000, checkAxisVbusVoltage));
+    // Delay 200ms so the axes can fully initialize. Then switch to state two.
+    tm.addBack(tm.newSimpleTask(1, 200, waitAndSwitchToStateTwo));
     tm.remove(self, true);
   }
 }
@@ -168,6 +199,7 @@ void setup() {
       Serial.println("Error Initializing CAN...");
       while(1);
   }
+  Serial.println("Waiting for odrives to connect...");
   // Start in state one
   tm.addFront(tm.newPeriodicTask(0, 100, checkAllAxesArePresent));
 }

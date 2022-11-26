@@ -22,6 +22,10 @@ TaskManager tm;
 
 // Function that interfaces ODrive with our can hardware. If you want to
 // use multiple CAN buses you would need one for each bus.
+//
+// Note that sometimes it is possible to send too many messages at once
+// and overwhelm the TX queue, this code detects such situation and adds
+// a delay, so the message can be transmitted correctly.
 static void sendCmdCh0(uint32_t canId, uint8_t len, uint8_t *buf) {
   uint8_t ret;
   do {
@@ -72,8 +76,8 @@ enum AxisLocation {
 
 // We communicate with 3 ODrive boards, each board has 2 axes. Each axis
 // has to be setup separately. If you have boards that are connected to a
-// different CAN bus, you would need separate callback for each bus. For
-// example SendCmdCh1.
+// different CAN bus, you would need separate CAN callback for each bus.
+// For example SendCmdCh1.
 //
 // It is required to have unique node_id even if some axis are on a
 // separate CAN bus. Otherwise the parsing code has to be modified to 
@@ -92,6 +96,9 @@ ODriveAxis axes[] = {
 
 #define NUM_AXES (sizeof(axes)/sizeof(axes[0]))
 
+// Note this should be non-blocking code, if there are no CAN
+// messages in the RX queue, readMsgBuf should return some error
+// but not wait for messages to appear.
 static void readAndProcessCan() {
   uint32_t id;
   uint8_t len;
@@ -103,6 +110,7 @@ static void readAndProcessCan() {
       printCanMessage(id, len, buf);
     }
   }
+  // Add reading from other CAN busses here, process in similar fashion.
 }
 
 /*

@@ -609,7 +609,7 @@ public:
     uint8_t buf[8];
     can_setSignal<float>(buf, velGain, 0, 32, true);
     can_setSignal<float>(buf, velIntegratorGain, 32, 32, true);
-    SendCmd(MSG_SET_VEL_GAINS, 4, buf);
+    SendCmd(MSG_SET_VEL_GAINS, 8, buf);
   }
 
 private:

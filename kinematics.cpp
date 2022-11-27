@@ -2,6 +2,8 @@
 #include "kinematics.h"
 #include <Ramp.h>
 
+using odrive::AxisState;
+
 class Interpolation {
 public:
     Interpolation()
@@ -65,7 +67,9 @@ void driveJoints(DogLegJoint joint, float pos) {
         pos *= -1;
         break;
     }
-    axes[joint].SetInputPos(pos + jointOffsets[joint]);
+    if (axes[joint].hb.state == AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL) {
+      axes[joint].SetInputPos(pos + jointOffsets[joint]);
+    }
 }
 
 void kinematics(

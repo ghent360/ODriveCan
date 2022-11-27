@@ -37,6 +37,16 @@ extern const AxisClass jointClass[numAxes]; // Index with DogLegJoint value
 extern odrive::ODriveAxis axes[numAxes]; // Index with DogLegJoint value
 
 void driveJoints(DogLegJoint joint, float pos);
+void kinematics(
+    DogLeg leg,
+    float xIn,
+    float yIn,
+    float zIn,
+    float roll,
+    float pitch,
+    float yawIn,
+    bool interOn,
+    int dur);
 
 extern uint32_t currentMillis;
 extern uint32_t previousInterpMillis;

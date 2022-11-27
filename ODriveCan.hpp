@@ -606,12 +606,19 @@ public:
 
   void SetVelGains(float velGain, float velIntegratorGain) {
     uint8_t buf[8];
-    can_setSignal<float>(buf, velGain, 0, 32, true);
-    can_setSignal<float>(buf, velIntegratorGain, 32, 32, true);
+    // Cheat here, so we do inline all can_setSignal calls.
+    //can_setSignal<float>(buf, velGain, 0, 32, true);
+    //can_setSignal<float>(buf, velIntegratorGain, 32, 32, true);
+    setFloat(buf, velGain);
+    setFloat(buf + 4, velIntegratorGain);
     SendCmd(MSG_SET_VEL_GAINS, 8, buf);
   }
 
 private:
+  void setFloat(uint8_t* ptr, float v) {
+    *reinterpret_cast<float*>(ptr) = v;
+  }
+
   void SendCmd(uint8_t cmdId, uint8_t len = 0, uint8_t *buf = NULL) {
     uint32_t canId = (node_id << 5) | (cmdId & 0x1f);
     if (can_send_) {

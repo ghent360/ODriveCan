@@ -5,48 +5,68 @@
 class Interpolation {
 public:
     Interpolation()
-      : interpolationFlag_(false), 
-        savedValue_(0xbadbeef) {}
+        : interpolationFlag_(false),
+          savedValue_(0xbadbeef) {}
 
     int go(int input, int duration) {
-      if (input != savedValue_) {   // check for new data
-        interpolationFlag_ = false;
-      }
-      savedValue_ = input;          // bookmark the old value
+        if (input != savedValue_) { // check for new data
+            interpolationFlag_ = false;
+        }
+        savedValue_ = input; // bookmark the old value
 
-      if (!interpolationFlag_) {                          // only do it once until the flag is reset
-        ramp_.go(input, duration, LINEAR, ONCEFORWARD);  // start interpolation (value to go to, duration)
-        interpolationFlag_ = true;
-      }
-      return ramp_.update();
+        if (!interpolationFlag_) { // only do it once until the flag is reset
+            ramp_.go(input, duration, LINEAR, ONCEFORWARD); // start interpolation (value to go to, duration)
+            interpolationFlag_ = true;
+        }
+        return ramp_.update();
     }
+
 private:
     rampInt ramp_;
     bool interpolationFlag_;
-    int  savedValue_;
+    int savedValue_;
 };
 
-Interpolation interpFRX;        // Front Right leg
+Interpolation interpFRX; // Front Right leg
 Interpolation interpFRY;
 Interpolation interpFRZ;
 Interpolation interpFRT;
 
-Interpolation interpFLX;        // Front Left leg
+Interpolation interpFLX; // Front Left leg
 Interpolation interpFLY;
 Interpolation interpFLZ;
 Interpolation interpFLT;
 
-Interpolation interpBRX;        // Back Rigth leg
+Interpolation interpBRX; // Back Rigth leg
 Interpolation interpBRY;
 Interpolation interpBRZ;
 Interpolation interpBRT;
 
-Interpolation interpBLX;        // Back Left leg
+Interpolation interpBLX; // Back Left leg
 Interpolation interpBLY;
 Interpolation interpBLZ;
 Interpolation interpBLT;
 
 extern bool interpFlag;
+
+void driveJoints(DogLegJoint joint, float pos) {
+    // takes into account the original setup offsets for motor 
+    // positions, and also turns around directions so they are
+    // consistent, also constrains the motion limits for each joint
+
+    pos = constrain(pos, -2.5, 2.5);
+    switch (joint) {
+    //case BACK_RIGHT_KNEE:
+    case FRONT_LEFT_KNEE:
+    //case FRONT_RIGHT_SHOULDER:
+    case BACK_LEFT_SHOULDER:
+    //case BACK_RIGHT_HIP:
+    case BACK_LEFT_HIP:
+        pos *= -1;
+        break;
+    }
+    axes[joint].SetInputPos(pos + jointOffsets[joint]);
+}
 
 void kinematics(
     DogLeg leg,
@@ -167,7 +187,7 @@ void kinematics(
             }
         }
     } else {
-        // Interpolation is off then use the original values        
+        // Interpolation is off then use the original values
         z = zIn;
         x = xIn;
         y = yIn;
@@ -184,7 +204,7 @@ void kinematics(
     yawAngle = ((float)(M_PI / 180)) * yaw;
 
     // put in offsets from robot's parameters so we can work out the radius of the foot from the robot's centre
-    switch(leg) {
+    switch (leg) {
     case FRONT_RIGHT:
         y = y - (bodyWidth + hipOffset);
         x = x - bodyLength;
@@ -214,7 +234,7 @@ void kinematics(
     yy3 = radius * sinf(demandYaw);
 
     // remove the offsets so we pivot around 0/0 x/y
-    switch(leg) {
+    switch (leg) {
     case FRONT_RIGHT:
         yy3 = yy3 + (bodyWidth + hipOffset);
         xx3 = xx3 + bodyLength;
@@ -278,8 +298,7 @@ void kinematics(
         roll = -roll;
         yy3 = yy3 * -1;
     }
-    /*else if (leg == 1 || leg == 4)
-    {
+    /*else if (leg == 1 || leg == 4) {
         roll = 0 + roll;
     }*/
 
@@ -326,13 +345,13 @@ void kinematics(
     yy1 = yy1 + hipOffset; // add on hip offset because there is default distance in Y
     hipAngle1a = atanf(yy1 / zz1);
     hipAngle1Degrees = (hipAngle1a * ((float)(180 / M_PI))); // convert to degrees
-    hipHyp = zz1 / cosf(hipAngle1a); // this is the hypotenuse of the first triangle
+    hipHyp = zz1 / cosf(hipAngle1a);                         // this is the hypotenuse of the first triangle
 
     // second triangle
-    hipAngle1b = asinf(hipOffset / hipHyp);                 // calc 'the other angle' in the triangle
-    //hipAngle1 = (M_PI - (M_PI / 2) - hipAngle1b) + hipAngle1a; // calc total hip angle
+    hipAngle1b = asinf(hipOffset / hipHyp); // calc 'the other angle' in the triangle
+    // hipAngle1 = (M_PI - (M_PI / 2) - hipAngle1b) + hipAngle1a; // calc total hip angle
     hipAngle1 = ((float)(M_PI / 2) - hipAngle1b) + hipAngle1a; // calc total hip angle
-    hipAngle1 = hipAngle1 - 1.5708f;                       // take away offset for rest position
+    hipAngle1 = hipAngle1 - 1.5708f;                           // take away offset for rest position
     hipAngle1Degrees = (hipAngle1 * ((float)(180 / M_PI)));    // convert to degrees
 
     // calc new leg length to give to the code  below
@@ -354,20 +373,20 @@ void kinematics(
     shoulderAngle1a = sqrtf(thighLength) + sqrtf(z3) - sqrtf(shinLength);
     shoulderAngle1b = 2 * thighLength * z3;
     shoulderAngle1c = shoulderAngle1a / shoulderAngle1b;
-    shoulderAngle1 = acosf(shoulderAngle1c); // radians
-    kneeAngle = ((float)M_PI) - (shoulderAngle1 * 2);  // radians
+    shoulderAngle1 = acosf(shoulderAngle1c);          // radians
+    kneeAngle = ((float)M_PI) - (shoulderAngle1 * 2); // radians
 
     // calc degrees from angles
     shoulderAngle1Degrees = shoulderAngle1 * ((float)(180 / M_PI)); // degrees
-    kneeAngleDegrees = kneeAngle * ((float)(180 / M_PI));          // degrees
+    kneeAngleDegrees = kneeAngle * ((float)(180 / M_PI));           // degrees
 
     // write to joints
 
     // factor for converting degrees to motor turns used by the ODrive
-    const float conversion = 0.02777777777777777777777777777778f; 
+    const float conversion = 0.02777777777777777777777777777778f;
 
-    switch(leg) {
-/*        
+    switch (leg) {
+/*
     case FRONT_RIGHT: {
         float shoulderAngle1Counts = (shoulderAngle1Degrees - 45f) * conversion;// convert to encoder counts
         float shoulderAngle2Counts = shoulderAngle2Degrees * conversion;        // convert to encoder counts
@@ -378,24 +397,25 @@ void kinematics(
         driveJoints(FRONT_RIGHT_KNEE, kneeAngleCounts);               // front right knee
         driveJoints(FRONT_RIGHT_HIP, hipAngleCounts);                 // front right hip
     }
-*/    
     break;
+*/
     case FRONT_LEFT: {
-        float shoulderAngle1Counts = (shoulderAngle1Degrees - 45) * conversion;// convert to encoder counts
+        float shoulderAngle1Counts = (shoulderAngle1Degrees - 45) * conversion; // convert to encoder counts
         float shoulderAngle2Counts = shoulderAngle2Degrees * conversion;        // convert to encoder counts
         float shoulderAngleCounts = shoulderAngle1Counts + shoulderAngle2Counts;
-        float kneeAngleCounts = (kneeAngleDegrees - 90) * conversion;// convert to encoder counts
+        float kneeAngleCounts = (kneeAngleDegrees - 90) * conversion; // convert to encoder counts
         float hipAngleCounts = hipAngle1Degrees * conversion;         // convert to encoder counts
         driveJoints(FRONT_LEFT_SHOULDER, shoulderAngleCounts);        // front left shoulder
         driveJoints(FRONT_LEFT_KNEE, kneeAngleCounts);                // front left knee
         driveJoints(FRONT_LEFT_HIP, hipAngleCounts);                  // front left hip
     }
     break;
+
     case BACK_LEFT: {
-        float shoulderAngle1Counts = (shoulderAngle1Degrees - 45) * conversion;// convert to encoder counts
+        float shoulderAngle1Counts = (shoulderAngle1Degrees - 45) * conversion; // convert to encoder counts
         float shoulderAngle2Counts = shoulderAngle2Degrees * conversion;        // convert to encoder counts
         float shoulderAngleCounts = shoulderAngle1Counts - shoulderAngle2Counts;
-        float kneeAngleCounts = (kneeAngleDegrees - 90) * conversion;// convert to encoder counts
+        float kneeAngleCounts = (kneeAngleDegrees - 90) * conversion; // convert to encoder counts
         float hipAngleCounts = hipAngle1Degrees * conversion;         // convert to encoder counts
         driveJoints(BACK_LEFT_SHOULDER, shoulderAngleCounts);         // back left shoulder
         driveJoints(BACK_LEFT_KNEE, kneeAngleCounts);                 // back left knee

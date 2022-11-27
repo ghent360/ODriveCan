@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2022 ghent360. See LICENSE file for details.
 */
+#pragma once
+
 #include <stdint.h>
 #include <can_helpers.hpp>
 
@@ -444,9 +446,6 @@ public:
   // be known/set before the CAN communication would work.
   uint32_t            node_id;
 
-  // User defined ID for this axis. For example AXIS_LEFT_FRONT_HIP.
-  uint32_t            user_id;
-
   // The following list is structures from the messages we care to decode.
   // You can skip on some of the messages to save code/data, for example
   // The Sensorless messages are not handled (commented out).
@@ -460,8 +459,8 @@ public:
   MotorError          mot_err;
   VbusVoltage         vbus;
 
-  ODriveAxis(uint32_t nodeId, uint32_t userId, CanSendMsg canSend) 
-    : node_id(nodeId), user_id(userId), can_send_(canSend) {}
+  ODriveAxis(uint32_t nodeId, CanSendMsg canSend) 
+    : node_id(nodeId), can_send_(canSend) {}
 
   // You must call the Parse method on all messages you wish to handle form
   // the list above. The code does not look pretty, but the compiler

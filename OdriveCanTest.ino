@@ -10,29 +10,13 @@
 #include <same51_can.h>
 #include "ODriveCan.hpp"
 #include "TaskManager.hpp"
+#include "kinematics.h"
 
 using odrive::AxisState;
 using odrive::CanMsgData;
 using odrive::ODriveAxis;
 using odrive::ParseCanMsg;
 using odrive::VbusVoltage;
-
-// AXIS class definitions:
-enum AxisClass {
-  CLASS_KNEE = 0x1,
-  CLASS_HIP  = 0x2,
-  CLASS_SHOULDER = 0x3
-};
-
-enum AxisSide {
-  SIDE_LEFT = 0x10,
-  SIDE_RIGHT = 0x20
-};
-
-enum AxisLocation {
-  LOC_FRONT = 0x100,
-  LOC_BACK  = 0x200
-};
 
 enum PeriodicTaskId {
   StateOne,
@@ -86,46 +70,6 @@ static void printCanMessage(uint32_t id, uint8_t len, const CanMsgData& buf) {
   Serial.println();
 }
 
-static AxisClass getAxisClass(uint32_t userId) {
-  switch (userId & 0xf) {
-    case 0x1: return CLASS_KNEE;
-    case 0x2: return CLASS_HIP;
-    case 0x3:
-    default:
-      return CLASS_SHOULDER;
-  }
-}
-
-static AxisSide getAxisSide(uint32_t userId) {
-  switch (userId & 0xf0) {
-    case 0x10: return SIDE_LEFT;
-    case 0x20:
-    default:
-      return SIDE_RIGHT;
-  }
-}
-
-static AxisLocation getAxisLocation(uint32_t userId) {
-  switch (userId & 0xf00) {
-    case 0x100: return LOC_FRONT;
-    case 0x200:
-    default:
-      return LOC_BACK;
-  }
-}
-
-static const struct {
-  uint32_t node_id;
-  float home_pos;
-} axesHomePosition[] = {
-  {1, 0.31},
-  {3, -0.08},
-  {5, -0.18},
-  {7, 0.22},
-  {9, 0.27},
-  {11, -0.06}
-};
-
 // We communicate with 3 ODrive boards, each board has 2 axes. Each axis
 // has to be setup separately. If you have boards that are connected to a
 // different CAN bus, you would need separate CAN callback for each bus.
@@ -137,16 +81,20 @@ static const struct {
 //
 // On my setup the axes have even node_ids starting with 1. These have to
 // be configured using the odrivetool.
-ODriveAxis axes[] = {
-  ODriveAxis( 1, SIDE_LEFT | LOC_FRONT | CLASS_HIP, sendCmdCh0),
-  ODriveAxis( 3, SIDE_LEFT | LOC_FRONT | CLASS_SHOULDER, sendCmdCh0),
-  ODriveAxis( 5, SIDE_LEFT | LOC_BACK  | CLASS_KNEE, sendCmdCh0),
-  ODriveAxis( 7, SIDE_LEFT | LOC_FRONT | CLASS_KNEE, sendCmdCh0),
-  ODriveAxis( 9, SIDE_LEFT | LOC_BACK  | CLASS_HIP, sendCmdCh0),
-  ODriveAxis(11, SIDE_LEFT | LOC_BACK  | CLASS_SHOULDER, sendCmdCh0),
+ODriveAxis axes[numAxes] = {
+//  [FRONT_RIGHT_KNEE] = ODriveAxis( 8, sendCmdCh1),
+  [FRONT_LEFT_KNEE] = ODriveAxis( 7, sendCmdCh0),
+//  [BACK_RIGHT_KNEE] = ODriveAxis( 6, sendCmdCh1),
+  [BACK_LEFT_KNEE] = ODriveAxis( 5, sendCmdCh0),
+//  [FRONT_RIGHT_SHOULDER] = ODriveAxis( 4, sendCmdCh1),
+  [FRONT_LEFT_SHOULDER] = ODriveAxis( 3, sendCmdCh0),
+//  [BACK_RIGHT_SHOULDER] = ODriveAxis(12, sendCmdCh1),
+  [BACK_LEFT_SHOULDER] = ODriveAxis(11, sendCmdCh0),
+//  [FRONT_RIGHT_HIP] = ODriveAxis( 2, sendCmdCh1),
+  [FRONT_LEFT_HIP] = ODriveAxis( 1, sendCmdCh0),
+//  [BACK_RIGHT_HIP] = ODriveAxis( 10, sendCmdCh0),
+  [BACK_LEFT_HIP] = ODriveAxis( 9, sendCmdCh0)
 };
-
-#define NUM_AXES (sizeof(axes)/sizeof(axes[0]))
 
 // Note this should be non-blocking code, if there are no CAN
 // messages in the RX queue, readMsgBuf should return some error
@@ -209,15 +157,10 @@ static void setAxisIdle() {
 }
 
 static void axesGoHome() {
-  for(auto& axis: axes) {
-    for(auto& pos: axesHomePosition) {
-      if (pos.node_id == axis.node_id) {
-        if (axis.hb.state == AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL) {
-          axis.SetInputPos(pos.home_pos);
-        }
-        break;
-      }
-    }
+  for (int idx=0; idx<numAxes; idx++) {
+    if (axes[idx].hb.state == AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL) {
+      axes[idx].SetInputPos(jointOffsets[idx]);
+    } 
   }
 }
 
@@ -227,19 +170,19 @@ static void modifyGains() {
   const float posGainShoulder = 20.0f;
   const float velGain = 0.1f;
   const float integrator = 0.2f;
-  for(auto& axis: axes) {
-    switch(getAxisClass(axis.user_id)) {
+  for (int idx=0; idx<numAxes; idx++) {
+    switch(jointClass[idx]) {
       case CLASS_HIP:
-        axis.SetPosGain(posGainHips);
+        axes[idx].SetPosGain(posGainHips);
         break;
       case CLASS_KNEE:
-        axis.SetPosGain(posGainKnee);
+        axes[idx].SetPosGain(posGainKnee);
         break;
       case CLASS_SHOULDER:
-        axis.SetPosGain(posGainShoulder);
+        axes[idx].SetPosGain(posGainShoulder);
         break;
     }
-    axis.SetVelGains(velGain, integrator);
+    axes[idx].SetVelGains(velGain, integrator);
   }
 }
 
@@ -247,7 +190,7 @@ static void checkSerialInput(TaskNode*, uint32_t) {
   if (Serial.available()) {
     auto ch = Serial.read();
     if (ch < 32) return;
-    Serial.println((char)ch); // Echo the incomming character.
+    Serial.println((char)ch); // Echo the incoming character.
     switch(ch) {
       default:
           Serial.print("Unknown command '");
@@ -292,7 +235,7 @@ static void checkAxisVbusVoltage(TaskNode*, uint32_t) {
   static uint8_t axisIdx = 0;
   axes[axisIdx].RequestVbusVoltage();
   axisIdx++;
-  if (axisIdx >= NUM_AXES) {
+  if (axisIdx >= numAxes) {
     axisIdx = 0;
   }
 }

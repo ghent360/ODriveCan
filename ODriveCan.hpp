@@ -515,9 +515,9 @@ public:
     SendCmd(MSG_GET_ENCODER_COUNT);
   }
 
-  void SetControlerModes(ControlMode crtlMode, InputMode inputMode) {
+  void SetControllerModes(ControlMode ctrlMode, InputMode inputMode) {
     uint8_t buf[8];
-    can_setSignal<int32_t>(buf, crtlMode, 0, 32, true);
+    can_setSignal<int32_t>(buf, ctrlMode, 0, 32, true);
     can_setSignal<int32_t>(buf, inputMode, 32, 32, true);
     SendCmd(MSG_SET_CONTROLLER_MODES, 8, buf);
   }

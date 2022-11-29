@@ -92,17 +92,18 @@ static void sendCmdCh3(uint32_t canId, uint8_t len, uint8_t *buf) {
 }
 
 static void readAndProcessCan() {
-  CAN_message_t msg;
-  if ( can1.read(msg) ) {
-    bool parseSuccess = ParseCanMsg(axes, msg.id, msg.len, msg.buf);
+  CAN_message_t msg1;
+  CAN_message_t msg2;
+  if ( can1.read(msg1) ) {
+    bool parseSuccess = ParseCanMsg(axes, msg1.id, msg1.len, msg1.buf);
     if (!parseSuccess) {
-      printCanMessage(msg.id, msg.len, msg.buf);
+      printCanMessage(msg1.id, msg1.len, msg1.buf);
     }
   }
-  if ( can3.read(msg) ) {
-    bool parseSuccess = ParseCanMsg(axes, msg.id, msg.len, msg.buf);
+  if ( can3.read(msg2) ) {
+    bool parseSuccess = ParseCanMsg(axes, msg2.id, msg2.len, msg2.buf);
     if (!parseSuccess) {
-      printCanMessage(msg.id, msg.len, msg.buf);
+      printCanMessage(msg2.id, msg2.len, msg2.buf);
     }
   }
 }
@@ -335,32 +336,50 @@ static void checkSerialInput(TaskNode*, uint32_t) {
           activeAxisPos = 0;
           break;
       case '1':
-          //activeAxis = FRONT_LEFT_KNEE;
+          activeAxis = FRONT_LEFT_KNEE;
+          activeAxisPos = 0;
+          break;
+      case '!':
           activeAxis = FRONT_RIGHT_KNEE;
           activeAxisPos = 0;
           break;
       case '2':
-          //activeAxis = BACK_LEFT_KNEE;
+          activeAxis = BACK_LEFT_KNEE;
+          activeAxisPos = 0;
+          break;
+      case '@':
           activeAxis = BACK_RIGHT_KNEE;
           activeAxisPos = 0;
           break;
       case '3':
-          //activeAxis = FRONT_LEFT_SHOULDER;
+          activeAxis = FRONT_LEFT_SHOULDER;
+          activeAxisPos = 0;
+          break;
+      case '#':
           activeAxis = FRONT_RIGHT_SHOULDER;
           activeAxisPos = 0;
           break;
       case '4':
-          //activeAxis = BACK_LEFT_SHOULDER;
+          activeAxis = BACK_LEFT_SHOULDER;
+          activeAxisPos = 0;
+          break;
+      case '$':
           activeAxis = BACK_RIGHT_SHOULDER;
           activeAxisPos = 0;
           break;
       case '5':
-          //activeAxis = FRONT_LEFT_HIP;
+          activeAxis = FRONT_LEFT_HIP;
+          activeAxisPos = 0;
+          break;
+      case '%':
           activeAxis = FRONT_RIGHT_HIP;
           activeAxisPos = 0;
           break;
       case '6':
-          //activeAxis = BACK_LEFT_HIP;
+          activeAxis = BACK_LEFT_HIP;
+          activeAxisPos = 0;
+          break;
+      case '^':
           activeAxis = BACK_RIGHT_HIP;
           activeAxisPos = 0;
           break;

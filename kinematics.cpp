@@ -58,12 +58,12 @@ void driveJoints(DogLegJoint joint, float pos) {
 
     pos = constrain(pos, -2.5, 2.5);
     switch (joint) {
-    //case BACK_RIGHT_KNEE:
-    case FRONT_LEFT_KNEE:
-    //case FRONT_RIGHT_SHOULDER:
-    case BACK_LEFT_SHOULDER:
-    //case BACK_RIGHT_HIP:
-    case BACK_LEFT_HIP:
+    case BACK_RIGHT_KNEE:
+    //case FRONT_LEFT_KNEE:
+    case FRONT_RIGHT_SHOULDER:
+    //case BACK_LEFT_SHOULDER:
+    case BACK_RIGHT_HIP:
+    //case BACK_LEFT_HIP:
         pos *= -1;
         break;
     }
@@ -390,9 +390,8 @@ void kinematics(
     const float conversion = 0.02777777777777777777777777777778f;
 
     switch (leg) {
-/*
     case FRONT_RIGHT: {
-        float shoulderAngle1Counts = (shoulderAngle1Degrees - 45f) * conversion;// convert to encoder counts
+        float shoulderAngle1Counts = (shoulderAngle1Degrees - 45) * conversion;// convert to encoder counts
         float shoulderAngle2Counts = shoulderAngle2Degrees * conversion;        // convert to encoder counts
         float shoulderAngleCounts = shoulderAngle1Counts + shoulderAngle2Counts;
         float kneeAngleCounts = (kneeAngleDegrees - 90) * conversion;// convert to encoder counts
@@ -402,7 +401,7 @@ void kinematics(
         driveJoints(FRONT_RIGHT_HIP, hipAngleCounts);                 // front right hip
     }
     break;
-*/
+/*
     case FRONT_LEFT: {
         float shoulderAngle1Counts = (shoulderAngle1Degrees - 45) * conversion; // convert to encoder counts
         float shoulderAngle2Counts = shoulderAngle2Degrees * conversion;        // convert to encoder counts
@@ -426,7 +425,7 @@ void kinematics(
         driveJoints(BACK_LEFT_HIP, hipAngleCounts);                   // back left hip
     }
     break;
-/*
+*/
     case BACK_RIGHT: {
         float shoulderAngle1Counts = (shoulderAngle1Degrees - 45) * conversion; // convert to encoder counts
         float shoulderAngle2Counts = shoulderAngle2Degrees * conversion;        // convert to encoder counts
@@ -438,36 +437,36 @@ void kinematics(
         driveJoints(BACK_RIGHT_HIP, hipAngleCounts);                  // back right hip
     }
     break;
-*/
+
     }
 }
 
 const float jointOffsets[numAxes] = {
-//  [FRONT_RIGHT_KNEE] = 0,
-  [FRONT_LEFT_KNEE] = 0.22,
-//  [BACK_RIGHT_KNEE] = 0,
-  [BACK_LEFT_KNEE] = -0.18,
-//  [FRONT_RIGHT_SHOULDER] = 0,
-  [FRONT_LEFT_SHOULDER] = -0.08,
-//  [BACK_RIGHT_SHOULDER] = 0,
-  [BACK_LEFT_SHOULDER] = -0.06,
-//  [FRONT_RIGHT_HIP] = 0,
-  [FRONT_LEFT_HIP] = 0.31,
-//  [BACK_RIGHT_HIP] = 0,
-  [BACK_LEFT_HIP] = 0.27
+  [FRONT_RIGHT_KNEE] = 0.2,
+//  [FRONT_LEFT_KNEE] = 0.22,
+  [BACK_RIGHT_KNEE] = -0.32,
+//  [BACK_LEFT_KNEE] = -0.18,
+  [FRONT_RIGHT_SHOULDER] = -0.26,
+//  [FRONT_LEFT_SHOULDER] = -0.08,
+  [BACK_RIGHT_SHOULDER] = 0.16,
+//  [BACK_LEFT_SHOULDER] = -0.06,
+  [FRONT_RIGHT_HIP] = -0.45,
+//  [FRONT_LEFT_HIP] = 0.31,
+  [BACK_RIGHT_HIP] = -0.29,
+//  [BACK_LEFT_HIP] = 0.27
 };
 
 const AxisClass jointClass[numAxes] = {
-//  [FRONT_RIGHT_KNEE] = AxisClass::CLASS_KNEE,
-  [FRONT_LEFT_KNEE] = AxisClass::CLASS_KNEE,
-//  [BACK_RIGHT_KNEE] = AxisClass::CLASS_KNEE,
-  [BACK_LEFT_KNEE] = AxisClass::CLASS_KNEE,
-//  [FRONT_RIGHT_SHOULDER] = AxisClass::CLASS_SHOULDER,
-  [FRONT_LEFT_SHOULDER] = AxisClass::CLASS_SHOULDER,
-//  [BACK_RIGHT_SHOULDER] = AxisClass::CLASS_SHOULDER,
-  [BACK_LEFT_SHOULDER] = AxisClass::CLASS_SHOULDER,
-//  [FRONT_RIGHT_HIP] = AxisClass::CLASS_HIP,
-  [FRONT_LEFT_HIP] = AxisClass::CLASS_HIP,
-//  [BACK_RIGHT_HIP] = AxisClass::CLASS_HIP,
-  [BACK_LEFT_HIP] = AxisClass::CLASS_HIP
+  [FRONT_RIGHT_KNEE] = AxisClass::CLASS_KNEE,
+//  [FRONT_LEFT_KNEE] = AxisClass::CLASS_KNEE,
+  [BACK_RIGHT_KNEE] = AxisClass::CLASS_KNEE,
+//  [BACK_LEFT_KNEE] = AxisClass::CLASS_KNEE,
+  [FRONT_RIGHT_SHOULDER] = AxisClass::CLASS_SHOULDER,
+//  [FRONT_LEFT_SHOULDER] = AxisClass::CLASS_SHOULDER,
+  [BACK_RIGHT_SHOULDER] = AxisClass::CLASS_SHOULDER,
+//  [BACK_LEFT_SHOULDER] = AxisClass::CLASS_SHOULDER,
+  [FRONT_RIGHT_HIP] = AxisClass::CLASS_HIP,
+//  [FRONT_LEFT_HIP] = AxisClass::CLASS_HIP,
+  [BACK_RIGHT_HIP] = AxisClass::CLASS_HIP,
+//  [BACK_LEFT_HIP] = AxisClass::CLASS_HIP
 };

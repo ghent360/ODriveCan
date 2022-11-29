@@ -39,7 +39,7 @@ TaskManager tm;
 // Note that sometimes it is possible to send too many messages at once
 // and overwhelm the TX queue, this code detects such situation and adds
 // a delay, so the message can be transmitted correctly.
-static void sendCmdCh0(uint32_t canId, uint8_t len, uint8_t *buf) {
+static void sendCmdCh1(uint32_t canId, uint8_t len, uint8_t *buf) {
   uint8_t ret;
   do {
     ret = can.sendMsgBuf(canId, 0, len, buf);
@@ -82,18 +82,18 @@ static void printCanMessage(uint32_t id, uint8_t len, const CanMsgData& buf) {
 // On my setup the axes have even node_ids starting with 1. These have to
 // be configured using the odrivetool.
 ODriveAxis axes[numAxes] = {
-//  [FRONT_RIGHT_KNEE] = ODriveAxis( 8, sendCmdCh1),
-  [FRONT_LEFT_KNEE] = ODriveAxis( 7, sendCmdCh0),
-//  [BACK_RIGHT_KNEE] = ODriveAxis( 6, sendCmdCh1),
-  [BACK_LEFT_KNEE] = ODriveAxis( 5, sendCmdCh0),
-//  [FRONT_RIGHT_SHOULDER] = ODriveAxis( 4, sendCmdCh1),
-  [FRONT_LEFT_SHOULDER] = ODriveAxis( 3, sendCmdCh0),
-//  [BACK_RIGHT_SHOULDER] = ODriveAxis(12, sendCmdCh1),
-  [BACK_LEFT_SHOULDER] = ODriveAxis(11, sendCmdCh0),
-//  [FRONT_RIGHT_HIP] = ODriveAxis( 2, sendCmdCh1),
-  [FRONT_LEFT_HIP] = ODriveAxis( 1, sendCmdCh0),
-//  [BACK_RIGHT_HIP] = ODriveAxis( 10, sendCmdCh0),
-  [BACK_LEFT_HIP] = ODriveAxis( 9, sendCmdCh0)
+  [FRONT_RIGHT_KNEE] = ODriveAxis( 8, sendCmdCh1),
+//  [FRONT_LEFT_KNEE] = ODriveAxis( 7, sendCmdCh0),
+  [BACK_RIGHT_KNEE] = ODriveAxis( 6, sendCmdCh1),
+//  [BACK_LEFT_KNEE] = ODriveAxis( 5, sendCmdCh0),
+  [FRONT_RIGHT_SHOULDER] = ODriveAxis( 4, sendCmdCh1),
+//  [FRONT_LEFT_SHOULDER] = ODriveAxis( 3, sendCmdCh0),
+  [BACK_RIGHT_SHOULDER] = ODriveAxis(12, sendCmdCh1),
+//  [BACK_LEFT_SHOULDER] = ODriveAxis(11, sendCmdCh0),
+  [FRONT_RIGHT_HIP] = ODriveAxis( 2, sendCmdCh1),
+//  [FRONT_LEFT_HIP] = ODriveAxis( 1, sendCmdCh0),
+  [BACK_RIGHT_HIP] = ODriveAxis( 10, sendCmdCh1),
+//  [BACK_LEFT_HIP] = ODriveAxis( 9, sendCmdCh0)
 };
 
 // Note this should be non-blocking code, if there are no CAN
@@ -149,11 +149,23 @@ static void printHelp() {
   Serial.println("  'c' - clear active axis errors.");
 }
 
+static void printAxesHomePos(TaskNode*, uint32_t) {
+  for (int idx=0; idx<numAxes; idx++) {
+    Serial.print("Axis ");
+    Serial.print(idx);
+    Serial.print(" (");
+    Serial.print(axes[idx].node_id);
+    Serial.print(") pos = ");
+    Serial.println(axes[idx].enc_est.pos);
+  }
+}
+
 static void setAxisLimitsAndStart() {
   for(auto& axis: axes) {
     axis.SetLimits(2.0f, 10.0f); // Should be 6000.0f, 20.0f
     axis.SetState(AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL);
   }
+  tm.addBack(tm.newSimpleTask(PrintPosition, 5000, printAxesHomePos));
 }
 
 static void setAxisIdle() {
@@ -240,27 +252,33 @@ static void checkSerialInput(TaskNode*, uint32_t) {
           activeAxisPos = 0;
           break;
       case '1':
-          activeAxis = FRONT_LEFT_KNEE;
+          //activeAxis = FRONT_LEFT_KNEE;
+          activeAxis = FRONT_RIGHT_KNEE;
           activeAxisPos = 0;
           break;
       case '2':
-          activeAxis = BACK_LEFT_KNEE;
+          //activeAxis = BACK_LEFT_KNEE;
+          activeAxis = BACK_RIGHT_KNEE;
           activeAxisPos = 0;
           break;
       case '3':
-          activeAxis = FRONT_LEFT_SHOULDER;
+          //activeAxis = FRONT_LEFT_SHOULDER;
+          activeAxis = FRONT_RIGHT_SHOULDER;
           activeAxisPos = 0;
           break;
       case '4':
-          activeAxis = BACK_LEFT_SHOULDER;
+          //activeAxis = BACK_LEFT_SHOULDER;
+          activeAxis = BACK_RIGHT_SHOULDER;
           activeAxisPos = 0;
           break;
       case '5':
-          activeAxis = FRONT_LEFT_HIP;
+          //activeAxis = FRONT_LEFT_HIP;
+          activeAxis = FRONT_RIGHT_HIP;
           activeAxisPos = 0;
           break;
       case '6':
-          activeAxis = BACK_LEFT_HIP;
+          //activeAxis = BACK_LEFT_HIP;
+          activeAxis = BACK_RIGHT_HIP;
           activeAxisPos = 0;
           break;
       case '+':

@@ -59,12 +59,14 @@ void driveJoints(DogLegJoint joint, float pos) {
     pos = constrain(pos, -2.5, 2.5);
     switch (joint) {
     case BACK_RIGHT_KNEE:
-    //case FRONT_LEFT_KNEE:
+    case FRONT_LEFT_KNEE:
     case FRONT_RIGHT_SHOULDER:
-    //case BACK_LEFT_SHOULDER:
+    case BACK_LEFT_SHOULDER:
     case BACK_RIGHT_HIP:
-    //case BACK_LEFT_HIP:
+    case BACK_LEFT_HIP:
         pos *= -1;
+        break;
+    default:
         break;
     }
     if (axes[joint].hb.state == AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL) {
@@ -84,7 +86,7 @@ void kinematics(
     int dur) {
     // moving the foot sideways on the end plane
     float hipOffset = 108; // distance from the hip pivot to the centre of the leg
-    float lengthY;
+    //float lengthY;
     float hipAngle1a;
     float hipAngle1b;
     float hipAngle1;
@@ -105,7 +107,7 @@ void kinematics(
     float shoulderAngle1a;
     float shoulderAngle1b;
     float shoulderAngle1c;
-    float shoulderAngle1d;
+    //float shoulderAngle1d;
     float kneeAngle;
     float kneeAngleDegrees;
 
@@ -118,7 +120,7 @@ void kinematics(
     float footDisplacementRoll;      // where the foot actually is
     float footDisplacementAngleRoll; // smaller angle
     float footWholeAngleRoll;        // whole leg angle
-    float hipRollAngle;              // angle for hip when roll axis is in use
+    //float hipRollAngle;              // angle for hip when roll axis is in use
     float rollAngle;                 // angle in RADIANS that the body rolls
     float zz1a;                      // hypotenuse of final triangle
     float zz1;                       // new height for leg to pass onto the next bit of code
@@ -131,7 +133,7 @@ void kinematics(
     float footDisplacementPitch;      // where the foot actually is
     float footDisplacementAnglePitch; // smaller angle
     float footWholeAnglePitch;        // whole leg angle
-    float shoulderPitchAngle;         // angle for hip when roll axis is in use
+    //float shoulderPitchAngle;         // angle for hip when roll axis is in use
     float pitchAngle;                 // angle in RADIANS that the body rolls
     float zz2a;                       // hypotenuse of final triangle
     float zz2;                        // new height for the leg to pass onto the next bit of code
@@ -177,6 +179,12 @@ void kinematics(
             x = interpBLX.go(xIn, dur);
             y = interpBLY.go(yIn, dur);
             yaw = interpBLT.go(yawIn, dur);
+            break;
+        default:
+            z = zIn; // in the meantime use raw values
+            x = xIn;
+            y = yIn;
+            yaw = yawIn;
             break;
         }
         // wait for filters to settle before using Interpolated values
@@ -401,7 +409,6 @@ void kinematics(
         driveJoints(FRONT_RIGHT_HIP, hipAngleCounts);                 // front right hip
     }
     break;
-/*
     case FRONT_LEFT: {
         float shoulderAngle1Counts = (shoulderAngle1Degrees - 45) * conversion; // convert to encoder counts
         float shoulderAngle2Counts = shoulderAngle2Degrees * conversion;        // convert to encoder counts
@@ -413,7 +420,6 @@ void kinematics(
         driveJoints(FRONT_LEFT_HIP, hipAngleCounts);                  // front left hip
     }
     break;
-
     case BACK_LEFT: {
         float shoulderAngle1Counts = (shoulderAngle1Degrees - 45) * conversion; // convert to encoder counts
         float shoulderAngle2Counts = shoulderAngle2Degrees * conversion;        // convert to encoder counts
@@ -425,7 +431,6 @@ void kinematics(
         driveJoints(BACK_LEFT_HIP, hipAngleCounts);                   // back left hip
     }
     break;
-*/
     case BACK_RIGHT: {
         float shoulderAngle1Counts = (shoulderAngle1Degrees - 45) * conversion; // convert to encoder counts
         float shoulderAngle2Counts = shoulderAngle2Degrees * conversion;        // convert to encoder counts
@@ -437,36 +442,35 @@ void kinematics(
         driveJoints(BACK_RIGHT_HIP, hipAngleCounts);                  // back right hip
     }
     break;
-
     }
 }
 
 const float jointOffsets[numAxes] = {
   [FRONT_RIGHT_KNEE] = 0.2,
-//  [FRONT_LEFT_KNEE] = 0.22,
+  [FRONT_LEFT_KNEE] = 0.22,
   [BACK_RIGHT_KNEE] = -0.32,
-//  [BACK_LEFT_KNEE] = -0.18,
+  [BACK_LEFT_KNEE] = -0.18,
   [FRONT_RIGHT_SHOULDER] = -0.26,
-//  [FRONT_LEFT_SHOULDER] = -0.08,
+  [FRONT_LEFT_SHOULDER] = -0.08,
   [BACK_RIGHT_SHOULDER] = 0.16,
-//  [BACK_LEFT_SHOULDER] = -0.06,
+  [BACK_LEFT_SHOULDER] = -0.06,
   [FRONT_RIGHT_HIP] = -0.45,
-//  [FRONT_LEFT_HIP] = 0.31,
+  [FRONT_LEFT_HIP] = 0.31,
   [BACK_RIGHT_HIP] = -0.29,
-//  [BACK_LEFT_HIP] = 0.27
+  [BACK_LEFT_HIP] = 0.27
 };
 
 const AxisClass jointClass[numAxes] = {
   [FRONT_RIGHT_KNEE] = AxisClass::CLASS_KNEE,
-//  [FRONT_LEFT_KNEE] = AxisClass::CLASS_KNEE,
+  [FRONT_LEFT_KNEE] = AxisClass::CLASS_KNEE,
   [BACK_RIGHT_KNEE] = AxisClass::CLASS_KNEE,
-//  [BACK_LEFT_KNEE] = AxisClass::CLASS_KNEE,
+  [BACK_LEFT_KNEE] = AxisClass::CLASS_KNEE,
   [FRONT_RIGHT_SHOULDER] = AxisClass::CLASS_SHOULDER,
-//  [FRONT_LEFT_SHOULDER] = AxisClass::CLASS_SHOULDER,
+  [FRONT_LEFT_SHOULDER] = AxisClass::CLASS_SHOULDER,
   [BACK_RIGHT_SHOULDER] = AxisClass::CLASS_SHOULDER,
-//  [BACK_LEFT_SHOULDER] = AxisClass::CLASS_SHOULDER,
+  [BACK_LEFT_SHOULDER] = AxisClass::CLASS_SHOULDER,
   [FRONT_RIGHT_HIP] = AxisClass::CLASS_HIP,
-//  [FRONT_LEFT_HIP] = AxisClass::CLASS_HIP,
+  [FRONT_LEFT_HIP] = AxisClass::CLASS_HIP,
   [BACK_RIGHT_HIP] = AxisClass::CLASS_HIP,
-//  [BACK_LEFT_HIP] = AxisClass::CLASS_HIP
+  [BACK_LEFT_HIP] = AxisClass::CLASS_HIP
 };

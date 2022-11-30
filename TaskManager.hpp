@@ -4,7 +4,9 @@
 #include <stdint.h>
 
 // Returns the current time in milliseconds
+#ifndef ARDUINO
 extern "C" uint32_t millis();
+#endif
 
 class TaskNode {
 public:

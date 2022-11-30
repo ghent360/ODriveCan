@@ -410,8 +410,8 @@ static void checkSerialInput(TaskNode*, uint32_t) {
   }
 }
 
-static void axisVbusValueCheck(ODriveAxis&, VbusVoltage& v) {
-  if (v.val < 19.4f) { // Cut off voltage for 6S battery.
+static void axisVbusValueCheck(ODriveAxis&, VbusVoltage&, VbusVoltage& newV) {
+  if (newV.val < 19.4f) { // Cut off voltage for 6S battery.
     for(auto& axis: axes) {
       axis.EStop(); // Call EStop to reduce the axis power consumption.
     }
@@ -421,7 +421,7 @@ static void axisVbusValueCheck(ODriveAxis&, VbusVoltage& v) {
   Serial.print("Axis ");
   Serial.print(axis.node_id);
   Serial.print(" vbus=");
-  Serial.println(v.val);
+  Serial.println(newV.val);
 */  
 }
 

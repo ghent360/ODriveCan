@@ -164,7 +164,8 @@ static void readAndProcessCan() {
 #endif
 
 enum PeriodicTaskId {
-  StateOne,
+  StateOneCheck,
+  StateOneReport,
   StateTwo,
   StateThreeConnection,
   StateThreeVoltage,
@@ -207,7 +208,8 @@ ODriveAxis axes[numAxes] = {
  * The following code is a basic three state machine. We start with the state
  * where we wait for all axes to become alive. The first state is implemented
  * in the checkAllAxesArePresent periodical task. When all axes become available
- * we switch to the second state.
+ * we switch to the second state. In the first state there is also the 
+ * reportAxesNotPresent task, that reports axes that are not responding every 5 seconds.
  * 
  * The second state is implemented in the clearErrorsAndSwitchToStateThree periodical
  * task. It checks all axis error states, if any axis reports an error it calls 
@@ -223,6 +225,7 @@ ODriveAxis axes[numAxes] = {
  *   checkSerialInput     - read serial input and perform actions.
  */
 static void checkAllAxesArePresent(TaskNode*, uint32_t);
+static void reportAxesNotPresent(TaskNode* self, uint32_t);
 
 static void printHelp() {
   Serial.println("Help:");
@@ -465,7 +468,8 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
     }
     tm.remove(tm.findById(StateThreeVoltage), true); // Remove the checkAxisVbusVoltage task.
     Serial.println("Waiting for odrives to connect...");
-    tm.addBack(tm.newPeriodicTask(StateOne, 100, checkAllAxesArePresent));
+    tm.addBack(tm.newPeriodicTask(StateOneCheck, 100, checkAllAxesArePresent));
+    tm.addBack(tm.newPeriodicTask(StateOneReport, 5000, reportAxesNotPresent));
     tm.remove(self, true); // Remove the checkAxisConnection task.
   }
 }
@@ -483,7 +487,8 @@ static void clearErrorsAndSwitchToStateThree(TaskNode* self, uint32_t) {
       Serial.println(axis.node_id);
       // Lost axis connection, back to square one:
       Serial.println("Waiting for odrives to connect...");
-      tm.addBack(tm.newPeriodicTask(StateOne, 100, checkAllAxesArePresent));
+      tm.addBack(tm.newPeriodicTask(StateOneCheck, 100, checkAllAxesArePresent));
+      tm.addBack(tm.newPeriodicTask(StateOneReport, 5000, reportAxesNotPresent));
       tm.remove(self, true);
       return;
     }
@@ -527,8 +532,19 @@ static void checkAllAxesArePresent(TaskNode* self, uint32_t) {
   }
   if (allAlive) {
     // Switch to state two.
+    tm.remove(tm.findById(StateOneReport), true); // Remove the reportAxesNotPresent task.
     tm.addBack(tm.newPeriodicTask(StateTwo, 200, clearErrorsAndSwitchToStateThree));
     tm.remove(self, true); // Remove the checkAllAxesArePresent task.
+  }
+}
+
+static void reportAxesNotPresent(TaskNode* self, uint32_t) {
+  for(auto& axis: axes) {
+    if (!axis.hb.alive) {
+      Serial.print("Axis ");
+      Serial.print(axis.node_id);
+      Serial.println(" not responding");
+    }
   }
 }
 
@@ -539,7 +555,8 @@ void setup() {
   canInit();
   Serial.println("Waiting for odrives to connect...");
   // Start in state one
-  tm.addFront(tm.newPeriodicTask(StateOne, 100, checkAllAxesArePresent));
+  tm.addFront(tm.newPeriodicTask(StateOneCheck, 100, checkAllAxesArePresent));
+  tm.addFront(tm.newPeriodicTask(StateOneReport, 5000, reportAxesNotPresent));
 }
 
 void loop() {

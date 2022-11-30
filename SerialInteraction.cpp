@@ -13,7 +13,7 @@ extern TaskManager tm;
 int8_t activeAxis = -1;
 float activeAxisPos = 0;
 
-void printHelp() {
+static void printHelp() {
   Serial.println("Help:");
   Serial.println("  '?' - print this message.");
   Serial.println("  'l' - set limits and enter closed loop control mode.");
@@ -200,4 +200,10 @@ void checkSerialInput(TaskNode*, uint32_t) {
           break;
     }
   }
+}
+
+void initSerialInterraction() {
+  printHelp();
+  activeAxis = -1;
+  activeAxisPos = 0;
 }

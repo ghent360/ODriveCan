@@ -3,8 +3,5 @@
 */
 #pragma once
 
-void printHelp();
+void initSerialInterraction();
 void checkSerialInput(TaskNode*, uint32_t);
-
-extern int8_t activeAxis;
-extern float activeAxisPos;

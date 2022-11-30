@@ -38,7 +38,7 @@ TaskManager tm;
  *                          to the first state.
  *   checkAxisVbusVoltage - periodically request the vbus voltage for each axis
  *                          if the voltage is too low it calls EStop on all axes.
- *   checkSerialInput     - read serial input and perform actions.
+ *   checkSerialInput     - read serial input and perform actions. (defined in SerialInteraction.cpp)
  */
 static void checkAllAxesArePresent(TaskNode*, uint32_t);
 static void reportAxesNotPresent(TaskNode* self, uint32_t);
@@ -101,9 +101,7 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
 
 static void startStateThree() {
   Serial.println("All odrives active...");
-  printHelp();
-  activeAxis = -1;
-  activeAxisPos = 0;
+  initSerialInterraction();
   tm.addBack(tm.newPeriodicTask(StateThreeConnection, 150, checkAxisConnection));
   for(auto& axis: axes) {
     axis.vbus.SetCallback(axisVbusValueCheck);

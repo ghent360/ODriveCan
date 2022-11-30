@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include "can_helpers.hpp"
 
-#define CHEAT_CAN_SET
+//#define CHEAT_CAN_SET
 namespace odrive {
 
 // ODrive uses CAN2.0. Message data payload is max 8 bytes long.
@@ -652,10 +652,11 @@ public:
   }
 
 private:
+#ifdef CHEAT_CAN_SET
   static void setFloat(uint8_t* ptr, float v) {
     *reinterpret_cast<float*>(ptr) = v;
   }
-
+#endif
   void SendCmd(uint8_t cmdId, uint8_t len = 0, uint8_t *buf = NULL) {
     uint32_t canId = (node_id << 5) | (cmdId & 0x1f);
     if (can_send_) {

@@ -122,7 +122,7 @@ static void canInit() {
   }
 }
 
-static void sendCmd(uint32_t canId, uint8_t len, uint8_t *buf) {
+static void sendCmdCh1(uint32_t canId, uint8_t len, uint8_t *buf) {
   uint8_t ret;
   do {
     ret = can.sendMsgBuf(canId, 0, len, buf);
@@ -137,6 +137,10 @@ static void sendCmd(uint32_t canId, uint8_t len, uint8_t *buf) {
     Serial.print(" error ");
     Serial.println(ret);
   }
+}
+
+static void sendCmdCh3(uint32_t canId, uint8_t len, uint8_t *buf) {
+  sendCmdCh1(canId, len, buf);
 }
 
 // Note this should be non-blocking code, if there are no CAN

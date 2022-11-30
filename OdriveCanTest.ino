@@ -27,7 +27,9 @@ using odrive::VbusVoltage;
 // Helper to print CAN messages we can not parse.
 static void printCanMessage(uint32_t id, uint8_t len, const CanMsgData& buf) {
   Serial.print("Id: ");
-  Serial.print(id);
+  Serial.print(id >> 5);
+  Serial.print(" ");
+  Serial.print((int)(id & 0x1f));
   Serial.print(" Len: ");
   Serial.print(len);
   Serial.print(" Data: ");

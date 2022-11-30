@@ -14,7 +14,6 @@
 #include "SerialInteraction.h"
 #include "TaskIds.h"
 
-using odrive::AxisState;
 using odrive::ODriveAxis;
 using odrive::VbusVoltage;
 
@@ -153,9 +152,9 @@ static void startStateTwo() {
 static void checkAllAxesArePresent(TaskNode* self, uint32_t) {
   bool allAlive = true;
   for(auto& axis: axes) {
+    axis.hb.PeriodicCheck(axis);
     if (!axis.hb.alive) {
       allAlive = false;
-      break;
     }
   }
   if (allAlive) {
@@ -178,7 +177,7 @@ static void reportAxesNotPresent(TaskNode* self, uint32_t) {
 
 static void startStateOne() {
   Serial.println("Waiting for odrives to connect...");
-  tm.addBack(tm.newPeriodicTask(StateOneCheck, 100, checkAllAxesArePresent));
+  tm.addBack(tm.newPeriodicTask(StateOneCheck, 150, checkAllAxesArePresent));
   tm.addBack(tm.newPeriodicTask(StateOneReport, 5000, reportAxesNotPresent));
 }
 

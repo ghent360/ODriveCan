@@ -10,8 +10,9 @@
 using odrive::AxisState;
 
 extern TaskManager tm;
-int8_t activeAxis = -1;
-float activeAxisPos = 0;
+
+static int8_t activeAxis = -1;
+static float activeAxisPos = 0;
 
 static void printHelp() {
   Serial.println("Help:");

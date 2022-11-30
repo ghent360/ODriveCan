@@ -53,6 +53,9 @@ TaskManager tm;
  */
 static void checkAllAxesArePresent(TaskNode*, uint32_t);
 static void reportAxesNotPresent(TaskNode* self, uint32_t);
+static void startStateOne();
+static void startStateTwo();
+static void startStateThree();
 
 static void printHelp() {
   Serial.println("Help:");
@@ -287,18 +290,29 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
     }
   }
   if (!allAlive) {
-    // Switch back to first state:
+    // Clean state three and switch back to first state:
     tm.remove(tm.findById(StateThreeSerial), true); // Remove the checkSerialInput task.
     // Remove the voltage checking callbacks.
     for(auto& axis: axes) {
       axis.vbus.SetCallback(nullptr);
     }
     tm.remove(tm.findById(StateThreeVoltage), true); // Remove the checkAxisVbusVoltage task.
-    Serial.println("Waiting for odrives to connect...");
-    tm.addBack(tm.newPeriodicTask(StateOneCheck, 100, checkAllAxesArePresent));
-    tm.addBack(tm.newPeriodicTask(StateOneReport, 5000, reportAxesNotPresent));
     tm.remove(self, true); // Remove the checkAxisConnection task.
+    startStateOne();
   }
+}
+
+static void startStateThree() {
+  Serial.println("All odrives active...");
+  printHelp();
+  activeAxis = -1;
+  activeAxisPos = 0;
+  tm.addBack(tm.newPeriodicTask(StateThreeConnection, 150, checkAxisConnection));
+  for(auto& axis: axes) {
+    axis.vbus.SetCallback(axisVbusValueCheck);
+  }
+  tm.addBack(tm.newPeriodicTask(StateThreeVoltage, 1000, checkAxisVbusVoltage));
+  tm.addBack(tm.newPeriodicTask(StateThreeSerial, 10, checkSerialInput));
 }
 
 // Sometimes we get axis errors on startup. Clear the errors, if all axes
@@ -313,10 +327,8 @@ static void clearErrorsAndSwitchToStateThree(TaskNode* self, uint32_t) {
       Serial.print("Lost connection to axis ");
       Serial.println(axis.node_id);
       // Lost axis connection, back to square one:
-      Serial.println("Waiting for odrives to connect...");
-      tm.addBack(tm.newPeriodicTask(StateOneCheck, 100, checkAllAxesArePresent));
-      tm.addBack(tm.newPeriodicTask(StateOneReport, 5000, reportAxesNotPresent));
       tm.remove(self, true);
+      startStateOne();
       return;
     }
     if (axis.hb.error != 0) {
@@ -333,18 +345,12 @@ static void clearErrorsAndSwitchToStateThree(TaskNode* self, uint32_t) {
     return;
   }
   // All is good switch to state three.
-  Serial.println("All odrives active...");
-  printHelp();
-  activeAxis = -1;
-  activeAxisPos = 0;
-  // Switch to second state
-  tm.addBack(tm.newPeriodicTask(StateThreeConnection, 150, checkAxisConnection));
-  for(auto& axis: axes) {
-    axis.vbus.SetCallback(axisVbusValueCheck);
-  }
-  tm.addBack(tm.newPeriodicTask(StateThreeVoltage, 1000, checkAxisVbusVoltage));
-  tm.addBack(tm.newPeriodicTask(StateThreeSerial, 10, checkSerialInput));
   tm.remove(self, true); // Remove the clearErrorsAndSwitchToStateThree task.
+  startStateThree();
+}
+
+static void startStateTwo() {
+  tm.addBack(tm.newPeriodicTask(StateTwo, 200, clearErrorsAndSwitchToStateThree));
 }
 
 // This function implements state one - we wait until we receive heartbeat
@@ -360,8 +366,8 @@ static void checkAllAxesArePresent(TaskNode* self, uint32_t) {
   if (allAlive) {
     // Switch to state two.
     tm.remove(tm.findById(StateOneReport), true); // Remove the reportAxesNotPresent task.
-    tm.addBack(tm.newPeriodicTask(StateTwo, 200, clearErrorsAndSwitchToStateThree));
     tm.remove(self, true); // Remove the checkAllAxesArePresent task.
+    startStateTwo();
   }
 }
 
@@ -375,15 +381,18 @@ static void reportAxesNotPresent(TaskNode* self, uint32_t) {
   }
 }
 
+static void startStateOne() {
+  Serial.println("Waiting for odrives to connect...");
+  tm.addBack(tm.newPeriodicTask(StateOneCheck, 100, checkAllAxesArePresent));
+  tm.addBack(tm.newPeriodicTask(StateOneReport, 5000, reportAxesNotPresent));
+}
+
 void setup() {
   Serial.begin(115200);
   while(!Serial);
 
   canInit();
-  Serial.println("Waiting for odrives to connect...");
-  // Start in state one
-  tm.addFront(tm.newPeriodicTask(StateOneCheck, 100, checkAllAxesArePresent));
-  tm.addFront(tm.newPeriodicTask(StateOneReport, 5000, reportAxesNotPresent));
+  startStateOne();
 }
 
 void loop() {

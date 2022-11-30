@@ -4,8 +4,9 @@
 #pragma once
 
 #include <stdint.h>
-#include <can_helpers.hpp>
+#include "can_helpers.hpp"
 
+#define CHEAT_CAN_SET
 namespace odrive {
 
 // ODrive uses CAN2.0. Message data payload is max 8 bytes long.

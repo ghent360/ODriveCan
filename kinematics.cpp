@@ -74,7 +74,7 @@ void driveJoints(DogLegJoint joint, float pos) {
     }
 }
 
-void kinematics(
+void kinematicsInterp(
     DogLeg leg,
     float xIn,
     float yIn,
@@ -84,6 +84,72 @@ void kinematics(
     float yawIn,
     bool interOn,
     int dur) {
+    float x, y, z, yaw;
+
+    // ** INTERPOLATION **
+    // use Interpolated values if Interpolation is on
+    if (interOn) {
+        switch (leg) {
+        case FRONT_RIGHT:
+            z = interpFRZ.go(zIn, dur);
+            x = interpFRX.go(xIn, dur);
+            y = interpFRY.go(yIn, dur);
+            yaw = interpFRT.go(yawIn, dur);
+            break;
+        case FRONT_LEFT:
+            z = interpFLZ.go(zIn, dur);
+            x = interpFLX.go(xIn, dur);
+            y = interpFLY.go(yIn, dur);
+            yaw = interpFLT.go(yawIn, dur);
+            break;
+        case BACK_RIGHT:
+            z = interpBRZ.go(zIn, dur);
+            x = interpBRX.go(xIn, dur);
+            y = interpBRY.go(yIn, dur);
+            yaw = interpBRT.go(yawIn, dur);
+            break;
+        case BACK_LEFT:
+            z = interpBLZ.go(zIn, dur);
+            x = interpBLX.go(xIn, dur);
+            y = interpBLY.go(yIn, dur);
+            yaw = interpBLT.go(yawIn, dur);
+            break;
+        default:
+            z = zIn; // in the meantime use raw values
+            x = xIn;
+            y = yIn;
+            yaw = yawIn;
+            break;
+        }
+        // wait for filters to settle before using Interpolated values
+        // set a timer for filter to settle
+        if (!interpFlag) {
+            z = zIn; // in the meantime use raw values
+            x = xIn;
+            y = yIn;
+            yaw = yawIn;
+            if (currentMillis - previousInterpMillis >= 300) {
+                interpFlag = true;
+            }
+        }
+    } else {
+        // Interpolation is off then use the original values
+        z = zIn;
+        x = xIn;
+        y = yIn;
+        yaw = yawIn;
+    }
+    kinematics(leg, x, y, z, roll, pitch, yaw);
+}
+
+void kinematics(
+    DogLeg leg,
+    float x,
+    float y,
+    float z,
+    float roll,
+    float pitch,
+    float yaw) {
     // moving the foot sideways on the end plane
     float hipOffset = 108; // distance from the hip pivot to the centre of the leg
     //float lengthY;
@@ -146,65 +212,6 @@ void kinematics(
     float demandYaw;     // demand yaw postion - existing yaw plus the stick yaw
     float xx3;           // new X coordinate based on demand angle
     float yy3;           // new Y coordinate based on demand angle
-
-    float x;
-    float y;
-    float z;
-    float yaw;
-
-    // ** INTERPOLATION **
-    // use Interpolated values if Interpolation is on
-    if (interOn) {
-        switch (leg) {
-        case FRONT_RIGHT:
-            z = interpFRZ.go(zIn, dur);
-            x = interpFRX.go(xIn, dur);
-            y = interpFRY.go(yIn, dur);
-            yaw = interpFRT.go(yawIn, dur);
-            break;
-        case FRONT_LEFT:
-            z = interpFLZ.go(zIn, dur);
-            x = interpFLX.go(xIn, dur);
-            y = interpFLY.go(yIn, dur);
-            yaw = interpFLT.go(yawIn, dur);
-            break;
-        case BACK_RIGHT:
-            z = interpBRZ.go(zIn, dur);
-            x = interpBRX.go(xIn, dur);
-            y = interpBRY.go(yIn, dur);
-            yaw = interpBRT.go(yawIn, dur);
-            break;
-        case BACK_LEFT:
-            z = interpBLZ.go(zIn, dur);
-            x = interpBLX.go(xIn, dur);
-            y = interpBLY.go(yIn, dur);
-            yaw = interpBLT.go(yawIn, dur);
-            break;
-        default:
-            z = zIn; // in the meantime use raw values
-            x = xIn;
-            y = yIn;
-            yaw = yawIn;
-            break;
-        }
-        // wait for filters to settle before using Interpolated values
-        // set a timer for filter to settle
-        if (!interpFlag) {
-            z = zIn; // in the meantime use raw values
-            x = xIn;
-            y = yIn;
-            yaw = yawIn;
-            if (currentMillis - previousInterpMillis >= 300) {
-                interpFlag = true;
-            }
-        }
-    } else {
-        // Interpolation is off then use the original values
-        z = zIn;
-        x = xIn;
-        y = yIn;
-        yaw = yawIn;
-    }
 
     // **** START INVERSE KINEMATICS CALCS ****
     // yy3 = y;

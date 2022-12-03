@@ -57,10 +57,11 @@ const float cellMinVoltage = 3.35;
 
 static void axisVbusValueCheck(ODriveAxis&, VbusVoltage&, VbusVoltage& newV) {
   if (newV.val < (6*cellWarnVoltage)) {
-    Serial.print("ODrive battery voltage low: ");
+    Serial.print("Warning odrive battery voltage low: ");
     Serial.println(newV.val);
   }
   if (newV.val < (6*cellMinVoltage)) {
+    Serial.println("ODrive battery voltage too low (estop)");
     panic();
   }
 }
@@ -81,7 +82,9 @@ static void checkBatteryVoltage(TaskNode*, uint32_t) {
     Serial.println(batVoltage);
   }
   if (batVoltage < (2*cellMinVoltage)) {
+    Serial.println("Battery voltage too low (estop)");
     panic();
+    delay(250);
     lowPowerMode();
   }
 }

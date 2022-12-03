@@ -209,7 +209,7 @@ void checkSerialInput(TaskNode*, uint32_t) {
   }
 }
 
-void initSerialInterraction() {
+void initSerialInteraction() {
   printHelp();
   activeAxis = -1;
   activeAxisPos = 0;

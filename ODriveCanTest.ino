@@ -121,7 +121,7 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
 
 static void startStateThree() {
   Serial.println("All odrives active...");
-  initSerialInterraction();
+  initSerialInteraction();
   tm.addBack(tm.newPeriodicTask(StateThreeConnection, 150, checkAxisConnection));
   for(auto& axis: axes) {
     axis.vbus.SetCallback(axisVbusValueCheck);

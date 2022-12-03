@@ -8,7 +8,8 @@ enum PeriodicTaskId {
   StateOneReport,
   StateTwo,
   StateThreeConnection,
-  StateThreeVoltage,
+  StateThreeODriveVoltage,
+  StateThreeBatteryVoltage,
   StateThreeSerial,
 };
 

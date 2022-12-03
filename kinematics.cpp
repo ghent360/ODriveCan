@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2022 ghent360. See LICENSE file for details.
+ *
+ * Original algorithm and code was developed by James Bruton
+ * (https://www.youtube.com/c/jamesbruton). This is a minor adaptation.
+ * https://github.com/XRobots/openDogV3.
+*/
 #include <math.h>
 #include "kinematics.h"
 #include <Ramp.h>

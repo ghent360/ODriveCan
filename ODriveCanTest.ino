@@ -13,6 +13,7 @@
 #include "CanInterface.h"
 #include "SerialInteraction.h"
 #include "TaskIds.h"
+#include "VoltageMonitor.h"
 
 using odrive::ODriveAxis;
 using odrive::VbusVoltage;
@@ -45,19 +46,23 @@ static void startStateOne();
 static void startStateTwo();
 static void startStateThree();
 
-static void axisVbusValueCheck(ODriveAxis&, VbusVoltage&, VbusVoltage& newV) {
-  if (newV.val < 19.4f) { // Cut off voltage for 6S battery.
-    for(auto& axis: axes) {
-      axis.EStop(); // Call EStop to reduce the axis power consumption.
-    }
-    Serial.println("Battery voltage low.");
+static void panic() {
+  for(auto& axis: axes) {
+    axis.EStop(); // Call EStop to reduce the axis power consumption.
   }
-/*
-  Serial.print("Axis ");
-  Serial.print(axis.node_id);
-  Serial.print(" vbus=");
-  Serial.println(newV.val);
-*/  
+}
+
+const float cellWarnVoltage = 3.5;
+const float cellMinVoltage = 3.35;
+
+static void axisVbusValueCheck(ODriveAxis&, VbusVoltage&, VbusVoltage& newV) {
+  if (newV.val < (6*cellWarnVoltage)) {
+    Serial.print("ODrive battery voltage low: ");
+    Serial.println(newV.val);
+  }
+  if (newV.val < (6*cellMinVoltage)) {
+    panic();
+  }
 }
 
 static void checkAxisVbusVoltage(TaskNode*, uint32_t) {
@@ -66,6 +71,18 @@ static void checkAxisVbusVoltage(TaskNode*, uint32_t) {
   axisIdx++;
   if (axisIdx >= numAxes) {
     axisIdx = 0;
+  }
+}
+
+static void checkBatteryVoltage(TaskNode*, uint32_t) {
+  float batVoltage = readBatteryVoltage();
+  if (batVoltage < (2*cellWarnVoltage)) {
+    Serial.print("Warning battery voltage low: ");
+    Serial.println(batVoltage);
+  }
+  if (batVoltage < (2*cellMinVoltage)) {
+    panic();
+    lowPowerMode();
   }
 }
 
@@ -92,7 +109,8 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
     for(auto& axis: axes) {
       axis.vbus.SetCallback(nullptr);
     }
-    tm.remove(tm.findById(StateThreeVoltage), true); // Remove the checkAxisVbusVoltage task.
+    tm.remove(tm.findById(StateThreeODriveVoltage), true); // Remove the checkAxisVbusVoltage task.
+    tm.remove(tm.findById(StateThreeBatteryVoltage), true); // Remove the checkBatteryVoltage task.
     tm.remove(self, true); // Remove the checkAxisConnection task.
     startStateOne();
   }
@@ -105,7 +123,8 @@ static void startStateThree() {
   for(auto& axis: axes) {
     axis.vbus.SetCallback(axisVbusValueCheck);
   }
-  tm.addBack(tm.newPeriodicTask(StateThreeVoltage, 1000, checkAxisVbusVoltage));
+  tm.addBack(tm.newPeriodicTask(StateThreeODriveVoltage, 1000, checkAxisVbusVoltage));
+  tm.addBack(tm.newPeriodicTask(StateThreeBatteryVoltage, 1000, checkBatteryVoltage));
   tm.addBack(tm.newPeriodicTask(StateThreeSerial, 10, checkSerialInput));
 }
 
@@ -187,6 +206,7 @@ void setup() {
 
   canInit();
   startStateOne();
+  initVoltageMonitor();
 }
 
 void loop() {

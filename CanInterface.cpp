@@ -54,6 +54,11 @@ void canInit() {
   can3.enableFIFO();
 }
 
+void canSleep() {
+  digitalWrite(3, HIGH);
+  digitalWrite(2, HIGH);
+}
+
 static void sendCmdCh1(uint32_t canId, uint8_t len, uint8_t *buf) {
   CAN_message_t msg;
   int ret;
@@ -115,6 +120,9 @@ void canInit() {
       Serial.println("Error Initializing CAN...");
       while(1);
   }
+}
+
+void canSleep() {
 }
 
 static void sendCmdCh1(uint32_t canId, uint8_t len, uint8_t *buf) {

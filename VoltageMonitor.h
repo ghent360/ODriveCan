@@ -3,6 +3,6 @@
 */
 #pragma once
 
-void canInit();
-void readAndProcessCan();
-void canSleep();
+void initVoltageMonitor();
+float readBatteryVoltage();
+void lowPowerMode();

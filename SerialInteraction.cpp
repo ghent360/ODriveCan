@@ -14,6 +14,22 @@ extern TaskManager tm;
 static int8_t activeAxis = -1;
 static float activeAxisPos = 0;
 
+static void deactivateAxis() {
+  activeAxis = -1;
+  activeAxisPos = 0;
+}
+
+static void activateAxis(DogLegJoint axis) {
+  Serial.print("Active axis ");
+  Serial.println(axisName[axis]);
+  activeAxis = axis;
+  activeAxisPos = 0;
+}
+
+static bool isAxisActive() {
+  return activeAxis >= 0;
+}
+
 static void printHelp() {
   Serial.println("Help:");
   Serial.println("  '?' - print this message.");
@@ -42,7 +58,7 @@ static void printAxesHomePos(TaskNode*, uint32_t) {
 
 static void setAxisLimitsAndStart() {
   for(auto& axis: axes) {
-    axis.SetLimits(2.0f, 10.0f); // Should be 6000.0f, 20.0f
+    axis.SetLimits(6.0f, 10.0f); // Should be 6000.0f, 20.0f
     axis.SetState(AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL);
   }
   tm.addBack(tm.newSimpleTask(PrintPosition, 5000, printAxesHomePos));
@@ -52,6 +68,7 @@ static void setAxisIdle() {
   for(auto& axis: axes) {
     axis.SetState(AxisState::AXIS_STATE_IDLE);
   }
+  deactivateAxis();
 }
 
 static void axesGoHome() {
@@ -87,10 +104,12 @@ static void modifyGains() {
 }
 
 static void moveAxisPos() {
-  activeAxisPos = constrain(activeAxisPos, -2.5, 2.5);
-  Serial.print("pos = ");
-  Serial.println(activeAxisPos);
-  driveJoints(static_cast<DogLegJoint>(activeAxis), activeAxisPos);
+  if (isAxisActive()) {
+    activeAxisPos = constrain(activeAxisPos, -2.5, 2.5);
+    Serial.print("pos = ");
+    Serial.println(activeAxisPos);
+    driveJoints(static_cast<DogLegJoint>(activeAxis), activeAxisPos);
+  }
 }
 
 void checkSerialInput(TaskNode*, uint32_t) {
@@ -125,66 +144,53 @@ void checkSerialInput(TaskNode*, uint32_t) {
           modifyGains();
           break;
       case '0':
-          activeAxis = -1;
-          activeAxisPos = 0;
+          deactivateAxis();
           break;
       case '1':
-          activeAxis = FRONT_LEFT_KNEE;
-          activeAxisPos = 0;
+          activateAxis(FRONT_LEFT_KNEE);
           break;
       case '!':
-          activeAxis = FRONT_RIGHT_KNEE;
-          activeAxisPos = 0;
+          activateAxis(FRONT_RIGHT_KNEE);
           break;
       case '2':
-          activeAxis = BACK_LEFT_KNEE;
-          activeAxisPos = 0;
+          activateAxis(BACK_LEFT_KNEE);
           break;
       case '@':
-          activeAxis = BACK_RIGHT_KNEE;
-          activeAxisPos = 0;
+          activateAxis(BACK_RIGHT_KNEE);
           break;
       case '3':
-          activeAxis = FRONT_LEFT_SHOULDER;
-          activeAxisPos = 0;
+          activateAxis(FRONT_LEFT_SHOULDER);
           break;
       case '#':
-          activeAxis = FRONT_RIGHT_SHOULDER;
-          activeAxisPos = 0;
+          activateAxis(FRONT_RIGHT_SHOULDER);
           break;
       case '4':
-          activeAxis = BACK_LEFT_SHOULDER;
-          activeAxisPos = 0;
+          activateAxis(BACK_LEFT_SHOULDER);
           break;
       case '$':
-          activeAxis = BACK_RIGHT_SHOULDER;
-          activeAxisPos = 0;
+          activateAxis(BACK_RIGHT_SHOULDER);
           break;
       case '5':
-          activeAxis = FRONT_LEFT_HIP;
-          activeAxisPos = 0;
+          activateAxis(FRONT_LEFT_HIP);
           break;
       case '%':
-          activeAxis = FRONT_RIGHT_HIP;
-          activeAxisPos = 0;
+          activateAxis(FRONT_RIGHT_HIP);
           break;
       case '6':
-          activeAxis = BACK_LEFT_HIP;
-          activeAxisPos = 0;
+          activateAxis(BACK_LEFT_HIP);
           break;
       case '^':
-          activeAxis = BACK_RIGHT_HIP;
-          activeAxisPos = 0;
+          activateAxis(BACK_RIGHT_HIP);
           break;
       case '+':
           if (activeAxis >= 0) {
-            activeAxisPos += 0.1;
+            activeAxisPos += 0.05;
             moveAxisPos();
           }
           break;
       case '-':
           if (activeAxis >= 0) {
-            activeAxisPos -= 0.1;
+            activeAxisPos -= 0.05;
             moveAxisPos();
           }
           break;

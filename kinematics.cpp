@@ -58,12 +58,26 @@ Interpolation interpBLT;
 
 extern bool interpFlag;
 
+float constrainJointPos(DogLegJoint joint, float pos) {
+    switch(jointClass[joint]) {
+    case AxisClass::CLASS_KNEE: 
+        return constrain(pos, -0.8, 3.5);
+        break;
+    case AxisClass::CLASS_SHOULDER: 
+        return constrain(pos, -3, 1.35);
+        break;
+    default:
+    case AxisClass::CLASS_HIP:
+        return constrain(pos, -0.8, 0.2);
+    }
+}
+
 void driveJoints(DogLegJoint joint, float pos) {
     // takes into account the original setup offsets for motor 
     // positions, and also turns around directions so they are
     // consistent, also constrains the motion limits for each joint
 
-    pos = constrain(pos, -2.5, 2.5);
+    pos = constrainJointPos(joint, pos);
     switch (joint) {
     case BACK_RIGHT_KNEE:
     case FRONT_LEFT_KNEE:
@@ -505,3 +519,13 @@ const char* axisName[numAxes] = {
   [BACK_RIGHT_HIP] = STRINGIFY(BACK_RIGHT_HIP),
   [BACK_LEFT_HIP] = STRINGIFY(BACK_LEFT_HIP)
 };
+
+const char* getLegName(DogLeg leg) {
+  switch(leg) {
+  case FRONT_LEFT: return STRINGIFY(FRONT_LEFT);
+  case FRONT_RIGHT: return STRINGIFY(FRONT_RIGHT);
+  case BACK_LEFT: return STRINGIFY(BACK_LEFT);
+  case BACK_RIGHT: return STRINGIFY(BACK_RIGHT);
+  }
+  return "";
+}

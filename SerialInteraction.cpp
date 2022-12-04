@@ -13,13 +13,31 @@ extern TaskManager tm;
 
 static int8_t activeAxis = -1;
 static float activeAxisPos = 0;
+static int8_t activeLeg = -1;
+static float activeLegX = 0;
+static float activeLegY = 0;
+static float activeLegZ = 0;
+
+static void deactivateLeg() {
+  activeLeg = -1;
+  activeLegX = activeLegY = activeLegZ = 0;
+}
 
 static void deactivateAxis() {
   activeAxis = -1;
   activeAxisPos = 0;
 }
 
+static void activateLeg(DogLeg leg) {
+  deactivateAxis();
+  Serial.print("Active leg ");
+  Serial.println(getLegName(leg));
+  activeLeg = leg;
+  activeLegX = activeLegY = activeLegZ = 0;
+}
+
 static void activateAxis(DogLegJoint axis) {
+  deactivateLeg();
   Serial.print("Active axis ");
   Serial.println(axisName[axis]);
   activeAxis = axis;
@@ -35,13 +53,14 @@ static void printHelp() {
   Serial.println("  '?' - print this message.");
   Serial.println("  'l' - set limits and enter closed loop control mode.");
   Serial.println("  'i' - enter idle mode.");
-  Serial.println("  'H' - move all axis to 'home' position.");
   Serial.println("  'C' - clear all axis errors.");
   Serial.println("  'g' - modify gains.");
   Serial.println("  '1'..'6' - set axis active.");
-  Serial.println("  '0' - deactivate selected axis.");
+  Serial.println("  '7'..'0' - set leg active.");
+  Serial.println("  '`' - deactivate selected axis.");
   Serial.println("  '+', '-' - change the active axis position.");
-  Serial.println("  'h' - move active axis to 'home' position.");
+  Serial.println("  'x', 'X', 'y', 'Y', 'z', 'Z' - change the active leg position.");
+  Serial.println("  'h', 'H' - move active/all axis to 'home' position.");
   Serial.println("  'c' - clear active axis errors.");
 }
 
@@ -143,8 +162,9 @@ void checkSerialInput(TaskNode*, uint32_t) {
       case 'g':
           modifyGains();
           break;
-      case '0':
+      case '`':
           deactivateAxis();
+          deactivateLeg();
           break;
       case '1':
           activateAxis(FRONT_LEFT_KNEE);
@@ -182,6 +202,18 @@ void checkSerialInput(TaskNode*, uint32_t) {
       case '^':
           activateAxis(BACK_RIGHT_HIP);
           break;
+      case '7':
+          activateLeg(FRONT_LEFT);
+          break;
+      case '8':
+          activateLeg(FRONT_RIGHT);
+          break;
+      case '9':
+          activateLeg(BACK_LEFT);
+          break;
+      case '0':
+          activateLeg(BACK_RIGHT);
+          break;
       case '+':
           if (activeAxis >= 0) {
             activeAxisPos += 0.05;
@@ -192,6 +224,42 @@ void checkSerialInput(TaskNode*, uint32_t) {
           if (activeAxis >= 0) {
             activeAxisPos -= 0.05;
             moveAxisPos();
+          }
+          break;
+      case 'x':
+          if (activeLeg > 0) {
+            activeLegX += 0.1;
+            kinematics(static_cast<DogLeg>(activeLeg), activeLegX, activeLegY, activeLegZ, 0, 0, 0);
+          }
+          break;
+      case 'X':
+          if (activeLeg > 0) {
+            activeLegX -= 0.1;
+            kinematics(static_cast<DogLeg>(activeLeg), activeLegX, activeLegY, activeLegZ, 0, 0, 0);
+          }
+          break;
+      case 'y':
+          if (activeLeg > 0) {
+            activeLegY += 0.1;
+            kinematics(static_cast<DogLeg>(activeLeg), activeLegX, activeLegY, activeLegZ, 0, 0, 0);
+          }
+          break;
+      case 'Y':
+          if (activeLeg > 0) {
+            activeLegY -= 0.1;
+            kinematics(static_cast<DogLeg>(activeLeg), activeLegX, activeLegY, activeLegZ, 0, 0, 0);
+          }
+          break;
+      case 'z':
+          if (activeLeg > 0) {
+            activeLegZ += 0.1;
+            kinematics(static_cast<DogLeg>(activeLeg), activeLegX, activeLegY, activeLegZ, 0, 0, 0);
+          }
+          break;
+      case 'Z':
+          if (activeLeg > 0) {
+            activeLegZ -= 0.1;
+            kinematics(static_cast<DogLeg>(activeLeg), activeLegX, activeLegY, activeLegZ, 0, 0, 0);
           }
           break;
       case 'h':

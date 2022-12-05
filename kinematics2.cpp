@@ -11,10 +11,12 @@ constexpr float shinLength2 = shinLength * shinLength;
 constexpr float hipLength2 = hipLength * hipLength;
 constexpr float lenDiff = shinLength - tieLength;
 constexpr float lenDiff2 = lenDiff * lenDiff;
+
 const float sqrt2 = sqrtf(2);
 const float sqrt2Half = sqrt2 / 2;
 const float oneOverSqrt2 = 1 / sqrt2;
 
+/* Simple kinematics for the leg in XY dimensions only. */
 void forwardKinematics(float th1, float th2, float& x, float & y) {
     float b1 = tieLength * sinf(th1);
     float a1 = tieLength * cosf(th1);
@@ -37,6 +39,24 @@ void inverseKinematics(float x, float y, float& th1, float& th2) {
     float r = sqrt(r2);
     float phy3 = acos((r2 + tieLength2 - shinLength2) / (2 * r * tieLength));
     th1 = phy2 + phy3;
+}
+
+/* Full kinematics for the leg in all 3 dimensions */
+void forwardKinematics2(
+    float th1, float th2, float th3, float& x, float& y, float& z) {
+    float x1 = tieLength * cosf(th1);
+    float y1 = tieLength * sinf(th1);
+    float x2 = shinLength * cosf(th1 + th2);
+    float y2 = shinLength * sinf(th1 + th2);
+    x = y1 + y2;
+    float ll2 = (x1 + x2) * (x1 + x2) + (y1 + y2) * (y1 + y2);
+    float ll = sqrtf(ll2);
+    float z1 = hipLength * cosf(th3);
+    float z2 = ll * cosf(M_PI / 2 - th3);
+    z = z1 + z2;
+    float yy1 = hipLength * sinf(th3);
+    float yy2 = ll * sinf(M_PI / 2 - th3);
+    y = yy1 + yy2 + ballRadius;
 }
 
 void inverseKinematics2(

@@ -59,4 +59,16 @@ TEST_SUITE("Kinematics2") {
         CHECK(fabs(th1) < 0.0005);
         CHECK(fabs(th2 + (M_PI/2)) < 0.0005);
     }
+
+    TEST_CASE("Full forward kinematics") {
+        float x, y, z;
+        forwardKinematics2(0, 0, 0, x, y, z);
+        CHECK(fabs(x) < 1E-8);
+        CHECK(fabs(y - (float)(199.36 + 205 + 32.5)) < 1E-8);
+        CHECK(fabs(z - 107.36f) < 0.0005);
+        forwardKinematics2(0, 0, M_PI/2, x, y, z);
+        CHECK(fabs(x) < 1E-8);
+        CHECK(fabs(y - (107.36f + 32.5f)) < 0.0005);
+        CHECK(fabs(z - (float)(199.36 + 205)) < 0.0005);
+   }
 }

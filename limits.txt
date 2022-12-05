@@ -1,0 +1,8 @@
+Right knee (-0.8, +2.5 +++)
+Rigth shoulder( -2.5--- , 1.35)
+Right hip (-0.8, 0.2 - limit by stand)
+
+
+Tie pivot point center distance: 199.36mm
+Shin length - 205mm
+Foot ball radius - 32.5mm

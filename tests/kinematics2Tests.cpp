@@ -62,13 +62,25 @@ TEST_SUITE("Kinematics2") {
 
     TEST_CASE("Full forward kinematics") {
         float x, y, z;
-        forwardKinematics2(0, 0, 0, x, y, z);
-        CHECK(fabs(x) < 1E-8);
+        forwardKinematics2(-M_PI/2, 0, 0, x, y, z);
+        CHECK(fabs(x) < 0.0005);
         CHECK(fabs(y - (float)(199.36 + 205 + 32.5)) < 1E-8);
         CHECK(fabs(z - 107.36f) < 0.0005);
-        forwardKinematics2(0, 0, M_PI/2, x, y, z);
-        CHECK(fabs(x) < 1E-8);
+        forwardKinematics2(-M_PI/2, 0, M_PI/2, x, y, z);
+        CHECK(fabs(x) < 0.0005);
         CHECK(fabs(y - (107.36f + 32.5f)) < 0.0005);
         CHECK(fabs(z - (float)(199.36 + 205)) < 0.0005);
-   }
+    }
+
+    TEST_CASE("Full inverse kinematics") {
+        float th1, th2, th3;
+        inverseKinematics2(0, 199.36 + 205 + 32.5, 107.36, th1, th2, th3);
+        CHECK(fabs(th1) < 1E-8);
+        CHECK(fabs(th2) < 0.0005);
+        CHECK(fabs(th3) < 1E-8);
+        inverseKinematics2(0, -(107.36f + 32.5f), 199.36f + 205.0f, th1, th2, th3);
+        CHECK(fabs(th1) < 1E-8);
+        CHECK(fabs(th2) < 0.0005);
+        CHECK(fabs(th3) < 1E-8);
+    }
 }

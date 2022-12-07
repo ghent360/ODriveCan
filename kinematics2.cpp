@@ -43,37 +43,48 @@ void inverseKinematics(float x, float y, float &th1, float &th2) {
 
 /* Full kinematics for the leg in all 3 dimensions */
 void forwardKinematics2(
-    float th1, float th2, float th3, float &x, float &y, float &z) {
-    float t1= tieLength * cosf(th1);
-    float t2= shinLength * cosf(th1 + th2);
-    x = t1 + t2;
-    t1= tieLength * sinf(th1);
-    t2= shinLength * sinf(th1 + th2);
-    float ll2 = x * x + (t1 + t2) * (t1 + t2);
-    float ll = sqrt(ll2);
-    t1 = hipLength * sinf(th3);
-    t2 = ll * sinf(M_PI / 2 - th3);
-    y = t1 + t2 + ballRadius;
-    t1 = hipLength * cosf(th3);
-    t2 = ll * cosf(M_PI / 2 - th3);
-    z = t1 + t2;
+    float q, float s, float t, float &x, float &y, float &z) {
+    float Ct = cosf(t);
+    float St = sinf(t);
+    float tmp = (shinLength * sinf(q+s) + tieLength * sinf(s));
+
+    x = -cosf(s) * (tieLength + shinLength * (cosf(q) - sinf(q)));
+    y = Ct * tmp + hipLength * St;
+    z = St * tmp + hipLength * Ct;
 }
 
 void inverseKinematics2(
-    float x, float y, float z, float &th1, float &th2, float &th3) {
-    y -= ballRadius;
-    float r1sqr = z * z + y * y;
-    float ll2 = r1sqr - hipLength2;
-    float ll = sqrtf(ll2);
-    float phy1 = atan2f(y, z);
-    float phy2 = atan2f(ll, hipLength);
-    th3 = phy2 - phy1;
-    float h = hipLength * sinf(th3);
-    float r2sqr = (h + y) * (h + y) + x * x; // ll2 == r2sqr
-    float r2 = sqrt(r2sqr);
-    float phy3 = acosf((tieLength2 + shinLength2 - r2sqr) / (2 * tieLength * shinLength));
-    th2 = phy3 - M_PI;
-    phy1 = atan2f(x, y + h);
-    phy2 = acosf((tieLength2 + r2sqr - shinLength2) / (2 * tieLength * r2));
-    th1 = phy1 + phy2;
+    float x, float y, float z, bool posth3, float &th1, float &th2, float &th3) {
+    float hypz = sqrtf(z * z + y * y);
+    float alpha = acosf(fabs(z) / hypz);
+    float beta = acosf(hipLength / hypz);
+    if (z > 0) {
+        th3 = alpha - beta;
+    } else {
+        th3 = M_PI - alpha - beta;
+    }
+    float xprime = x;
+    float yprime = -sqrtf(y*y + z*z - hipLength2);
+    float hypx2 = xprime * xprime + yprime * yprime;
+    float hypx = sqrtf(hypx2);
+    float phy = acosf(fabs(xprime) / hypx);
+    float xsi = acosf((tieLength2 + hypx2 - shinLength2) / (2 * tieLength * hypx));
+    th1  = acosf((tieLength2 + shinLength2 - hypx2) / (2 * tieLength * shinLength));
+    if (fabsf(th1 - (float)M_PI) < 0.0005f) {
+        th1 = 0;
+    }
+    if (posth3) {
+        if (xprime >= 0) {
+            th2 = M_PI / 2 - xsi - phy;
+        } else {
+            th2 = -M_PI / 2 - xsi + phy;
+        }
+    } else {
+        th1 = -th1;
+        if (xprime >= 0) {
+            th2 = M_PI / 2 + xsi - phy;
+        } else {
+            th2 = -M_PI / 2 + xsi + phy;
+        }
+    }
 }

@@ -6,3 +6,155 @@ Right hip (-0.8, 0.2 - limit by stand)
 Tie pivot point center distance: 199.36mm
 Shin length - 205mm
 Foot ball radius - 32.5mm
+
+
+Hip to Shoulder axis rotation matrix
+        new
+      x  y  z
+     ---------
+o  x|-1  0  0 |
+l  y| 0  1  0 |
+d  z| 0  0 -1 |
+     ---------
+
+Shoulder to Knee and Knee to Leg-end axis rotations are identity.
+
+Hip joint rotation matrix (rotation around X axis, angle t):
+   ---------
+  |1   0   0|
+  |0  Ct -St|
+  |0  St  Ct|
+   ---------
+
+Rotation matrix for Hip (Joint rotation for hip X rotation axis for Hip):
+
+   ---------     ---------     ---------
+  |1   0   0|   |-1  0  0 |   |-1  0   0|
+  |0  Ct -St| X | 0  1  0 | = | 0 Ct  St|
+  |0  St  Ct|   | 0  0 -1 |   | 0 St -Ct|
+   ---------     ---------     ---------
+
+Displacement vector for Hip:
+   ---------
+  |    0    |
+  |hipLen*St|
+  |hipLen*Ct|
+   ---------
+
+Homogenous matrix for Hip:
+           -------------------
+          |-1  0   0     0    |
+          | 0 Ct  St hipLen*St|
+  Hhip =  | 0 St -Ct hipLen*Ct|
+          | 0  0   0     1    |
+           -------------------
+
+Rotation matrix for Shoulder (rotate around Z axis, angle s):
+Axis rotation is identity, so this is the total rotation matrix.
+   ---------
+  |Cs -Ss  0|
+  |Ss  Cs  0|
+  | 0   0  1|
+   ---------
+
+Displacement vector for Shoulder:
+   ----------
+  |shldLen*Cs|
+  |shldLen*Ss|
+  |    0     |
+   ----------
+
+Homogenous matrix for Shoulder:
+            --------------------
+           |Cs -Cs  0 shldLen*Cs|
+           |Ss  Cs  0 shldLen*Ss|
+  Hshld =  | 0   0  1     0     |
+           | 0   0  0     1     |
+            --------------------
+
+Rotation matrix for Knee (rotate around Z axis, angle q):
+Axis rotation is identity, so this is the total rotation matrix.
+   ---------
+  |Cq -Sq  0|
+  |Sq  Cq  0|
+  | 0   0  1|
+   ---------
+
+Displacement vector for Knee:
+   ----------
+  |kneeLen*Cq|
+  |kneeLen*Sq|
+  |    0     |
+   ----------
+
+Homogenous matrix for Knee:
+            --------------------
+           |Cq -Cq  0 kneeLen*Cq|
+           |Sq  Cq  0 kneeLen*Sq|
+  Hknee =  | 0   0  1     0     |
+           | 0   0  0     1     |
+            --------------------
+
+Total homogenous matrix = Hhip * Hshld * Hknee
+
+   -------------------     --------------------     --------------------
+  |-1  0   0     0    |   |Cs -Cs  0 shldLen*Cs|   |Cq -Cq  0 kneeLen*Cq|
+  | 0 Ct  St hipLen*St|   |Ss  Cs  0 shldLen*Ss|   |Sq  Cq  0 kneeLen*Sq|
+  | 0 St -Ct hipLen*Ct| X | 0   0  1     0     | X | 0   0  1     0     |
+  | 0  0   0     1    |   | 0   0  0     1     |   | 0   0  0     1     |
+   -------------------     --------------------     --------------------
+
+Lets do the second two first:
+   --------------------     --------------------
+  |Cs -Cs  0 shldLen*Cs|   |Cq -Cq  0 kneeLen*Cq|
+  |Ss  Cs  0 shldLen*Ss|   |Sq  Cq  0 kneeLen*Sq|
+  | 0   0  1     0     | X | 0   0  1     0     |
+  | 0   0  0     1     |   | 0   0  0     1     |
+   --------------------     --------------------
+=   
+   ----------------------------------------------------------------------
+  |Cq*Cs-Sq*Cs    -2*CqCs    0 shldLen*Cs + kneeLen*Cq*Cs - kneeLen*Sq*Cs|
+  |Sq*Cs+Cq*Ss  Cq*Cs-Cq*Ss  0 shldLen*Ss + kneeLen*Sq*Cs + kneeLen*Cq*Ss|
+  |     0            0       1                  0                        |
+  |     0            0       0                  1                        |
+   ----------------------------------------------------------------------
+
+Simplified:
+   ----------------------------------------------------
+  |Cs*(Cq-Sq)  -2*CqCs   0 Cs*(shldLen+kneeLen*(Cq-Sq))|
+  |  S(q+s)   Cq*(Cs-Ss) 0  shldLen*Ss+kneeLen*S(q+s)  |
+  |     0          0     1              0              |
+  |     0          0     0              1              |
+   ----------------------------------------------------
+
+Final:
+
+   -------------------     ----------------------------------------------------
+  |-1  0   0     0    |   |Cs*(Cq-Sq)  -2*CqCs   0 Cs*(shldLen+kneeLen*(Cq-Sq))|
+  | 0 Ct  St hipLen*St|   |  S(q+s)   Cq*(Cs-Ss) 0  shldLen*Ss+kneeLen*S(q+s)  |
+  | 0 St -Ct hipLen*Ct| X |     0          0     1              0              |
+  | 0  0   0     1    |   |     0          0     0              1              |
+   -------------------     ----------------------------------------------------
+=
+   -------------------------------------------------------------------------
+  |-Cs*(Cq-Sq)         2*Cq*Sq   0              -Cs(shldLen+kneeLen*(Cq-Sq))|
+  |  Ct*S(q+s)   Cq*Ct*(Cs-Ss)  St  Ct*(kneeLen*S(q+s)+shldLen*Ss)+hipLen*St|
+  |  St*S(q+s)   Cq*St*(Cs-Ss) -Ct  St*(kneeLen*S(q+s)+shldLen*Ss)+hipLen*Ct|
+  |          0               0   0                                         1|
+   -------------------------------------------------------------------------
+
+
+  | SqCs-CqCs             2CqCs   0            -a*CqCs+a*SqCs-b*Cs|
+  | SqCsCt+CqSsCt CqCsCt-CqSsCt  St  a*SqCsCt+a*CqSsCt+b*SsCt+c*St|
+  | SqCsSt+CqSsSt CqCsSt-CqSsSt -Ct  a*SqCsSt+a*CqSsSt+b*SsSt+c*Ct|
+  |             0             0   0                              1|
+  
+
+Final displacement vector (q - knee angle, s - shoulder angle, t - hip angle):
+
+   ----------------------------------------
+  |            -Cs(shldLen+kneeLen*(Cq-Sq))|
+  |Ct*(kneeLen*S(q+s)+shldLen*Ss)+hipLen*St|
+  |St*(kneeLen*S(q+s)+shldLen*Ss)+hipLen*Ct|
+  |                                       1|
+   ----------------------------------------

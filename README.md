@@ -1,5 +1,5 @@
 # ODriveCan
-Arduino library to communicate with ODrive 3.x boards. This library is not tied to any particular CAN bus hardware implementation. Note: the ODrive Pro and S1 can protocol is very similar to the ODrive 3.x, some of the code may work as is, however the PRO protocol continues to evolve and compatibility is not guarranteed. I don't have PRO or S1 boards, so I can not test if it works or not use at tyour own risk.
+Arduino library to communicate with ODrive 3.x boards. This library is not tied to any particular CAN bus hardware implementation. Note: the ODrive Pro and S1 can protocol is very similar to the ODrive 3.x, some of the code may work as is, however the PRO protocol continues to evolve and compatibility is not guarranteed. I don't have PRO or S1 boards, so I can not test if it works or not use at your own risk.
 
 The provided example Arduino code is tested on SAME51 board from seeed studio as well as Teensy 4.1.
 

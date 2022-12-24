@@ -1,11 +1,14 @@
 /*
  * Copyright (c) 2022 ghent360. See LICENSE file for details.
  *
- * This is a very basic example of communicating with 3 ODrive boards
- * over CAN on SAME51 board. The example would request vbus voltage from
- * each axis and print it on the serial console. It would also verify
- * heartbeat messages are received from each axis or it will print that
- * the axis is unavailable.
+ * This is a very basic example of communicating with 12 ODrive boards
+ * over CAN on SAME51/Teensy4.1 board. The example would request vbus
+ * voltage from each axis and print it on the serial console. It would 
+ * also verify heartbeat messages are received from each axis or it will
+ * print that the axis is unavailable.
+ * 
+ * There is a simple serial interface, where one can start all axes in
+ * closed loop control more, or ser it ti idle.
 */
 #include "ODriveCan.hpp"
 #include "CanInterface.h"
@@ -16,6 +19,7 @@ using odrive::AxisState;
 using odrive::ODriveAxis;
 using odrive::VbusVoltage;
 
+// This class implements a very basic cooperative multitasking controller.
 TaskManager tm;
 
 /*

@@ -6,7 +6,6 @@
 #include <stdint.h>
 #include "can_helpers.hpp"
 
-//#define CHEAT_CAN_SET
 namespace odrive {
 
 // ODrive uses CAN2.0. Message data payload is max 8 bytes long.
@@ -640,23 +639,13 @@ public:
 
   void SetVelGains(float velGain, float velIntegratorGain) {
     uint8_t buf[8];
-    // Cheat here, so we do inline all can_setSignal calls.
-#ifdef CHEAT_CAN_SET
-    setFloat(buf, velGain);
-    setFloat(buf + 4, velIntegratorGain);
-#else    
     can_setSignal<float>(buf, velGain, 0, 32, true);
     can_setSignal<float>(buf, velIntegratorGain, 32, 32, true);
-#endif    
     SendCmd(MSG_SET_VEL_GAINS, 8, buf);
   }
 
 private:
-#ifdef CHEAT_CAN_SET
-  static void setFloat(uint8_t* ptr, float v) {
-    *reinterpret_cast<float*>(ptr) = v;
-  }
-#endif
+
   void SendCmd(uint8_t cmdId, uint8_t len = 0, uint8_t *buf = NULL) {
     uint32_t canId = (node_id << 5) | (cmdId & 0x1f);
     if (can_send_) {
@@ -666,23 +655,5 @@ private:
 
   CanSendMsg can_send_;
 };
-
-// The following helper function is used to process CAN messages over an
-// array of ODriveAxis objects.
-template<int N>
-bool ParseCanMsg(
-    ODriveAxis (&axes)[N],
-    uint32_t msgId,
-    uint8_t dataLen,
-    const CanMsgData& buf) {
-  uint32_t axisId = (msgId >> 5);
-  uint8_t cmdId = (uint8_t)(msgId & 0x1f);
-  for(auto& axis : axes) {
-    if (axis.node_id == axisId) {
-      return axis.Parse(cmdId, dataLen, buf);
-    }
-  }
-  return false;
-}
 
 } // namespace odrive

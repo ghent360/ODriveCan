@@ -14,6 +14,7 @@
 #include "SerialInteraction.h"
 #include "TaskIds.h"
 #include "VoltageMonitor.h"
+#include "globals.h"
 
 using odrive::ODriveAxis;
 using odrive::VbusVoltage;
@@ -207,12 +208,12 @@ void setup() {
   Serial.begin(115200);
   while(!Serial);
 
-  canInit();
+  canInterface.canInit();
   startStateOne();
   initVoltageMonitor();
 }
 
 void loop() {
-  readAndProcessCan();
+  canInterface.readAndProcessCan();
   tm.runNext(millis());
 }

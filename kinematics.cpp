@@ -6,8 +6,11 @@
  * https://github.com/XRobots/openDogV3.
 */
 #include <math.h>
-#include "kinematics.h"
+#include <stdint.h>
 #include <Ramp.h>
+#include "kinematics.h"
+#include "ODriveCan.hpp"
+#include "globals.h"
 
 using odrive::AxisState;
 
@@ -66,10 +69,10 @@ float constrainJointPos(DogLegJoint joint, float pos) {
     case AxisClass::CLASS_SHOULDER: 
         return constrain(pos, -3, 1.35);
         break;
-    default:
     case AxisClass::CLASS_HIP:
         return constrain(pos, -0.8, 0.2);
     }
+    return pos;
 }
 
 void driveJoints(DogLegJoint joint, float pos) {
@@ -487,45 +490,3 @@ const float jointOffsets[numAxes] = {
   [BACK_RIGHT_HIP] = -0.29,
   [BACK_LEFT_HIP] = 0.27
 };
-
-const AxisClass jointClass[numAxes] = {
-  [FRONT_RIGHT_KNEE] = AxisClass::CLASS_KNEE,
-  [FRONT_LEFT_KNEE] = AxisClass::CLASS_KNEE,
-  [BACK_RIGHT_KNEE] = AxisClass::CLASS_KNEE,
-  [BACK_LEFT_KNEE] = AxisClass::CLASS_KNEE,
-  [FRONT_RIGHT_SHOULDER] = AxisClass::CLASS_SHOULDER,
-  [FRONT_LEFT_SHOULDER] = AxisClass::CLASS_SHOULDER,
-  [BACK_RIGHT_SHOULDER] = AxisClass::CLASS_SHOULDER,
-  [BACK_LEFT_SHOULDER] = AxisClass::CLASS_SHOULDER,
-  [FRONT_RIGHT_HIP] = AxisClass::CLASS_HIP,
-  [FRONT_LEFT_HIP] = AxisClass::CLASS_HIP,
-  [BACK_RIGHT_HIP] = AxisClass::CLASS_HIP,
-  [BACK_LEFT_HIP] = AxisClass::CLASS_HIP
-};
-
-#define STRINGIFY(x) #x
-
-const char* axisName[numAxes] = {
-  [FRONT_RIGHT_KNEE] = STRINGIFY(FRONT_RIGHT_KNEE),
-  [FRONT_LEFT_KNEE] = STRINGIFY(FRONT_LEFT_KNEE),
-  [BACK_RIGHT_KNEE] = STRINGIFY(BACK_RIGHT_KNEE),
-  [BACK_LEFT_KNEE] = STRINGIFY(BACK_LEFT_KNEE),
-  [FRONT_RIGHT_SHOULDER] = STRINGIFY(FRONT_RIGHT_SHOULDER),
-  [FRONT_LEFT_SHOULDER] = STRINGIFY(FRONT_LEFT_SHOULDER),
-  [BACK_RIGHT_SHOULDER] = STRINGIFY(BACK_RIGHT_SHOULDER),
-  [BACK_LEFT_SHOULDER] = STRINGIFY(BACK_LEFT_SHOULDER),
-  [FRONT_RIGHT_HIP] = STRINGIFY(FRONT_RIGHT_HIP),
-  [FRONT_LEFT_HIP] = STRINGIFY(FRONT_LEFT_HIP),
-  [BACK_RIGHT_HIP] = STRINGIFY(BACK_RIGHT_HIP),
-  [BACK_LEFT_HIP] = STRINGIFY(BACK_LEFT_HIP)
-};
-
-const char* getLegName(DogLeg leg) {
-  switch(leg) {
-  case FRONT_LEFT: return STRINGIFY(FRONT_LEFT);
-  case FRONT_RIGHT: return STRINGIFY(FRONT_RIGHT);
-  case BACK_LEFT: return STRINGIFY(BACK_LEFT);
-  case BACK_RIGHT: return STRINGIFY(BACK_RIGHT);
-  }
-  return "";
-}

@@ -3,6 +3,7 @@
 */
 #include <Arduino.h>
 #include "ODriveCan.hpp"
+#include "globals.h"
 #include "kinematics.h"
 #include "TaskManager.hpp"
 #include "TaskIds.h"

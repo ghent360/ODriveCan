@@ -5,7 +5,7 @@
 #include <Arduino.h>
 #include <ADC.h>
 #include <ADC_util.h>
-#include "CanInterface.h"
+#include "globals.h"
 
 static const int batteryVoltagePin = A17; // ADC0
 
@@ -310,6 +310,6 @@ float readBatteryVoltage() {
 }
 
 void lowPowerMode() {
-  canSleep();  // Disable the CAN transcievers.
+  canInterface.canSleep();  // Disable the CAN transcievers.
   hal_hibernate();
 }

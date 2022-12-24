@@ -2,8 +2,8 @@
  * Copyright (c) 2022 ghent360. See LICENSE file for details.
  *
 */
+#include "CanInterface.h"
 #include "ODriveCan.hpp"
-#include "kinematics.h"
 
 #ifdef ARDUINO_TEENSY41
 #include <FlexCAN_T4.h>
@@ -13,9 +13,24 @@
 #error Board is not supported.
 #endif
 
-using odrive::CanMsgData;
-using odrive::ODriveAxis;
-using odrive::ParseCanMsg;
+namespace odrive {
+
+static bool ParseCanMsg(
+    ODriveAxis *axes,
+    uint8_t numAxes,
+    uint32_t msgId,
+    uint8_t dataLen,
+    const CanMsgData& buf) {
+  uint32_t axisId = (msgId >> 5);
+  uint8_t cmdId = (uint8_t)(msgId & 0x1f);
+  ODriveAxis *axesEnd = axes + numAxes;
+  for(ODriveAxis *axis = axes; axis < axesEnd; axis++) {
+    if (axis->node_id == axisId) {
+      return axis->Parse(cmdId, dataLen, buf);
+    }
+  }
+  return false;
+}
 
 // Helper to print CAN messages we can not parse.
 static void printCanMessage(uint32_t id, uint8_t len, const CanMsgData& buf) {
@@ -37,7 +52,7 @@ static void printCanMessage(uint32_t id, uint8_t len, const CanMsgData& buf) {
 FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_32> can3;
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_32> can1;
 
-void canInit() {
+void CanInterface::canInit() {
   // Enable CAN trasciever chips
   // CAN 1
   pinMode(2, OUTPUT);
@@ -54,12 +69,12 @@ void canInit() {
   can3.enableFIFO();
 }
 
-void canSleep() {
+void CanInterface::canSleep() {
   digitalWrite(3, HIGH);
   digitalWrite(2, HIGH);
 }
 
-static void sendCmdCh1(uint32_t canId, uint8_t len, uint8_t *buf) {
+void CanInterface::sendCmdCh1(uint32_t canId, uint8_t len, uint8_t *buf) {
   CAN_message_t msg;
   int ret;
   msg.id = canId;
@@ -75,7 +90,7 @@ static void sendCmdCh1(uint32_t canId, uint8_t len, uint8_t *buf) {
   } while (ret == 0);
 }
 
-static void sendCmdCh3(uint32_t canId, uint8_t len, uint8_t *buf) {
+void CanInterface::sendCmdCh3(uint32_t canId, uint8_t len, uint8_t *buf) {
   CAN_message_t msg;
   int ret;
   msg.id = canId;
@@ -91,17 +106,17 @@ static void sendCmdCh3(uint32_t canId, uint8_t len, uint8_t *buf) {
   } while (ret == 0);
 }
 
-void readAndProcessCan() {
+void CanInterface::readAndProcessCan() {
   CAN_message_t msg1;
   CAN_message_t msg2;
   if ( can1.read(msg1) ) {
-    bool parseSuccess = ParseCanMsg(axes, msg1.id, msg1.len, msg1.buf);
+    bool parseSuccess = ParseCanMsg(axes_, numAxes_, msg1.id, msg1.len, msg1.buf);
     if (!parseSuccess) {
       printCanMessage(msg1.id, msg1.len, msg1.buf);
     }
   }
   if ( can3.read(msg2) ) {
-    bool parseSuccess = ParseCanMsg(axes, msg2.id, msg2.len, msg2.buf);
+    bool parseSuccess = ParseCanMsg(axes_, numAxes_, msg2.id, msg2.len, msg2.buf);
     if (!parseSuccess) {
       printCanMessage(msg2.id, msg2.len, msg2.buf);
     }
@@ -111,7 +126,7 @@ void readAndProcessCan() {
 #elif ARDUINO_CANBED_M4
 SAME51_CAN can;
 
-void canInit() {
+void CanInterface::canInit() {
   uint8_t ret;
   ret = can.begin(MCP_ANY, CAN_1000KBPS, MCAN_MODE_CAN);
   if (ret == CAN_OK) {
@@ -122,10 +137,10 @@ void canInit() {
   }
 }
 
-void canSleep() {
+void CanInterface::canSleep() {
 }
 
-static void sendCmdCh1(uint32_t canId, uint8_t len, uint8_t *buf) {
+void CanInterface::sendCmdCh1(uint32_t canId, uint8_t len, uint8_t *buf) {
   uint8_t ret;
   do {
     ret = can.sendMsgBuf(canId, 0, len, buf);
@@ -142,20 +157,20 @@ static void sendCmdCh1(uint32_t canId, uint8_t len, uint8_t *buf) {
   }
 }
 
-static void sendCmdCh3(uint32_t canId, uint8_t len, uint8_t *buf) {
+void CanInterface::sendCmdCh3(uint32_t canId, uint8_t len, uint8_t *buf) {
   sendCmdCh1(canId, len, buf);
 }
 
 // Note this should be non-blocking code, if there are no CAN
 // messages in the RX queue, readMsgBuf should return some error
 // but not wait for messages to appear.
-void readAndProcessCan() {
+void CanInterface::readAndProcessCan() {
   uint32_t id;
   uint8_t len;
   static uint8_t buf[8];
 
   if (can.readMsgBuf(&id, &len, buf) == CAN_OK) {
-    bool parseSuccess = ParseCanMsg(axes, id, len, buf);
+    bool parseSuccess = ParseCanMsg(axes_, numAxes_, id, len, buf);
     if (!parseSuccess) {
       printCanMessage(id, len, buf);
     }
@@ -164,28 +179,4 @@ void readAndProcessCan() {
 }
 #endif
 
-// We communicate with 3 ODrive boards, each board has 2 axes. Each axis
-// has to be setup separately. If you have boards that are connected to a
-// different CAN bus, you would need separate CAN callback for each bus.
-// For example SendCmdCh1.
-//
-// It is required to have unique node_id even if some axis are on a
-// separate CAN bus. Otherwise the parsing code has to be modified to 
-// process each CAN bus separately.
-//
-// On my setup the axes have even node_ids starting with 1. These have to
-// be configured using the odrivetool.
-ODriveAxis axes[numAxes] = {
-  [FRONT_RIGHT_KNEE] = ODriveAxis( 8, sendCmdCh3),
-  [FRONT_LEFT_KNEE] = ODriveAxis( 7, sendCmdCh1),
-  [BACK_RIGHT_KNEE] = ODriveAxis( 6, sendCmdCh3),
-  [BACK_LEFT_KNEE] = ODriveAxis( 5, sendCmdCh1),
-  [FRONT_RIGHT_SHOULDER] = ODriveAxis( 4, sendCmdCh3),
-  [FRONT_LEFT_SHOULDER] = ODriveAxis( 3, sendCmdCh1),
-  [BACK_RIGHT_SHOULDER] = ODriveAxis(12, sendCmdCh3),
-  [BACK_LEFT_SHOULDER] = ODriveAxis(11, sendCmdCh1),
-  [FRONT_RIGHT_HIP] = ODriveAxis( 2, sendCmdCh3),
-  [FRONT_LEFT_HIP] = ODriveAxis( 1, sendCmdCh1),
-  [BACK_RIGHT_HIP] = ODriveAxis( 10, sendCmdCh3),
-  [BACK_LEFT_HIP] = ODriveAxis( 9, sendCmdCh1)
-};
+} // namespace odrive

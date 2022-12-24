@@ -7,111 +7,16 @@
  * heartbeat messages are received from each axis or it will print that
  * the axis is unavailable.
 */
-#include <same51_can.h>
 #include "ODriveCan.hpp"
+#include "CanInterface.h"
 #include "TaskManager.hpp"
+#include "kinematics.h"
 
 using odrive::AxisState;
-using odrive::CanMsgData;
 using odrive::ODriveAxis;
-using odrive::ParseCanMsg;
 using odrive::VbusVoltage;
 
-SAME51_CAN can;
 TaskManager tm;
-
-// Function that interfaces ODrive with our can hardware. If you want to
-// use multiple CAN buses you would need one for each bus.
-//
-// Note that sometimes it is possible to send too many messages at once
-// and overwhelm the TX queue, this code detects such situation and adds
-// a delay, so the message can be transmitted correctly.
-static void sendCmdCh0(uint32_t canId, uint8_t len, uint8_t *buf) {
-  uint8_t ret;
-  do {
-    ret = can.sendMsgBuf(canId, 0, len, buf);
-    if (ret == CAN_FAILTX) {  // TX queue is full, wait a bit.
-      delayMicroseconds(200); // Time to transmit 200 bits @ 1MBit/s
-    }
-  } while (ret == CAN_FAILTX);
-
-  if (ret != CAN_OK) {
-    Serial.print("Failed to send message ID ");
-    Serial.print(canId, HEX);
-    Serial.print(" error ");
-    Serial.println(ret);
-  }
-}
-
-// Helper to print CAN messages we can not parse.
-static void printCanMessage(uint32_t id, uint8_t len, const CanMsgData& buf) {
-  Serial.print("Id: ");
-  Serial.print(id);
-  Serial.print(" Len: ");
-  Serial.print(len);
-  Serial.print(" Data: ");
-  for (uint8_t i = 0; i < len; i++) {
-    Serial.print(buf[i], HEX);
-    Serial.print(", ");
-  }
-  Serial.println();
-}
-
-// AXIS class definitions:
-enum AxisClass {
-  CLASS_KNEE = 0x1,
-  CLASS_HIP  = 0x2,
-  CLASS_SHOULDER = 0x3
-};
-
-enum AxisSide {
-  SIDE_LEFT = 0x10,
-  SIDE_RIGHT = 0x20
-};
-
-enum AxisLocation {
-  LOC_FRONT = 0x100,
-  LOC_BACK  = 0x200
-};
-
-// We communicate with 3 ODrive boards, each board has 2 axes. Each axis
-// has to be setup separately. If you have boards that are connected to a
-// different CAN bus, you would need separate CAN callback for each bus.
-// For example SendCmdCh1.
-//
-// It is required to have unique node_id even if some axis are on a
-// separate CAN bus. Otherwise the parsing code has to be modified to 
-// process each CAN bus separately.
-//
-// On my setup the axes have even node_ids starting with 1. These have to
-// be configured using the odrivetool.
-ODriveAxis axes[] = {
-  ODriveAxis( 1, SIDE_LEFT | LOC_FRONT | CLASS_SHOULDER, sendCmdCh0),
-  ODriveAxis( 3, SIDE_LEFT | LOC_FRONT | CLASS_HIP, sendCmdCh0),
-  ODriveAxis( 5, SIDE_LEFT | LOC_BACK  | CLASS_KNEE, sendCmdCh0),
-  ODriveAxis( 7, SIDE_LEFT | LOC_FRONT | CLASS_KNEE, sendCmdCh0),
-  ODriveAxis( 9, SIDE_LEFT | LOC_BACK  | CLASS_SHOULDER, sendCmdCh0),
-  ODriveAxis(11, SIDE_LEFT | LOC_BACK  | CLASS_HIP, sendCmdCh0),
-};
-
-#define NUM_AXES (sizeof(axes)/sizeof(axes[0]))
-
-// Note this should be non-blocking code, if there are no CAN
-// messages in the RX queue, readMsgBuf should return some error
-// but not wait for messages to appear.
-static void readAndProcessCan() {
-  uint32_t id;
-  uint8_t len;
-  static uint8_t buf[8];
-
-  if (can.readMsgBuf(&id, &len, buf) == CAN_OK) {
-    bool parseSuccess = ParseCanMsg(axes, id, len, buf);
-    if (!parseSuccess) {
-      printCanMessage(id, len, buf);
-    }
-  }
-  // Add reading from other CAN busses here, process in similar fashion.
-}
 
 /*
  * The following code is a basic three state machine. We start with the state
@@ -179,26 +84,26 @@ static void checkSerialInput(TaskNode*, uint32_t) {
   }
 }
 
-static void axisVbusValueCheck(ODriveAxis&, VbusVoltage& v) {
+static void axisVbusValueCheck(
+  ODriveAxis& axis,
+  VbusVoltage&,
+  VbusVoltage& v) {
   if (v.val < 19.4f) { // Cut off voltage for 6S battery.
-    for(auto& axis: axes) {
-      axis.EStop(); // Call EStop to reduce the axis power consumption.
+    for(auto& a: axes) {
+      a.EStop(); // Call EStop to reduce the axis power consumption.
     }
-    Serial.println("Battery voltage low.");
+    Serial.print("Axis ");
+    Serial.print(axis.node_id);
+    Serial.print(" battery voltage low: ");
+    Serial.println(v.val);
   }
-/*
-  Serial.print("Axis ");
-  Serial.print(axis.node_id);
-  Serial.print(" vbus=");
-  Serial.println(v.val);
-*/  
 }
 
 static void checkAxisVbusVoltage(TaskNode*, uint32_t) {
   static uint8_t axisIdx = 0;
   axes[axisIdx].RequestVbusVoltage();
   axisIdx++;
-  if (axisIdx >= NUM_AXES) {
+  if (axisIdx >= numAxes) {
     axisIdx = 0;
   }
 }
@@ -281,9 +186,9 @@ static void clearErrorsAndSwitchToStateThree(TaskNode* self, uint32_t) {
 static void checkAllAxesArePresent(TaskNode* self, uint32_t) {
   bool allAlive = true;
   for(auto& axis: axes) {
+    axis.hb.PeriodicCheck(axis);
     if (!axis.hb.alive) {
       allAlive = false;
-      break;
     }
   }
   if (allAlive) {
@@ -297,14 +202,7 @@ void setup() {
   Serial.begin(115200);
   while(!Serial);
   
-  uint8_t ret;
-  ret = can.begin(MCP_ANY, CAN_1000KBPS, MCAN_MODE_CAN);
-  if (ret == CAN_OK) {
-      Serial.println("CAN Initialized Successfully!");
-  } else {
-      Serial.println("Error Initializing CAN...");
-      while(1);
-  }
+  canInit();
   Serial.println("Waiting for odrives to connect...");
   // Start in state one
   tm.addFront(tm.newPeriodicTask(0, 100, checkAllAxesArePresent));

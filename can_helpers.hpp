@@ -4,7 +4,8 @@
 #include <stdint.h>
 
 template <typename T, size_t N>
-T can_getSignal(const uint8_t (&buf)[N], const size_t startBit, const size_t length, const bool isIntel) {
+__attribute__((always_inline)) inline T can_getSignal(
+    const uint8_t (&buf)[N], const size_t startBit, const size_t length, const bool isIntel) {
     union {
         uint64_t tempVal;
         uint8_t tempBuf[8]; // This is used because memcpy into tempVal generates less optimal code
@@ -27,7 +28,8 @@ T can_getSignal(const uint8_t (&buf)[N], const size_t startBit, const size_t len
 }
 
 template <typename T, size_t N>
-void can_setSignal(uint8_t (&buf)[N], const T& val, const size_t startBit, const size_t length, const bool isIntel) {
+__attribute__((always_inline)) inline void can_setSignal(
+    uint8_t (&buf)[N], const T& val, const size_t startBit, const size_t length, const bool isIntel) {
 
     const uint64_t mask = length < 64 ? (1ULL << length) - 1ULL : -1ULL;
     const uint8_t shift = isIntel ? (startBit % 8) : (64 - startBit % 8) - length;

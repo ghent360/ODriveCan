@@ -1,8 +1,10 @@
 /*
  * Copyright (c) 2022 ghent360. See LICENSE file for details.
 */
+#pragma once
+
 #include <stdint.h>
-#include <can_helpers.hpp>
+#include "can_helpers.hpp"
 
 namespace odrive {
 
@@ -111,7 +113,8 @@ struct Heartbeat {
     ERROR_UNKNOWN_POSITION           = 0x00080000,
   };
 
-  typedef void (*Callback)(ODriveAxis& axis, Heartbeat &, bool);
+  typedef void (*Callback)(
+    ODriveAxis& axis, Heartbeat &old, Heartbeat &newVal);
   void SetCallback(const Callback cb) {
     cb_ = cb;
   }
@@ -122,17 +125,22 @@ struct Heartbeat {
     uint8_t dataLen,
     const CanMsgData& msg) {
     if (cmdId == MSG_ODRIVE_HEARTBEAT && dataLen == 8) {
-      error = can_getSignal<uint32_t>(msg, 0, 32, true);
-      state = can_getSignal<uint8_t>(msg, 4*8, 8, true);
-      //motor_flags = can_getSignal<uint8_t>(msg, 5*8, 8, true);
-      //encoder_flags = can_getSignal<uint8_t>(msg, 6*8, 8, true);
-      ctrl_state = can_getSignal<uint8_t>(msg, 7*8, 8, true);
-      bool was_alive = alive;
-      alive = true;
-      alive_hb_ = true;
+      Heartbeat newHb;
+      newHb.error = can_getSignal<uint32_t>(msg, 0, 32, true);
+      newHb.state = can_getSignal<uint8_t>(msg, 4*8, 8, true);
+      //newHb.motor_flags = can_getSignal<uint8_t>(msg, 5*8, 8, true);
+      //newHb.encoder_flags = can_getSignal<uint8_t>(msg, 6*8, 8, true);
+      newHb.ctrl_state = can_getSignal<uint8_t>(msg, 7*8, 8, true);
+      newHb.alive = true;
+      newHb.alive_hb_ = true;
       if (cb_) {
-        cb_(axis, *this, was_alive);
+        cb_(axis, *this, newHb);
       }
+      alive = newHb.alive;
+      alive_hb_ = newHb.alive_hb_;
+      error = newHb.error;
+      state = newHb.state;
+      ctrl_state = newHb.ctrl_state;
       return true;
     }
     return false;
@@ -168,7 +176,8 @@ struct EncoderEstimate {
   float pos;
   float vel;
 
-  typedef void (*Callback)(ODriveAxis& axis, EncoderEstimate &);
+  typedef void (*Callback)(
+    ODriveAxis& axis, EncoderEstimate &old, EncoderEstimate &newVal);
   void SetCallback(const Callback cb) {
     cb_ = cb;
   }
@@ -179,11 +188,14 @@ struct EncoderEstimate {
     uint8_t dataLen,
     const CanMsgData& msg) {
     if (cmdId == MSG_GET_ENCODER_ESTIMATES && dataLen == 8) {
-      pos = can_getSignal<float>(msg, 0, 32, true);
-      vel = can_getSignal<float>(msg, 32, 32, true);
+      EncoderEstimate newEst;
+      newEst.pos = can_getSignal<float>(msg, 0, 32, true);
+      newEst.vel = can_getSignal<float>(msg, 32, 32, true);
       if (cb_) {
-        cb_(axis, *this);
+        cb_(axis, *this, newEst);
       }
+      pos = newEst.pos;
+      vel = newEst.vel;
       return true;
     }
     return false;
@@ -196,7 +208,8 @@ struct EncoderCount {
   int32_t shadowCount;
   int32_t countInCPR;
 
-  typedef void (*Callback)(ODriveAxis& axis, EncoderCount &);
+  typedef void (*Callback)(
+    ODriveAxis& axis, EncoderCount &old, EncoderCount &newVal);
   void SetCallback(const Callback cb) {
     cb_ = cb;
   }
@@ -207,11 +220,14 @@ struct EncoderCount {
     uint8_t dataLen,
     const CanMsgData& msg) {
     if (cmdId == MSG_GET_ENCODER_COUNT && dataLen == 8) {
-      shadowCount = can_getSignal<int32_t>(msg, 0, 32, true);
-      countInCPR = can_getSignal<int32_t>(msg, 32, 32, true);
+      EncoderCount newEcnt;
+      newEcnt.shadowCount = can_getSignal<int32_t>(msg, 0, 32, true);
+      newEcnt.countInCPR = can_getSignal<int32_t>(msg, 32, 32, true);
       if (cb_) {
-        cb_(axis, *this);
+        cb_(axis, *this, newEcnt);
       }
+      shadowCount = newEcnt.shadowCount;
+      countInCPR = newEcnt.countInCPR;
       return true;
     }
     return false;
@@ -224,7 +240,7 @@ struct IqValues {
   float iqSetpoint;
   float iqMeasured;
 
-  typedef void (*Callback)(ODriveAxis& axis, IqValues &);
+  typedef void (*Callback)(ODriveAxis& axis, IqValues &old, IqValues &newVal);
   void SetCallback(const Callback cb) {
     cb_ = cb;
   }
@@ -235,11 +251,14 @@ struct IqValues {
     uint8_t dataLen,
     const CanMsgData& msg) {
     if (cmdId == MSG_GET_IQ && dataLen == 8) {
-      iqSetpoint = can_getSignal<float>(msg, 0, 32, true);
-      iqMeasured = can_getSignal<float>(msg, 32, 32, true);
+      IqValues newIq;
+      newIq.iqSetpoint = can_getSignal<float>(msg, 0, 32, true);
+      newIq.iqMeasured = can_getSignal<float>(msg, 32, 32, true);
       if (cb_) {
-        cb_(axis, *this);
+        cb_(axis, *this, newIq);
       }
+      iqSetpoint = newIq.iqSetpoint;
+      iqMeasured = newIq.iqMeasured;
       return true;
     }
     return false;
@@ -252,7 +271,8 @@ struct SensorlessEstimates {
   float pos;
   float vel;
 
-  typedef void (*Callback)(ODriveAxis& axis, SensorlessEstimates &);
+  typedef void (*Callback)(
+    ODriveAxis& axis, SensorlessEstimates &old, SensorlessEstimates &newVal);
   void SetCallback(const Callback cb) {
     cb_ = cb;
   }
@@ -263,11 +283,14 @@ struct SensorlessEstimates {
     uint8_t dataLen,
     const CanMsgData& msg) {
     if (cmdId == MSG_GET_SENSORLESS_ESTIMATES && dataLen == 8) {
-      pos = can_getSignal<float>(msg, 0, 32, true);
-      vel = can_getSignal<float>(msg, 32, 32, true);
+      SensorlessEstimates newEst;
+      newEst.pos = can_getSignal<float>(msg, 0, 32, true);
+      newEst.vel = can_getSignal<float>(msg, 32, 32, true);
       if (cb_) {
-        cb_(axis, *this);
+        cb_(axis, *this, newEst);
       }
+      pos = newEst.pos;
+      vel = newEst.vel;
       return true;
     }
     return false;
@@ -310,7 +333,8 @@ struct MotorError {
     ERROR_UNBALANCED_PHASES          = 0x800000000,
   };
 
-  typedef void (*Callback)(ODriveAxis& axis, MotorError &);
+  typedef void (*Callback)(
+    ODriveAxis& axis, MotorError &old, MotorError &newVal);
   void SetCallback(const Callback cb) {
     cb_ = cb;
   }
@@ -321,10 +345,12 @@ struct MotorError {
     uint8_t dataLen,
     const CanMsgData& msg) {
     if (cmdId == MSG_GET_MOTOR_ERROR && dataLen == 8) {
-      err = can_getSignal<uint64_t>(msg, 0, 64, true);
+      MotorError newErr;
+      newErr.err = can_getSignal<uint64_t>(msg, 0, 64, true);
       if (cb_) {
-        cb_(axis, *this);
+        cb_(axis, *this, newErr);
       }
+      err = newErr.err;
       return true;
     }
     return false;
@@ -350,7 +376,8 @@ struct EncoderError {
     ERROR_HALL_NOT_CALIBRATED_YET    = 0x00000200,
   };
 
-  typedef void (*Callback)(ODriveAxis& axis, EncoderError &);
+  typedef void (*Callback)(
+    ODriveAxis& axis, EncoderError &old, EncoderError &newVal);
   void SetCallback(const Callback cb) {
     cb_ = cb;
   }
@@ -361,10 +388,12 @@ struct EncoderError {
     uint8_t dataLen,
     const CanMsgData& msg) {
     if (cmdId == MSG_GET_ENCODER_ERROR && dataLen >= 4) {
-      err = can_getSignal<uint32_t>(msg, 0, 32, true);
+      EncoderError newErr;
+      newErr.err = can_getSignal<uint32_t>(msg, 0, 32, true);
       if (cb_) {
-        cb_(axis, *this);
+        cb_(axis, *this, newErr);
       }
+      err = newErr.err;
       return true;
     }
     return false;
@@ -382,7 +411,8 @@ struct SensorlessError {
     ERROR_UNKNOWN_CURRENT_MEASUREMENT = 0x00000002,
   };
   
-  typedef void (*Callback)(ODriveAxis& axis, SensorlessError &);
+  typedef void (*Callback)(
+    ODriveAxis& axis, SensorlessError &old, SensorlessError &newVal);
   void SetCallback(const Callback cb) {
     cb_ = cb;
   }
@@ -393,10 +423,12 @@ struct SensorlessError {
     uint8_t dataLen,
     const CanMsgData& msg) {
     if (cmdId == MSG_GET_SENSORLESS_ERROR && dataLen >= 4) {
-      err = can_getSignal<uint32_t>(msg, 0, 32, true);
+      SensorlessError newErr;
+      newErr.err = can_getSignal<uint32_t>(msg, 0, 32, true);
       if (cb_) {
-        cb_(axis, *this);
+        cb_(axis, *this, newErr);
       }
+      err = newErr.err;
       return true;
     }
     return false;
@@ -408,7 +440,8 @@ private:
 struct VbusVoltage {
   float val;
 
-  typedef void (*Callback)(ODriveAxis& axis, VbusVoltage &);
+  typedef void (*Callback)(
+    ODriveAxis& axis, VbusVoltage &old, VbusVoltage& newVal);
   void SetCallback(const Callback cb) {
     cb_ = cb;
   }
@@ -419,10 +452,12 @@ struct VbusVoltage {
     uint8_t dataLen,
     const CanMsgData& msg) {
     if (cmdId == MSG_GET_VBUS_VOLTAGE && dataLen >= 4) {
-      val = can_getSignal<float>(msg, 0, 32, true);
+      VbusVoltage newVal;
+      newVal.val = can_getSignal<float>(msg, 0, 32, true);
       if (cb_) {
-        cb_(axis, *this);
+        cb_(axis, *this, newVal);
       }
+      val = newVal.val;
       return true;
     }
     return false;
@@ -444,9 +479,6 @@ public:
   // be known/set before the CAN communication would work.
   uint32_t            node_id;
 
-  // User defined ID for this axis. For example AXIS_LEFT_FRONT_HIP.
-  uint32_t            user_id;
-
   // The following list is structures from the messages we care to decode.
   // You can skip on some of the messages to save code/data, for example
   // The Sensorless messages are not handled (commented out).
@@ -460,8 +492,8 @@ public:
   MotorError          mot_err;
   VbusVoltage         vbus;
 
-  ODriveAxis(uint32_t nodeId, uint32_t userId, CanSendMsg canSend) 
-    : node_id(nodeId), user_id(userId), can_send_(canSend) {}
+  ODriveAxis(uint32_t nodeId, CanSendMsg canSend) 
+    : node_id(nodeId), can_send_(canSend) {}
 
   // You must call the Parse method on all messages you wish to handle form
   // the list above. The code does not look pretty, but the compiler
@@ -515,9 +547,9 @@ public:
     SendCmd(MSG_GET_ENCODER_COUNT);
   }
 
-  void SetControllerModes(ControlMode ctrlMode, InputMode inputMode) {
+  void SetControlerModes(ControlMode crtlMode, InputMode inputMode) {
     uint8_t buf[8];
-    can_setSignal<int32_t>(buf, ctrlMode, 0, 32, true);
+    can_setSignal<int32_t>(buf, crtlMode, 0, 32, true);
     can_setSignal<int32_t>(buf, inputMode, 32, 32, true);
     SendCmd(MSG_SET_CONTROLLER_MODES, 8, buf);
   }

@@ -8,7 +8,7 @@ namespace odrive {
 
 class ODriveAxis;
 
-// You would need to adapt this class to your board
+// You may need to adapt this class to your board
 class CanInterface {
 public:
     CanInterface(ODriveAxis* axes, uint8_t numAxes)

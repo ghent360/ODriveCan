@@ -55,6 +55,7 @@ void canInit() {
 }
 
 void canSleep() {
+  // Disable CAN trasciever chips
   digitalWrite(3, HIGH);
   digitalWrite(2, HIGH);
 }
@@ -142,6 +143,7 @@ static void sendCmdCh1(uint32_t canId, uint8_t len, uint8_t *buf) {
   }
 }
 
+// On the SAME51 board there is only one CAN channel.
 static void sendCmdCh3(uint32_t canId, uint8_t len, uint8_t *buf) {
   sendCmdCh1(canId, len, buf);
 }

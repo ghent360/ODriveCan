@@ -5,20 +5,6 @@
 #include <stdint.h>
 #include "ODriveCan.hpp"
 
-enum DogLeg {
-    FRONT_LEFT = 1,
-    FRONT_RIGHT,
-    BACK_LEFT,
-    BACK_RIGHT
-};
-
-// AXIS class definitions:
-enum AxisClass {
-  CLASS_KNEE = 0x1,
-  CLASS_HIP  = 0x2,
-  CLASS_SHOULDER = 0x3
-};
-
 enum DogLegJoint {
     FRONT_RIGHT_KNEE,
     FRONT_LEFT_KNEE,
@@ -35,7 +21,4 @@ enum DogLegJoint {
 };
 
 constexpr int numAxes = 12;
-extern const float jointOffsets[numAxes]; // Index with DogLegJoint value
-extern const AxisClass jointClass[numAxes]; // Index with DogLegJoint value
 extern odrive::ODriveAxis axes[numAxes]; // Index with DogLegJoint value (defined in CanInterface.cpp)
-extern const char* axisName[numAxes]; // Index with DogLegJoint value

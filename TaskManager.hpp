@@ -1,10 +1,13 @@
 /*
  * Copyright (c) 2022 ghent360. See LICENSE file for details.
 */
+#pragma once
 #include <stdint.h>
 
 // Returns the current time in milliseconds
+#ifndef ARDUINO
 extern "C" uint32_t millis();
+#endif
 
 // This is internal class structure for each task.
 class TaskNode {

@@ -62,27 +62,59 @@ TEST_SUITE("Kinematics2") {
 
     TEST_CASE("Full forward kinematics") {
         float x, y, z;
+        forwardKinematics2(0, 0, 0, x, y, z);
+        forwardKinematics2(-M_PI/2, 0, 0, x, y, z);
+        forwardKinematics2(-M_PI/2, 0, M_PI/2, x, y, z);
+        forwardKinematics2(0, M_PI/2, 0, x, y, z);
+        forwardKinematics2(0, M_PI/2, M_PI/2, x, y, z);
+        forwardKinematics2(M_PI/4, -M_PI/2, 0, x, y, z);
+        forwardKinematics2(M_PI/3, -M_PI/2, 0, x, y, z);
+        forwardKinematics2(M_PI/2.05, -M_PI/2, 0, x, y, z);
+        forwardKinematics2(M_PI/2, -M_PI/2, 0, x, y, z);
+
+        // Lef fully extended down, hip horizontal 
+        // (have to rotate the tie to point down)
         forwardKinematics2(0, -M_PI/2, 0, x, y, z);
         CHECK(fabs(x) < 0.0005);
-        CHECK(fabs(y + (float)(199.36 + 205)) < 1E-8);
+        CHECK(fabs(y + (199.36f + 205.0f)) < 0.0005);
         CHECK(fabs(z - 107.36f) < 0.0005);
-        forwardKinematics2(0, M_PI/2, -M_PI/2, x, y, z);
-        CHECK(fabs(x) < 0.0005);
-        CHECK(fabs(y + 107.36f) < 0.0005);
-        CHECK(fabs(z + (199.36f + 205.0f)) < 0.0005);
+        // Leg fully extended, hip vertical up
         forwardKinematics2(-M_PI/2, -M_PI/2, 0, x, y, z);
         CHECK(fabs(x) < 0.0005);
-        CHECK(fabs(y + (float)(199.36 + 205)) < 1E-8);
+        CHECK(fabs(y - 107.36f) < 0.0005);
+        CHECK(fabs(z + (199.36f + 205.0f)) < 0.0005);
+        // Leg fully extended, hip vertical down
+        forwardKinematics2(M_PI/2, -M_PI/2, 0, x, y, z);
+        CHECK(fabs(x) < 0.0005);
+        CHECK(fabs(y + 107.36f) < 0.0005);
+        CHECK(fabs(z - (199.36f + 205.0f)) < 0.0005);
+        forwardKinematics2(0, -M_PI/2, M_PI/2, x, y, z);
+        CHECK(fabs(x - 205.0f) < 0.0005);
+        CHECK(fabs(y + 199.36f) < 0.0005);
+        CHECK(fabs(z - 107.36f) < 0.0005);
+        forwardKinematics2(0, -M_PI/2, -M_PI/2, x, y, z);
+        CHECK(fabs(x + 205.0f) < 0.0005);
+        CHECK(fabs(y + 199.36f) < 0.0005);
         CHECK(fabs(z - 107.36f) < 0.0005);
     }
 
     TEST_CASE("Full inverse kinematics") {
-        float th1, th2, th3;
-        inverseKinematics2(0, -(199.36f + 205.0f), 107.36f, true, th1, th2, th3);
-        CHECK(fabs(th1) < 0.0005);
-        CHECK(fabs(th2) < 0.0005); // -M_PI/2
-        CHECK(fabs(th3) < 0.0005);
+        float h, t, k;
+        inverseKinematics2(0, -(199.36f + 205.0f), 107.36f, true, h, t, k);
+        CHECK(fabs(h) < 0.0005);
+        CHECK(fabs(t) < 0.0005); // should be -M_PI/2 to match FK
+        CHECK(fabs(k) < 0.0005);
         // Can't solve Y > 0
-        //inverseKinematics2(0, -107.36f, -(199.36f + 205.0f), true, th1, th2, th3);
+        //inverseKinematics2(0, 107.36f, -(199.36f + 205.0f), true, th1, th2, th3);
+        // Can't solve correctly edge condition if (z > 0) needs TLC.
+        //inverseKinematics2(0, -107.36f, (199.36f + 205.0f), true, h, t, k);
+        inverseKinematics2(205, -199.36, 107.36, true, h, t, k);
+        CHECK(fabs(h) < 0.0005);
+        CHECK(fabs(t) < 0.0005); // should be -M_PI/2
+        CHECK(fabs(k - M_PI / 2) < 0.0005);
+        inverseKinematics2(-205, -199.36, 107.36, false, h, t, k);
+        CHECK(fabs(h) < 0.0005);
+        CHECK(fabs(t) < 0.0005); // should be -M_PI/2
+        CHECK(fabs(k + M_PI / 2) < 0.0005);
     }
 }

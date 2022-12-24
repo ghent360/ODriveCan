@@ -43,25 +43,22 @@ void inverseKinematics(float x, float y, float &th1, float &th2) {
 
 /* Full kinematics for the leg in all 3 dimensions */
 void forwardKinematics2(
-    float q, float s, float t, float &x, float &y, float &z) {
-    float Ct = cosf(t);
-    float St = sinf(t);
-    float tmp = (shinLength * sinf(q+s) + tieLength * sinf(s));
-
-    x = -cosf(s) * (tieLength + shinLength * (cosf(q) - sinf(q)));
-    y = Ct * tmp + hipLength * St;
-    z = St * tmp + hipLength * Ct;
+    float h, float t, float k, float &x, float &y, float &z) {
+    //h = 2*M_PI - h; // negate h
+    x = shinLength*cos(t + k) + tieLength*cos(t);
+    y = hipLength*sin(h) + cos(h)*(shinLength*sin(t + k) + tieLength*sin(t));
+    z = hipLength*cos(h) + sin(h)*(shinLength*sin(t + k) + tieLength*sin(t));
 }
 
 void inverseKinematics2(
-    float x, float y, float z, bool posth3, float &th1, float &th2, float &th3) {
+    float x, float y, float z, bool posth3, float &h, float &t, float &k) {
     float hypz = sqrtf(z * z + y * y);
     float alpha = acosf(fabs(z) / hypz);
     float beta = acosf(hipLength / hypz);
     if (z > 0) {
-        th3 = alpha - beta;
+        h = alpha - beta;
     } else {
-        th3 = M_PI - alpha - beta;
+        h = M_PI - alpha - beta;
     }
     float xprime = x;
     float yprime = -sqrtf(y*y + z*z - hipLength2);
@@ -69,22 +66,22 @@ void inverseKinematics2(
     float hypx = sqrtf(hypx2);
     float phy = acosf(fabs(xprime) / hypx);
     float xsi = acosf((tieLength2 + hypx2 - shinLength2) / (2 * tieLength * hypx));
-    th1  = acosf((tieLength2 + shinLength2 - hypx2) / (2 * tieLength * shinLength));
-    if (fabsf(th1 - (float)M_PI) < 0.0005f) {
-        th1 = 0;
+    k  = acosf((tieLength2 + shinLength2 - hypx2) / (2 * tieLength * shinLength));
+    if (fabsf(k - (float)M_PI) < 0.0005f) {
+        k = 0;
     }
     if (posth3) {
         if (xprime >= 0) {
-            th2 = M_PI / 2 - xsi - phy;
+            t = M_PI / 2 - xsi - phy;
         } else {
-            th2 = -M_PI / 2 - xsi + phy;
+            t = -M_PI / 2 - xsi + phy;
         }
     } else {
-        th1 = -th1;
+        k = -k;
         if (xprime >= 0) {
-            th2 = M_PI / 2 + xsi - phy;
+            t = M_PI / 2 + xsi - phy;
         } else {
-            th2 = -M_PI / 2 + xsi + phy;
+            t = -M_PI / 2 + xsi + phy;
         }
     }
 }

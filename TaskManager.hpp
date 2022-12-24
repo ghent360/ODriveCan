@@ -9,9 +9,15 @@
 extern "C" uint32_t millis();
 #endif
 
+// This is internal class structure for each task.
 class TaskNode {
 public:
-  typedef void (*Callback)(TaskNode* self, uint32_t);
+  // A task is implemented by a function. It is expected that
+  // each task would not do blocking calls.
+  //
+  // Teach task gets passed the TaskNode structure and the current
+  // time in milliseconds
+  typedef void (*Callback)(TaskNode* self, uint32_t tineNow);
 
   uint32_t id() const { return id_; }
   void run(uint32_t timeNow) {
@@ -38,6 +44,7 @@ public:
     reset();
   }
 
+  // Reset the task manager to empty state.
   void reset() {
     task_list_start_ = task_list_end_ = nullptr;
     last_idle_time_ = 0;
@@ -46,12 +53,13 @@ public:
     }
   }
 
+  // Allocate a new task. Return nullptr if we are out of task nodes.
   TaskNode* newTask(
-      uint32_t id,
-      uint32_t timeNow,
-      uint32_t interval,
-      bool isPeriodic,
-      TaskNode::Callback cb) {
+      uint32_t id,      // ID for the task, so it can be found later
+      uint32_t timeNow, // the current time in milliseconds
+      uint32_t interval,// how long to wait before executing the task
+      bool isPeriodic,  // periodic tasks get re-scheduled automatically
+      TaskNode::Callback cb) { // The function that implements the task
     for(auto& node : pool_) {
       if (!node.in_use_) {
         node.in_use_ = true;
@@ -69,6 +77,7 @@ public:
     return nullptr;
   }
 
+  // Simplified interface for newTask for non periodic tasks
   TaskNode* newSimpleTask(
       uint32_t id,
       uint32_t interval,
@@ -76,6 +85,7 @@ public:
     return newTask(id, millis(), interval, false, cb);
   }
 
+  // Simplified interface for newTask for periodic tasks
   TaskNode* newPeriodicTask(
       uint32_t id,
       uint32_t interval,
@@ -83,6 +93,10 @@ public:
     return newTask(id, millis(), interval, true, cb);
   }
 
+  // Free a previously allocated task. Note before calling freeTask
+  // the task should be removed from the scheduler.
+  //
+  // In practice you should never call this method directly.
   void freeTask(TaskNode* node) {
     if (node) {
       node->in_use_ = false;
@@ -94,6 +108,7 @@ public:
     }
   }
 
+  // Add a task to the front of the scheduler queue.
   void addFront(TaskNode* node) {
     if (task_list_start_) {
       task_list_start_->prev_ = node;
@@ -106,6 +121,7 @@ public:
     }
   }
 
+  // Add a task to the back of the scheduler queue.
   void addBack(TaskNode* node) {
     if (task_list_end_) {
       task_list_end_->next_ = node;
@@ -164,6 +180,7 @@ public:
     return nullptr;
   }
 
+  // Find task with specified ID in the scheduler queue.
   TaskNode* findById(uint32_t id) {
     return findFirst([id](const TaskNode* node) {
       return node->id_ == id;
@@ -202,6 +219,7 @@ private:
   void HandleOOM(const char*) {
   }
  
+  // We allocate 32 tasks total. If you need more change this number.
   TaskNode pool_[32];
   TaskNode *task_list_start_;
   TaskNode *task_list_end_;

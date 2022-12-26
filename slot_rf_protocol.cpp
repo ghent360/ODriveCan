@@ -1,5 +1,5 @@
 // Copyright 2020 Josh Pieper, jjp@pobox.com.
-// Modifications Copyright 2022 Ghent The slicer, ghent360@iqury.us
+// Modifications Copyright 2022 Ghent The Slicer, ghent360@iqury.us
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 #include "slot_rf_protocol.h"
 #include <algorithm>
 #include <cstring>
+#include <memory>
 
 namespace nrf24 {
 
@@ -442,12 +443,24 @@ class SlotRfProtocol::Impl {
   ReceiveMode receive_mode_ = kSynchronizing;
 };
 
+SlotRfProtocol::Impl* SlotRfProtocol::getImplPtr() {
+  static_assert(sizeof(data_) >= sizeof(Impl), "Need larger static buffer");
+  
+  void* ptr = data_;
+  std::size_t space = sizeof(data_);
+  return reinterpret_cast<Impl*>(
+      std::align(alignof(Impl), sizeof(Impl), ptr, space));
+}
+
+
 SlotRfProtocol::SlotRfProtocol(const Options& options) {
-  impl_ = new Impl(options);
+  new (getImplPtr()) Impl(options);
+  //impl_ = new Impl(options);
 }
 
 SlotRfProtocol::~SlotRfProtocol() {
-  delete impl_;
+  //delete impl_;
+  getImplPtr()->~Impl();
 }
 
 void SlotRfProtocol::Poll() {

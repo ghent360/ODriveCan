@@ -1,5 +1,5 @@
 // Copyright 2020 Josh Pieper, jjp@pobox.com.
-// Modifications Copyright 2022 Ghent The slicer, ghent360@iqury.us
+// Modifications Copyright 2022 Ghent The Slicer, ghent360@iqury.us
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 namespace nrf24 {
 
 class SlotRfProtocol {
- public:
+public:
   static constexpr int kNumSlots = 15;
   static constexpr int kNumRemotes = 2;
 
@@ -86,9 +86,12 @@ class SlotRfProtocol {
   /// mode?
   bool locked() const;
 
- private:
+private:
   class Impl;
   Impl* impl_;
+  Impl* getImplPtr();
+
+  uint8_t data_[1024*2+64];
 };
 
 } // namespace nrf24

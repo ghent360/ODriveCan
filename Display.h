@@ -13,21 +13,21 @@ public:
   void updateScreen();
 
   void setTeensyBatteryVoltage(float v) {
-    if (fabsf(v - teensy_battery_voltage_) < 0.01) {
+    if (fabsf(v - teensy_battery_voltage_) > 0.01) {
       teensy_battery_voltage_ = v;
       dirty_ = true;
     }
   }
 
   void setBus1BatteryVoltage(float v) {
-    if (fabsf(v - bus1_battery_voltage_) < 0.01) {
+    if (fabsf(v - bus1_battery_voltage_) > 0.01) {
       bus1_battery_voltage_ = v;
       dirty_ = true;
     }
   }
 
   void setBus3BatteryVoltage(float v) {
-    if (fabsf(v - bus3_battery_voltage_) < 0.01) {
+    if (fabsf(v - bus3_battery_voltage_) > 0.01) {
       bus3_battery_voltage_ = v;
       dirty_ = true;
     }

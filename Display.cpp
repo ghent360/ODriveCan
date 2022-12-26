@@ -85,9 +85,9 @@ static void drawBatteryVoltage(
     }
   }
   tft.drawFastHLine(x, y, batteryBarWidth, batteryBarColor);
-  tft.drawFastHLine(x, y + barHeight, batteryBarWidth, batteryBarColor);
+  tft.drawFastHLine(x, y + barHeight - 1, batteryBarWidth, batteryBarColor);
   tft.drawFastVLine(x, y, barHeight, batteryBarColor);
-  tft.drawFastVLine(x + batteryBarWidth, y, barHeight, batteryBarColor);
+  tft.drawFastVLine(x + batteryBarWidth - 1, y, barHeight, batteryBarColor);
   uint16_t barWidth = 
     (uint16_t)(
         (float)(batteryBarWidth - 2) * (voltage - minVoltage) / 
@@ -100,13 +100,15 @@ void Display::drawCanStatus() {
   if (can_status_) {
     tft.setTextColor(ST7735_WHITE);
     tft.setTextSize(8);
-    tft.drawString(can_status_, 0, 50);
+    tft.drawString(can_status_, 0, 5 + 3*(batteryBarHeight + 1));
   }
 }
 
 void Display::drawUi() {
   tft.fillScreen(ST7735_BLACK);
   drawBatteryVoltage(0, 5, "M:", teensy_battery_voltage_, 2);
+  drawBatteryVoltage(0, 5 + (batteryBarHeight + 1), "1: ", bus1_battery_voltage_, 6);
+  drawBatteryVoltage(0, 5 + 2*(batteryBarHeight + 1), "2: ", bus3_battery_voltage_, 6);
   drawCanStatus();
   dirty_ = false;
 }

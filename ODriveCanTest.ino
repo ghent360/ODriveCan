@@ -87,8 +87,7 @@ static void checkBatteryVoltage(TaskNode*, uint32_t) {
   if (batVoltage < (2*cellWarnVoltage)) {
     Serial.print("Warning battery voltage low: ");
     Serial.println(batVoltage);
-  }
-  if (batVoltage < (2*cellMinVoltage)) {
+  } else if (batVoltage < (2*cellMinVoltage)) {
     Serial.println("Battery voltage too low (estop)");
     panic();
     delay(250);

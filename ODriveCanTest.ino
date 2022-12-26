@@ -12,6 +12,7 @@
 #include "VoltageMonitor.h"
 #include "globals.h"
 #include "Display.h"
+#include "Radio.h"
 
 using odrive::ODriveAxis;
 using odrive::VbusVoltage;
@@ -43,6 +44,8 @@ static void reportAxesNotPresent(TaskNode* self, uint32_t);
 static void startStateOne();
 static void startStateTwo();
 static void startStateThree();
+
+RadioV2 radio(NRF24_CE_PIN, NRF24_CS_PIN, NRF24_IRQ_PIN);
 
 static void panic() {
   for(auto& axis: axes) {
@@ -239,10 +242,16 @@ void setup() {
     66, // 15 fps should be good enough for now
     [](TaskNode*, uint32_t) { display.updateScreen(); }));
 
+  tm.addBack(tm.newPeriodicTask(
+    RadioUpdate,
+    1,
+    [](TaskNode*, uint32_t now) { radio.PollMillisecond(now); }));
+
   startStateOne();
 }
 
 void loop() {
   canInterface.readAndProcessCan();
   tm.runNext(millis());
+  radio.Poll();
 }

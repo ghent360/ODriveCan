@@ -6,6 +6,7 @@
 enum PeriodicTaskId {
   CheckTaskDuration,
   DisplayUpdate,
+  RadioUpdate,
   StateOneCheck,
   StateOneReport,
   StateTwo,

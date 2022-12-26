@@ -8,6 +8,10 @@
 #include  <limits>
 #include "slot_rf_protocol.h"
 
+#define NRF24_CE_PIN  4
+#define NRF24_IRQ_PIN 5
+#define NRF24_CS_PIN  6
+
 class Radio {
 public:
   bool initRadio();

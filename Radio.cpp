@@ -3,10 +3,6 @@
 #include <RF24.h>
 #include "nrf24l01.h"
 
-#define NRF24_CE_PIN  4
-#define NRF24_IRQ_PIN 5
-#define NRF24_CS_PIN  6
-
 static RF24 radio(NRF24_CE_PIN, NRF24_CS_PIN);
 static const byte readAddress[6] = "OD3tg";
 static const byte remoteAddress[6] = "OD3rm";

@@ -53,9 +53,6 @@ static void panic() {
   }
 }
 
-const float cellWarnVoltage = 3.5;
-const float cellMinVoltage = 3.35;
-
 static void axisVbusValueCheck(ODriveAxis&, VbusVoltage&, VbusVoltage& newV) {
   if (newV.val < (6*cellWarnVoltage)) {
     Serial.print("Warning odrive battery voltage low: ");
@@ -77,7 +74,7 @@ static void checkAxisVbusVoltage(TaskNode*, uint32_t) {
 }
 
 static void checkBatteryVoltage(TaskNode*, uint32_t) {
-  float batVoltage = readBatteryVoltage();
+  float batVoltage = voltageMonitor.readBatteryVoltage();
   if (batVoltage < (2*cellWarnVoltage)) {
     Serial.print("Warning battery voltage low: ");
     Serial.println(batVoltage);
@@ -86,7 +83,7 @@ static void checkBatteryVoltage(TaskNode*, uint32_t) {
     Serial.println("Battery voltage too low (estop)");
     panic();
     delay(250);
-    lowPowerMode();
+    voltageMonitor.lowPowerMode();
   }
 }
 
@@ -210,7 +207,7 @@ void setup() {
 
   canInterface.canInit();
   startStateOne();
-  initVoltageMonitor();
+  voltageMonitor.initVoltageMonitor();
 }
 
 void loop() {

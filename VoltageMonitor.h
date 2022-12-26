@@ -3,6 +3,12 @@
 */
 #pragma once
 
-void initVoltageMonitor();
-float readBatteryVoltage();
-void lowPowerMode();
+// Monitor the battery voltage for the Teensy 4.1 board.
+// If voltage gets bellow critical point switch off as many
+// peripherals as we can and switch the Teensy to low power mode.
+class VoltageMonitor {
+public:
+    void initVoltageMonitor();
+    float readBatteryVoltage();
+    void lowPowerMode();
+};

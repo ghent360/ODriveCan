@@ -5,11 +5,16 @@
 #include "RobotDefinition.h"
 #include "ODriveCan.hpp"
 #include "CanInterface.h"
+#include "VoltageMonitor.h"
 
 // various global data structures used by several files
 
 // My robot uses 12 axes.
 constexpr int numAxes = 12;
+
+// LiPO cell voltage levels
+constexpr float cellWarnVoltage = 3.5;
+constexpr float cellMinVoltage = 3.35;
 
 // Static offset for each joint at its resting position.
 extern const float jointOffsets[numAxes]; // Index with DogLegJoint value
@@ -26,3 +31,6 @@ const char* getLegName(DogLeg leg);
 
 // Our CanInterface instance.
 extern odrive::CanInterface canInterface;
+
+// The Teensy battery monitor instance.
+extern VoltageMonitor voltageMonitor;

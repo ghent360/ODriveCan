@@ -73,11 +73,15 @@ static void axisVbusValueCheck(
 }
 
 static void checkAxisVbusVoltage(TaskNode*, uint32_t) {
-  static uint8_t axisIdx = 0;
+  static uint8_t axisIdx = FRONT_RIGHT_HIP;
   axes[axisIdx].RequestVbusVoltage();
   axisIdx++;
-  if (axisIdx >= numAxes) {
-    axisIdx = 0;
+  // Check battery voltage only the axes with node ID 1 and 2.
+  // Axes are connected to battery bus bars and the first two
+  // would represent the voltage on both bus bars. That is sufficient
+  // for monitoring.
+  if (axisIdx > FRONT_LEFT_HIP) {
+    axisIdx = FRONT_RIGHT_HIP;
   }
 }
 

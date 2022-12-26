@@ -1,11 +1,7 @@
 /*
  * Copyright (c) 2022 ghent360. See LICENSE file for details.
  *
- * This is a very basic example of communicating with 3 ODrive boards
- * over CAN on SAME51 board. The example would request vbus voltage from
- * each axis and print it on the serial console. It would also verify
- * heartbeat messages are received from each axis or it will print that
- * the axis is unavailable.
+ * This is my version of the control software for OpenDog V3.
 */
 #include "ODriveCan.hpp"
 #include "TaskManager.hpp"
@@ -226,6 +222,21 @@ void setup() {
     DisplayUpdate,
     66, // 15 fps should be good enough for now
     [](TaskNode*, uint32_t) { display.updateScreen(); }));
+
+  tm.addBack(tm.newPeriodicTask(
+    CheckTaskDuration,
+    1000, // once per second
+    [](TaskNode*, uint32_t) {
+    uint32_t id = tm.getLongestTaskId();
+    if (id != (uint32_t)-1) {
+      Serial.print("Longest task ID ");
+      Serial.print(id);
+      Serial.print(" duration ");
+      Serial.print(tm.getMaxTaskTime());
+      Serial.println(" microseconds");
+      tm.resetProfiler();
+    }
+  }));
 
   startStateOne();
   voltageMonitor.initVoltageMonitor();

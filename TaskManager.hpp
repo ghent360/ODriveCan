@@ -51,6 +51,7 @@ public:
     for(auto& node: pool_) {
       node.in_use_ = false;
     }
+    resetProfiler();
   }
 
   // Allocate a new task. Return nullptr if we are out of task nodes.
@@ -157,7 +158,7 @@ public:
   }
 
   template<typename Functor>
-  TaskNode* findFirst(Functor cond) {
+  TaskNode* findFirst(Functor cond) const {
     TaskNode* node = task_list_start_;
     while (node) {
       if (cond(node)) {
@@ -169,7 +170,7 @@ public:
   }
 
   template<typename Functor>
-  TaskNode* findLast(Functor cond) {
+  TaskNode* findLast(Functor cond) const {
     TaskNode* node = task_list_end_;
     while (node) {
       if (cond(node)) {
@@ -181,7 +182,7 @@ public:
   }
 
   // Find task with specified ID in the scheduler queue.
-  TaskNode* findById(uint32_t id) {
+  TaskNode* findById(uint32_t id) const {
     return findFirst([id](const TaskNode* node) {
       return node->id_ == id;
     });
@@ -189,7 +190,7 @@ public:
 
   // Finds the next task that can me scheduled at this time or return
   // nullptr if no such task exists.
-  TaskNode* findNext(uint32_t time) {
+  TaskNode* findNext(uint32_t time) const {
     return findFirst([time](const TaskNode* node) {
       return ((time - node->sched_time_) >= node->interval_);
     });
@@ -202,7 +203,13 @@ public:
   uint32_t runNext(uint32_t time) {
     TaskNode *next = findNext(time);
     if (next) {
+      uint32_t startTime = micros();
       next->run(time);
+      uint32_t duration = micros() - startTime;
+      if (duration > max_task_time_) {
+        max_task_time_ = duration;
+        longest_task_id_ = next->id();
+      }
       if (next->in_use_) { // Check if the task has not been freed
         if (next->is_periodic_) {
           next->sched_time_ = time;
@@ -215,6 +222,19 @@ public:
     }
     return time - last_idle_time_;
   }
+
+  uint32_t getMaxTaskTime() const {
+    return max_task_time_;
+  }
+
+  uint32_t getLongestTaskId() const {
+    return longest_task_id_;
+  }
+
+  void resetProfiler() {
+    max_task_time_ = 0;
+    longest_task_id_ = -1;
+  }
 private:
   void HandleOOM(const char*) {
   }
@@ -224,4 +244,6 @@ private:
   TaskNode *task_list_start_;
   TaskNode *task_list_end_;
   uint32_t last_idle_time_;
+  uint32_t max_task_time_;
+  uint32_t longest_task_id_;
 };

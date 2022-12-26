@@ -49,7 +49,26 @@ uint64_t SelectShockburstId(uint32_t slot_id) {
 class SlotRfProtocol::Impl {
  public:
   Impl(const Options& options)
-      : options_(options) {
+      : options_(options),
+        nrf_([&]() {
+          Nrf24l01::Options options;
+          options.pins = options_.pins;
+
+          options.ptx = options_.ptx;
+          options.address_length = 5;
+          options.id = remotes_.front().shockburst_id();
+          options.dynamic_payload_length = true;
+          options.enable_crc = true;
+          options.crc_length = 2;
+          options.auto_retransmit_count = options_.auto_retransmit_count;
+          options.auto_retransmit_delay_us = 1000;
+          options.automatic_acknowledgment = true;
+          options.initial_channel = 0;
+          options.data_rate = options_.data_rate;
+          options.output_power = options_.output_power;
+
+          return options;
+        }()) {
   }
 
   void Start() {
@@ -58,14 +77,14 @@ class SlotRfProtocol::Impl {
 
   void Poll() {
     //MJ_ASSERT(!!nrf_);
-    nrf_->Poll();
+    nrf_.Poll();
 
-    if (!nrf_->is_data_ready()) {
+    if (!nrf_.is_data_ready()) {
       return;
     }
 
     rx_packet_.size = 0;
-    nrf_->Read(&rx_packet_);
+    nrf_.Read(&rx_packet_);
 
     // If we are a receiver, we need to mark ourselves as now locked
     // and update slot_timer_ to be ready for the next reception
@@ -81,7 +100,7 @@ class SlotRfProtocol::Impl {
 
   void PollMillisecond(uint32_t now) {
     //MJ_ASSERT(!!nrf_);
-    nrf_->PollMillisecond(now);
+    nrf_.PollMillisecond(now);
 
     slot_timer_--;
 
@@ -109,8 +128,8 @@ class SlotRfProtocol::Impl {
         TransmitCycle();
       } else if (remote_timer == 2) {
         // Switch to the next remote 2ms before we transmit.
-        nrf_->SelectId(remote->shockburst_id());
-        nrf_->SelectRfChannel(remote->channel(channel_index_));
+        nrf_.SelectId(remote->shockburst_id());
+        nrf_.SelectRfChannel(remote->channel(channel_index_));
       }
     }
 
@@ -131,7 +150,7 @@ class SlotRfProtocol::Impl {
         if (rx_miss_count_ > 20) {
           // Move on to the next channel.
           SwitchChannel();
-          nrf_->SelectRfChannel(remote->channel(channel_index_));
+          nrf_.SelectRfChannel(remote->channel(channel_index_));
           rx_miss_count_ = 0;
         }
       } else {
@@ -144,13 +163,13 @@ class SlotRfProtocol::Impl {
       // When receiving, we switch to the next channel halfway through
       // our time window.
       SwitchChannel();
-      nrf_->SelectRfChannel(remote->channel(channel_index_));
+      nrf_.SelectRfChannel(remote->channel(channel_index_));
       ReplyCycle();
     }
   }
 
   Remote* remote(int index) {
-    MJ_ASSERT(index >= 0 && index < static_cast<int>(remotes_.size()));
+    //MJ_ASSERT(index >= 0 && index < static_cast<int>(remotes_.size()));
     return &remotes_[index];
   }
 
@@ -159,7 +178,7 @@ class SlotRfProtocol::Impl {
   }
 
   uint32_t error() const {
-    return nrf_->error();
+    return nrf_.error();
   }
 
   bool locked() const {
@@ -226,7 +245,7 @@ class SlotRfProtocol::Impl {
       // Update our receive ages:
       for (auto& slot : rx_slots_) { slot.age++; }
 
-      const char* pos = packet.data;
+      const uint8_t* pos = packet.data;
       auto remaining = packet.size;
 
       while (remaining) {
@@ -271,15 +290,21 @@ class SlotRfProtocol::Impl {
 
       // For all slots which are enabled for this priority window, fill
       // our transmission buffer with those with the oldest age.
-      auto enabled_slots = FindEnabledSlots(priority_count_);
-      std::sort(enabled_slots.begin(), enabled_slots.end(),
+      uint8_t enabled_slots[kNumSlots];
+      uint8_t enabled_slots_size =
+        FindEnabledSlots(priority_count_, enabled_slots);
+      std::sort(enabled_slots, enabled_slots + enabled_slots_size,
                 [&](auto lhs, auto rhs) {
                   return tx_slots_[lhs].age > tx_slots_[rhs].age;
                 });
 
       packet->size = 0;
       // Now loop through by age filling up whatever we can.
-      for (auto slot_idx : enabled_slots) {
+      //for (auto slot_idx : enabled_slots) {
+      for(uint8_t enabled_slots_idx = 0;
+          enabled_slots_idx < enabled_slots_size;
+          enabled_slots_size++) {
+        auto slot_idx = enabled_slots[enabled_slots_idx];
         const int remaining_size = 32 - packet->size;
         if ((tx_slots_[slot_idx].size + 1) < remaining_size) {
           EmitSlot(packet, slot_idx);
@@ -298,23 +323,26 @@ class SlotRfProtocol::Impl {
     }
 
    private:
-    micro::StaticVector<uint8_t, kNumSlots>
-    FindEnabledSlots(uint8_t current_priority) const {
-      micro::StaticVector<uint8_t, kNumSlots> result;
+    uint8_t FindEnabledSlots(
+      uint8_t current_priority,
+      uint8_t (&result)[kNumSlots]) const {
+      uint8_t result_size = 0;
       uint32_t mask = 1 << current_priority;
       for (int i = 0; i < kNumSlots; i++) {
-        if (tx_slots_[i].priority & mask) { result.push_back(i); }
+        if (tx_slots_[i].priority & mask) { 
+          result[result_size++] = i;
+        }
       }
-      return result;
+      return result_size;
     }
 
     void EmitSlot(Nrf24l01::Packet* packet, int slot_index) {
       auto& size = packet->size;
 
-      const int remaining = 32 - size;
+      //const int remaining = 32 - size;
       auto& slot = tx_slots_[slot_index];
 
-      MJ_ASSERT((slot.size + 1) < remaining);
+      //MJ_ASSERT((slot.size + 1) < remaining);
 
       packet->data[size] = (slot_index << 4) | slot.size;
       size++;
@@ -374,50 +402,24 @@ class SlotRfProtocol::Impl {
 
     // Now we send out our frame, whether or not it has anything in it
     // (that gives the receiver a chance to reply).
-    nrf_->Transmit(&tx_packet_);
+    nrf_.Transmit(&tx_packet_);
   }
 
   void ReplyCycle() {
     remotes_[remote_index_].PrepareTxPacket(&tx_packet_);
-    nrf_->QueueAck(&tx_packet_);
+    nrf_.QueueAck(&tx_packet_);
   }
 
   void Restart() {
-    MJ_ASSERT(options_.ids.size() == remotes_.size());
+    //MJ_ASSERT(options_.ids.size() == remotes_.size());
     for (size_t i = 0; i < remotes_.size(); i++) {
       remotes_[i].SetId(options_.ids[i]);
     }
     remote_index_ = 0;
-
-    nrf_.emplace(
-        timer_,
-        [&]() {
-          Nrf24l01::Options options;
-          options.pins = options_.pins;
-
-          options.ptx = options_.ptx;
-          options.address_length = 5;
-          options.id = remotes_.front().shockburst_id();
-          options.dynamic_payload_length = true;
-          options.enable_crc = true;
-          options.crc_length = 2;
-          options.auto_retransmit_count = options_.auto_retransmit_count;
-          options.auto_retransmit_delay_us = 1000;
-          options.automatic_acknowledgment = true;
-          options.initial_channel = 0;
-          options.data_rate = options_.data_rate;
-          options.output_power = options_.output_power;
-
-          return options;
-        }());
-
   }
 
   const Options options_;
-  fw::MillisecondTimer* const timer_;
-
-  std::optional<Nrf24l01> nrf_;
-
+  Nrf24l01 nrf_;
   std::array<ConcreteRemote, kNumRemotes> remotes_;
   uint8_t channel_index_ = 0;
   uint8_t remote_index_ = 0;
@@ -440,18 +442,20 @@ class SlotRfProtocol::Impl {
   ReceiveMode receive_mode_ = kSynchronizing;
 };
 
-SlotRfProtocol::SlotRfProtocol(MillisecondTimer* timer,
-                               const Options& options)
-    : impl_(timer, options) {}
+SlotRfProtocol::SlotRfProtocol(const Options& options) {
+  impl_ = new Impl(options);
+}
 
-SlotRfProtocol::~SlotRfProtocol() {}
+SlotRfProtocol::~SlotRfProtocol() {
+  delete impl_;
+}
 
 void SlotRfProtocol::Poll() {
   impl_->Poll();
 }
 
-void SlotRfProtocol::PollMillisecond() {
-  impl_->PollMillisecond();
+void SlotRfProtocol::PollMillisecond(uint32_t now) {
+  impl_->PollMillisecond(now);
 }
 
 void SlotRfProtocol::Start() {

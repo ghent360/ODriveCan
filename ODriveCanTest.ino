@@ -129,7 +129,7 @@ static void startStateThree() {
   Serial.println("All odrives active...");
   display.setCanStatus("Ready");
   initSerialInteraction();
-  tm.addBack(tm.newPeriodicTask(StateThreeConnection, 150, checkAxisConnection));
+  tm.addBack(tm.newPeriodicTask(StateThreeConnection, 250, checkAxisConnection));
   for(auto& axis: axes) {
     axis.vbus.SetCallback(axisVbusValueCheck);
   }
@@ -174,7 +174,7 @@ static void clearErrorsAndSwitchToStateThree(TaskNode* self, uint32_t) {
 
 static void startStateTwo() {
   display.setCanStatus("Initializing axes");
-  tm.addBack(tm.newPeriodicTask(StateTwo, 200, clearErrorsAndSwitchToStateThree));
+  tm.addBack(tm.newPeriodicTask(StateTwo, 250, clearErrorsAndSwitchToStateThree));
 }
 
 // This function implements state one - we wait until we receive heartbeat
@@ -208,7 +208,7 @@ static void reportAxesNotPresent(TaskNode* self, uint32_t) {
 static void startStateOne() {
   Serial.println("Waiting for odrives to connect...");
   display.setCanStatus("Waiting to connect");
-  tm.addBack(tm.newPeriodicTask(StateOneCheck, 150, checkAllAxesArePresent));
+  tm.addBack(tm.newPeriodicTask(StateOneCheck, 250, checkAllAxesArePresent));
   tm.addBack(tm.newPeriodicTask(StateOneReport, 5000, reportAxesNotPresent));
 }
 
@@ -218,7 +218,7 @@ void setup() {
   display.initDisplay();
   canInterface.canInit();
   voltageMonitor.initVoltageMonitor();
-
+/*
   tm.addBack(tm.newPeriodicTask(
     CheckTaskDuration,
     1000, // once per second
@@ -233,7 +233,7 @@ void setup() {
       tm.resetProfiler();
     }
   }));
-
+*/
   tm.addBack(tm.newPeriodicTask(
     DisplayUpdate,
     66, // 15 fps should be good enough for now

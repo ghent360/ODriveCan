@@ -100,7 +100,7 @@ void Display::drawCanStatus() {
   if (can_status_) {
     tft.setTextColor(ST7735_WHITE);
     tft.setTextSize(8);
-    tft.drawString(can_status_, 0, 5 + 3*(batteryBarHeight + 1));
+    tft.drawString(can_status_, 0, 5 + 4*(batteryBarHeight + 1));
   }
 }
 

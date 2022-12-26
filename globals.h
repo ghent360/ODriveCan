@@ -6,6 +6,7 @@
 #include "ODriveCan.hpp"
 #include "CanInterface.h"
 #include "VoltageMonitor.h"
+#include "Display.h"
 
 // various global data structures used by several files
 
@@ -13,6 +14,7 @@
 constexpr int numAxes = 12;
 
 // LiPO cell voltage levels
+constexpr float cellMaxVoltage = 4.2;
 constexpr float cellWarnVoltage = 3.5;
 constexpr float cellMinVoltage = 3.35;
 
@@ -34,3 +36,6 @@ extern odrive::CanInterface canInterface;
 
 // The Teensy battery monitor instance.
 extern VoltageMonitor voltageMonitor;
+
+// The Display instance.
+extern Display display;

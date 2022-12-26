@@ -285,7 +285,7 @@ static void hal_hibernate ( void ) {
 }
 #endif // defined(__IMXRT1062__)
 
-void initVoltageMonitor() {
+void VoltageMonitor::initVoltageMonitor() {
   pinMode(batteryVoltagePin, INPUT);
 
   adc.adc0->setAveraging(16); // set number of averages
@@ -295,7 +295,7 @@ void initVoltageMonitor() {
   adc.adc0->setSamplingSpeed(ADC_SAMPLING_SPEED::VERY_LOW_SPEED); // change the sampling speed
 }
 
-float readBatteryVoltage() {
+float VoltageMonitor::readBatteryVoltage() {
   // Single reads
   int value = adc.adc0->analogRead(batteryVoltagePin);
   float vIn = value*3.3*(82+22)/(22*adc.adc0->getMaxValue());
@@ -309,7 +309,10 @@ float readBatteryVoltage() {
   return vIn;
 }
 
-void lowPowerMode() {
+void VoltageMonitor::lowPowerMode() {
   canInterface.canSleep();  // Disable the CAN transcievers.
+  display.stopDisplay();    // Disable display LED.
   hal_hibernate();
 }
+
+VoltageMonitor voltageMonitor;

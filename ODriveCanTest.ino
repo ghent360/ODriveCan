@@ -15,6 +15,7 @@
 #include "TaskIds.h"
 #include "VoltageMonitor.h"
 #include "globals.h"
+#include "Display.h"
 
 using odrive::ODriveAxis;
 using odrive::VbusVoltage;
@@ -53,7 +54,14 @@ static void panic() {
   }
 }
 
-static void axisVbusValueCheck(ODriveAxis&, VbusVoltage&, VbusVoltage& newV) {
+static void axisVbusValueCheck(
+  ODriveAxis& axis, VbusVoltage&, VbusVoltage& newV) {
+  if (axis.node_id == 1) {
+    display.setBus1BatteryVoltage(newV.val);
+  } else if (axis.node_id == 2) {
+    display.setBus3BatteryVoltage(newV.val);
+  }
+
   if (newV.val < (6*cellWarnVoltage)) {
     Serial.print("Warning odrive battery voltage low: ");
     Serial.println(newV.val);
@@ -75,6 +83,7 @@ static void checkAxisVbusVoltage(TaskNode*, uint32_t) {
 
 static void checkBatteryVoltage(TaskNode*, uint32_t) {
   float batVoltage = voltageMonitor.readBatteryVoltage();
+  display.setTeensyBatteryVoltage(batVoltage);
   if (batVoltage < (2*cellWarnVoltage)) {
     Serial.print("Warning battery voltage low: ");
     Serial.println(batVoltage);
@@ -119,6 +128,7 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
 
 static void startStateThree() {
   Serial.println("All odrives active...");
+  display.setCanStatus("Ready");
   initSerialInteraction();
   tm.addBack(tm.newPeriodicTask(StateThreeConnection, 150, checkAxisConnection));
   for(auto& axis: axes) {
@@ -164,6 +174,7 @@ static void clearErrorsAndSwitchToStateThree(TaskNode* self, uint32_t) {
 }
 
 static void startStateTwo() {
+  display.setCanStatus("Initializing axes");
   tm.addBack(tm.newPeriodicTask(StateTwo, 200, clearErrorsAndSwitchToStateThree));
 }
 
@@ -197,15 +208,22 @@ static void reportAxesNotPresent(TaskNode* self, uint32_t) {
 
 static void startStateOne() {
   Serial.println("Waiting for odrives to connect...");
+  display.setCanStatus("Waiting to connect");
   tm.addBack(tm.newPeriodicTask(StateOneCheck, 150, checkAllAxesArePresent));
   tm.addBack(tm.newPeriodicTask(StateOneReport, 5000, reportAxesNotPresent));
 }
 
 void setup() {
   Serial.begin(115200);
-  while(!Serial);
 
+  display.initDisplay();
   canInterface.canInit();
+
+  tm.addBack(tm.newPeriodicTask(
+    DisplayUpdate,
+    66, // 15 fps should be good enough for now
+    [](TaskNode*, uint32_t) { display.updateScreen(); }));
+
   startStateOne();
   voltageMonitor.initVoltageMonitor();
 }

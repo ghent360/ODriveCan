@@ -4,6 +4,7 @@
 #pragma once
 
 enum PeriodicTaskId {
+  DisplayUpdate,
   StateOneCheck,
   StateOneReport,
   StateTwo,

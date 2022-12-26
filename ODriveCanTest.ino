@@ -217,11 +217,7 @@ void setup() {
 
   display.initDisplay();
   canInterface.canInit();
-
-  tm.addBack(tm.newPeriodicTask(
-    DisplayUpdate,
-    66, // 15 fps should be good enough for now
-    [](TaskNode*, uint32_t) { display.updateScreen(); }));
+  voltageMonitor.initVoltageMonitor();
 
   tm.addBack(tm.newPeriodicTask(
     CheckTaskDuration,
@@ -238,8 +234,12 @@ void setup() {
     }
   }));
 
+  tm.addBack(tm.newPeriodicTask(
+    DisplayUpdate,
+    66, // 15 fps should be good enough for now
+    [](TaskNode*, uint32_t) { display.updateScreen(); }));
+
   startStateOne();
-  voltageMonitor.initVoltageMonitor();
 }
 
 void loop() {

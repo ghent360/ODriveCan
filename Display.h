@@ -14,6 +14,7 @@ public:
     : x_(x), y_(y), dirty_(false) {}
   virtual ~Widget() {}
 
+  virtual void init() = 0;
   bool dirty() const { return dirty_; }
   virtual void draw() = 0;
   virtual void getSize(uint16_t &w, uint16_t &h) = 0;
@@ -37,6 +38,7 @@ public:
     }
   }
 
+  void init() override;
   void draw() override;
   void getSize(uint16_t &w, uint16_t &h) override {
     w = w_;
@@ -66,6 +68,7 @@ public:
     dirty_ = true;
   }
 
+  void init() override {};
   void draw() override;
   void getSize(uint16_t &w, uint16_t &h) override;
 private:

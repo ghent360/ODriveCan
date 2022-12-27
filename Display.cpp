@@ -35,6 +35,11 @@ void Display::initDisplay() {
   tft.setRotation(3);
   tft.useFrameBuffer(true);
   tft.setFont(Arial_8);
+  tft.fillScreen(ST7735_BLACK);
+  tft.updateScreenAsync();
+  for(auto widget : widgets_) {
+    widget->init();
+  }
 }
 
 void Display::stopDisplay() {
@@ -58,6 +63,10 @@ void Display::drawUi() {
 BatteryWidget::BatteryWidget(
   const char* label, uint8_t x, uint8_t y, uint8_t numCells)
   : Widget(x, y), label_(label), num_cells_(numCells) {
+}
+
+void BatteryWidget::init() {
+  dirty_ = true;
   if (label_) {
     int16_t x1, y1;
     uint16_t labelW, labelH;
@@ -101,7 +110,7 @@ void BatteryWidget::draw() {
   if (label_) {
     tft.setTextColor(color);
     tft.setTextSize(6);
-    tft.drawString(label_, x_, label_y_offset_);
+    tft.drawString(label_, x_, y_ + label_y_offset_);
   }
   uint8_t x = x_ + bar_x_offset_;
   uint8_t y = y_ + bar_y_offset_;
@@ -114,7 +123,9 @@ void BatteryWidget::draw() {
         (float)(batteryBarWidth - 2) * (voltage - minVoltage) / 
         (maxVoltage - minVoltage) + 
         0.5f);
-  tft.fillRect(x + 1, y + 1, barWidth, batteryBarHeight - 2, color);
+  if (barWidth) {
+    tft.fillRect(x + 1, y + 1, barWidth, batteryBarHeight - 2, color);
+  }
   dirty_ = false;
 }
 
@@ -132,9 +143,17 @@ void StatusWidget::draw() {
 }
 
 void StatusWidget::getSize(uint16_t &w, uint16_t &h) {
-  int16_t x1, y1;
-  tft.setTextSize(font_size_);
-  tft.getTextBounds(status_, x_, y_, &x1, &y1, &w, &h);
+  if (status_) {
+    int16_t x1, y1;
+    uint16_t width, height;
+    tft.setTextSize(font_size_);
+    tft.getTextBounds(status_, x_, y_, &x1, &y1, &width, &height);
+    w = width;
+    h = height;
+  } else {
+    w = 0;
+    h = 0;
+  }
 }
 
 Display display;

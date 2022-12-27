@@ -61,10 +61,6 @@ static void axisVbusValueCheck(
     display.setBus3BatteryVoltage(newV.val);
   }
 
-  if (newV.val < (6*cellWarnVoltage)) {
-    Serial.print("Warning odrive battery voltage low: ");
-    Serial.println(newV.val);
-  }
   if (newV.val < (6*cellMinVoltage)) {
     Serial.println("ODrive battery voltage too low (estop)");
     panic();
@@ -87,10 +83,7 @@ static void checkAxisVbusVoltage(TaskNode*, uint32_t) {
 static void checkBatteryVoltage(TaskNode*, uint32_t) {
   float batVoltage = voltageMonitor.readBatteryVoltage();
   display.setTeensyBatteryVoltage(batVoltage);
-  if (batVoltage < (2*cellWarnVoltage)) {
-    Serial.print("Warning battery voltage low: ");
-    Serial.println(batVoltage);
-  } else if (batVoltage < (2*cellMinVoltage)) {
+  if (batVoltage < (2*cellMinVoltage)) {
     Serial.println("Battery voltage too low (estop)");
     panic();
     delay(250);

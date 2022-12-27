@@ -98,10 +98,6 @@ class Nrf24l01 {
   /// acknowledgement.  This can only be called if Options::ptx == false
   void QueueAck(const Packet*);
 
-  uint8_t ReadRegister(uint8_t);
-  void ReadRegister(uint8_t, uint8_t *data_out, uint8_t data_out_size);
-
-  void WriteRegister(uint8_t, const uint8_t *data_in, uint8_t data_in_size);
 
   uint32_t error() const { return error_; }
 
@@ -121,6 +117,7 @@ class Nrf24l01 {
   class SpiMaster {
    public:
     SpiMaster(SPIClass*, uint16_t cs);
+    uint8_t Command(uint8_t command);
     uint8_t Command(uint8_t command,
                     const uint8_t *data_in, uint8_t data_in_size,
                     uint8_t *data_out, uint8_t data_out_size);

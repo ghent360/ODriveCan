@@ -17,6 +17,9 @@
 
 namespace nrf24 {
 
+static const SPISettings spiSettings(10000000, MSBFIRST, SPI_MODE0);
+static constexpr int kMaxRetries = 2;
+
 Nrf24l01::SpiMaster::SpiMaster(SPIClass* spi, uint16_t cs)
     : spi_(spi), cs_(cs) {
   pinMode(cs_, OUTPUT);
@@ -24,12 +27,24 @@ Nrf24l01::SpiMaster::SpiMaster(SPIClass* spi, uint16_t cs)
   spi_->begin();
 }
 
+uint8_t Nrf24l01::SpiMaster::Command(uint8_t command) {
+  spi_->beginTransaction(spiSettings);
+  digitalWrite(cs_, LOW);
+  delayNanoseconds(38);
+
+  uint8_t status = spi_->transfer(command);
+
+  digitalWrite(cs_, HIGH);
+  spi_->endTransaction();
+  return status;
+}
+
 uint8_t Nrf24l01::SpiMaster::Command(
     uint8_t command,
     const uint8_t* data_in, uint8_t data_in_size,
     uint8_t* data_out = nullptr, uint8_t data_out_size = 0) {
   if (data_in_size > 32 || data_out_size > 32) return -1;
-  spi_->beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE0));
+  spi_->beginTransaction(spiSettings);
   digitalWrite(cs_, LOW);
 
   uint8_t size = max(data_in_size, data_out_size);
@@ -58,7 +73,16 @@ uint8_t Nrf24l01::SpiMaster::WriteRegister(
 }
 
 uint8_t Nrf24l01::SpiMaster::WriteRegister(uint8_t address, uint8_t data) {
-  return WriteRegister(address, &data, 1);
+  spi_->beginTransaction(spiSettings);
+  digitalWrite(cs_, LOW);
+  delayNanoseconds(38);
+
+  uint8_t status = spi_->transfer(0x20 + address);
+  spi_->transfer(data);
+
+  digitalWrite(cs_, HIGH);
+  spi_->endTransaction();
+  return status;
 }
 
 uint8_t Nrf24l01::SpiMaster::ReadRegister(
@@ -67,15 +91,21 @@ uint8_t Nrf24l01::SpiMaster::ReadRegister(
 }
 
 uint8_t Nrf24l01::SpiMaster::ReadRegister(uint8_t address) {
-  uint8_t result = 0;
-  ReadRegister(address, &result, 1);
+  spi_->beginTransaction(spiSettings);
+  digitalWrite(cs_, LOW);
+  delayNanoseconds(38);
+
+  spi_->transfer(0x00 + address);
+  uint8_t result = spi_->transfer(0x00);
+
+  digitalWrite(cs_, HIGH);
+  spi_->endTransaction();
   return result;
 }
 
 bool Nrf24l01::SpiMaster::VerifyRegister(
   uint8_t address, const uint8_t* data_in, uint8_t data_in_size) {
   if (data_in_size > 32) return false;
-  constexpr int kMaxRetries = 2;
 
   for (int i = 0; i < kMaxRetries; i++) {
     WriteRegister(address, data_in, data_in_size);
@@ -90,7 +120,16 @@ bool Nrf24l01::SpiMaster::VerifyRegister(
 }
 
 bool Nrf24l01::SpiMaster::VerifyRegister(uint8_t address, uint8_t value) {
-  return VerifyRegister(address, &value, 1);
+  for (int i = 0; i < kMaxRetries; i++) {
+    WriteRegister(address, value);
+    uint8_t regValue = ReadRegister(address);
+    if (regValue == value) {
+      return true;
+    }
+  }
+
+  // Well, we failed.  Report an error.
+  return false;
 }
 
 Nrf24l01::Nrf24l01(const Options& options)
@@ -108,7 +147,7 @@ Nrf24l01::~Nrf24l01() {}
 void Nrf24l01::Poll() {
   if (digitalRead(irq_) == 0) {
     // We have some interrupt to deal with.  Read the status.
-    const uint8_t status = nrf_.Command(0xff, nullptr, 0);
+    const uint8_t status = nrf_.Command(0xff);
 
     if (status & (1 << 6)) {
       ReadPacket();
@@ -121,7 +160,7 @@ void Nrf24l01::Poll() {
       retransmit_exceeded_++;
 
       // Flush our TX FIFO.
-      nrf_.Command(0xe1, nullptr, 0);
+      nrf_.Command(0xe1);
     }
 
     const uint8_t maybe_to_clear = status & 0x70;
@@ -192,7 +231,7 @@ bool Nrf24l01::Read(Packet* packet)  {
   rx_packet_.size = 0;
 
   // Check to see if there is more remaining.
-  const auto status_reg = nrf_.Command(0xff, nullptr, 0);
+  const auto status_reg = nrf_.Command(0xff);
   is_data_ready_ = ((status_reg >> 1) & 0x07) != 0x07;
   if (is_data_ready_) {
     ReadPacket();
@@ -216,16 +255,17 @@ void Nrf24l01::QueueAck(const Packet* packet) {
 }
 
 void Nrf24l01::ReadPacket() {
+  /*
   uint8_t payload_width = 0;
   nrf_.Command(0x60,  // R_RX_PL_WID
                nullptr, 0,
                &payload_width, 1);
-
-  rx_packet_.size = payload_width;
-  if (payload_width) {
+  */
+  rx_packet_.size = nrf_.ReadRegister(0x60);
+  if (rx_packet_.size) {
     nrf_.Command(0x61, nullptr, 0,
                  &rx_packet_.data[0],
-                 min(payload_width, sizeof(rx_packet_.data)));
+                 min(rx_packet_.size, sizeof(rx_packet_.data)));
   }
 }
 
@@ -344,23 +384,9 @@ uint8_t Nrf24l01::GetConfig() const {
 
 Nrf24l01::Status Nrf24l01::status() {
   Status result;
-  result.status_reg = nrf_.Command(0xff, nullptr, 0);
+  result.status_reg = nrf_.Command(0xff);
   result.retransmit_exceeded = retransmit_exceeded_;
   return result;
-}
-
-uint8_t Nrf24l01::ReadRegister(uint8_t reg) {
-  return nrf_.ReadRegister(reg);
-}
-
-void Nrf24l01::ReadRegister(
-  uint8_t reg, uint8_t *data_out, uint8_t data_out_size) {
-  nrf_.ReadRegister(reg, data_out, data_out_size);
-}
-
-void Nrf24l01::WriteRegister(
-  uint8_t reg, const uint8_t *data_in, uint8_t data_in_size) {
-  nrf_.WriteRegister(reg, data_in, data_in_size);
 }
 
 }  // namespace nrf24

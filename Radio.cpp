@@ -16,11 +16,14 @@ static uint8_t newChannelNo() {
   return random(0, 125 / 2) * 2;
 }
 
-void switchChannel(uint8_t channel) {
+static void switchChannel(uint8_t channel) {
   display.setRadioStatus(String("ch ") + String(channel));
   nrf24radio.setChannel(channel);
   nrf24radio.startListening();
 }
+
+Radio::Radio()
+  : init_ok_(false), last_received_ts_(0), rx_timeout_ms_(1000) {}
 
 void Radio::initRadio() {
   pinMode(NRF24_IRQ_PIN, INPUT);
@@ -62,15 +65,9 @@ void Radio::poll() {
         if (rx_data_[0] == 'C' && len > 1)
           switchChannel(rx_data_[1]);
       } else if (pipe_no == 1) {
-/*
-Handle Rx data
-        Serial.print("len = ");
-        Serial.print(len);
-        Serial.print(" data:");
-        Serial.println((const char*)rx_data_);
-        radio.writeAckPayload(1, ackData, sizeof(ackData));
-*/        
-      } else {
+        if (cb_) {
+          cb_(rx_data_, len);
+        }
       }
     }
   }
@@ -81,6 +78,10 @@ void Radio::poll10ms(uint32_t timeNow) {
     switchChannel(newChannelNo());
     last_received_ts_ = timeNow;
   }
+}
+
+bool Radio::writeTxData(const uint8_t* data, uint8_t len) {
+  return radio.writeAckPayload(1, data, len);
 }
 
 Radio radio;

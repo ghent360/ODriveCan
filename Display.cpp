@@ -25,7 +25,9 @@ Display::Display()
     bus1_battery_("1: ", 0, 5 + (BatteryWidget::batteryBarHeight + 1), 6),
     bus3_battery_("2: ", 0, 5 + 2*(BatteryWidget::batteryBarHeight + 1), 6),
     can_status_(
-      0, 5 + 4*(BatteryWidget::batteryBarHeight + 1), 8, ST7735_WHITE) {
+      0, 5 + 4*(BatteryWidget::batteryBarHeight + 1), 8, ST7735_WHITE),
+    radio_status_(
+      20 + BatteryWidget::batteryBarWidth, 5, 8, ST7735_WHITE) {
 }
 
 void Display::initDisplay() {
@@ -134,20 +136,20 @@ void StatusWidget::draw() {
   // Clear the old widget area
   tft.fillRect(x_, y_, old_w_, old_h_, ST7735_BLACK);
 
-  if (status_) {
+  if (status_.length() > 0) {
     tft.setTextColor(color_);
     tft.setTextSize(font_size_);
-    tft.drawString(status_, x_, y_);
+    tft.drawString(status_.c_str(), x_, y_);
   }
   dirty_ = false;
 }
 
 void StatusWidget::getSize(uint16_t &w, uint16_t &h) {
-  if (status_) {
+  if (status_.length() > 0) {
     int16_t x1, y1;
     uint16_t width, height;
     tft.setTextSize(font_size_);
-    tft.getTextBounds(status_, x_, y_, &x1, &y1, &width, &height);
+    tft.getTextBounds(status_.c_str(), x_, y_, &x1, &y1, &width, &height);
     w = width;
     h = height;
   } else {

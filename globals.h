@@ -7,6 +7,7 @@
 #include "CanInterface.h"
 #include "VoltageMonitor.h"
 #include "Display.h"
+#include "Radio.h"
 
 // various global data structures used by several files
 
@@ -39,3 +40,6 @@ extern VoltageMonitor voltageMonitor;
 
 // The Display instance.
 extern Display display;
+
+// The Radio instance.
+extern Radio radio;

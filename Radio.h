@@ -7,12 +7,20 @@
 #include <stdint.h>
 #include  <limits>
 
-#define NRF24_CE_PIN  4
-#define NRF24_IRQ_PIN 5
-#define NRF24_CS_PIN  6
-
 class Radio {
 public:
-  bool initRadio();
+  void initRadio();
+
+  bool ok() const {
+    return init_ok_;
+  }
+
   void powerDown();
+  void poll();
+  void poll10ms(uint32_t timeNow);
+private:
+  uint32_t init_ok_;
+  uint32_t last_received_ts_;
+  uint32_t rx_timeout_ms_;
+  uint8_t rx_data_[32];
 };

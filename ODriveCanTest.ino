@@ -210,14 +210,16 @@ static void startStateOne() {
 
 void setup() {
   Serial.begin(115200);
+  randomSeed(analogRead(A17) * micros());
 
   display.initDisplay();
   canInterface.canInit();
   voltageMonitor.initVoltageMonitor();
-/*
+  radio.initRadio();
+
   tm.addBack(tm.newPeriodicTask(
     CheckTaskDuration,
-    1000, // once per second
+    5000, // once per second
     [](TaskNode*, uint32_t) {
     uint32_t id = tm.getLongestTaskId();
     if (id != (uint32_t)-1) {
@@ -229,22 +231,22 @@ void setup() {
       tm.resetProfiler();
     }
   }));
-*/
+
   tm.addBack(tm.newPeriodicTask(
     DisplayUpdate,
     66, // 15 fps should be good enough for now
     [](TaskNode*, uint32_t) { display.updateScreen(); }));
-/*
+
   tm.addBack(tm.newPeriodicTask(
     RadioUpdate,
-    1,
-    [](TaskNode*, uint32_t now) { radio.PollMillisecond(now); }));
-*/
+    10,
+    [](TaskNode*, uint32_t now) { radio.poll10ms(now); }));
+
   startStateOne();
 }
 
 void loop() {
   canInterface.readAndProcessCan();
   tm.runNext(millis());
-  //radio.Poll();
+  radio.poll();
 }

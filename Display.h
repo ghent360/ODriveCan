@@ -60,9 +60,15 @@ private:
 class StatusWidget: public Widget {
 public:
   StatusWidget(uint8_t x, uint8_t y, uint8_t fontSize, uint16_t color)
-    : Widget(x, y), status_(nullptr), font_size_(fontSize), color_(color) {}
+    : Widget(x, y), status_(), font_size_(fontSize), color_(color) {}
 
   void setStatus(const char* status) {
+    getSize(old_w_, old_h_);
+    status_ = status;
+    dirty_ = true;
+  }
+  
+  void setStatus(const String& status) {
     getSize(old_w_, old_h_);
     status_ = status;
     dirty_ = true;
@@ -72,7 +78,7 @@ public:
   void draw() override;
   void getSize(uint16_t &w, uint16_t &h) override;
 private:
-  const char* status_;
+  String status_;
   const uint8_t font_size_;
   const uint16_t color_;
   uint16_t old_w_;
@@ -102,6 +108,18 @@ public:
   void setCanStatus(const char* msg) {
     can_status_.setStatus(msg);
   }
+
+  void setCanStatus(const String& msg) {
+    can_status_.setStatus(msg);
+  }
+
+  void setRadioStatus(const char* msg) {
+    radio_status_.setStatus(msg);
+  }
+
+  void setRadioStatus(const String& msg) {
+    radio_status_.setStatus(msg);
+  }
 private:
   void drawUi();
   bool dirty() const {
@@ -115,11 +133,13 @@ private:
   BatteryWidget bus1_battery_;
   BatteryWidget bus3_battery_;
   StatusWidget can_status_;
+  StatusWidget radio_status_;
 
-  Widget* widgets_[4] = {
+  Widget* widgets_[5] = {
     &teensy_battery_,
     &bus1_battery_,
     &bus3_battery_,
-    &can_status_
+    &can_status_,
+    &radio_status_,
   };
 };

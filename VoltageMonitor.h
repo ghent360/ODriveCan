@@ -8,7 +8,9 @@
 // peripherals as we can and switch the Teensy to low power mode.
 class VoltageMonitor {
 public:
-    void initVoltageMonitor();
-    float readBatteryVoltage();
-    void lowPowerMode();
+  void initVoltageMonitor();
+  float readBatteryVoltage();
+  void lowPowerMode();
+private:
+  float cvtMult_;
 };

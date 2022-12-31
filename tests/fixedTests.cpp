@@ -23,6 +23,19 @@ TEST_SUITE("Fixed template tests")
         CHECK(float(fx1) == 1.125f);
         fx1 = 1.05f;
         CHECK(float(fx1) == 1.0625f);
+        S8_4 fx2;
+        fx2 = 1.125f;
+        CHECK(float(fx2) == 1.125f);
+        fx2 = 1.1f;
+        CHECK(float(fx2) == 1.125f);
+        fx2 = 1.05f;
+        CHECK(float(fx2) == 1.0625f);
+        fx2 = -1.125f;
+        CHECK(float(fx2) == -1.125f);
+        fx2 = -1.1f;
+        CHECK(float(fx2) == -1.125f);
+        fx2 = -1.05f;
+        CHECK(float(fx2) == -1.0625f);
     }
 
     TEST_CASE("convert biased FP")

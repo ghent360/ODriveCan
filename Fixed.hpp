@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 #include <type_traits>
+#include <cstring>
 
 template<
   typename T,
@@ -48,8 +49,8 @@ public:
     return sizeof(value_);
   }
 
-  const uint8_t* to_tybes() const {
-    return reinterpret_cast<uint8_t*>(&value_);
+  const uint8_t* to_bytes() const {
+    return reinterpret_cast<const uint8_t*>(&value_);
   }
 
   static constexpr Fixed maxValue() {
@@ -72,6 +73,14 @@ public:
 
   static constexpr float min() {
     return float(minValue());
+  }
+
+  static constexpr Fixed fromBytes(const uint8_t* data, uint8_t len) {
+    Fixed result;
+    if (len == sizeof(result.value_)) {
+        std::memcpy(&result.value_, data, len);
+    }
+    return result;
   }
 private:
   static constexpr Fixed fromValue(T v) {

@@ -62,4 +62,15 @@ TEST_SUITE("Fixed template tests")
         f2 = 100;
         CHECK((float(f2) == F8_4_b50::max()));
     }
+
+    TEST_CASE("to/from bytes")
+    {
+        F8_4_b50 fx1(57.25f);
+        uint8_t storage;
+        std::memcpy(&storage, fx1.to_bytes(), fx1.size());
+        F8_4_b50 fx2 = F8_4_b50::fromBytes(&storage, sizeof(storage));
+        CHECK(float(fx1) == float(fx2));
+        fx2 = F8_4_b50::fromBytes(&storage, 0);
+        CHECK(float(fx2) == 50);
+    }
 }

@@ -12,6 +12,14 @@ static void FireCountTest(TaskNode*, uint32_t) {
     numFired++;
 }
 
+uint32_t micros() {
+    return 0;
+}
+
+uint32_t millis() {
+    return 0;
+}
+
 static void RemoveSelfAt2000(TaskNode* self, uint32_t time) {
     numFired++;
     if (time >= 2000) {

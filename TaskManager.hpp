@@ -7,6 +7,7 @@
 // Returns the current time in milliseconds
 #ifndef ARDUINO
 extern "C" uint32_t millis();
+extern "C" uint32_t micros();
 #endif
 
 // This is internal class structure for each task.

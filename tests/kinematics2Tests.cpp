@@ -6,7 +6,7 @@
 
 #include "doctest.h"
 
-
+#if 0
 TEST_SUITE("Kinematics2") {
     TEST_CASE("forward rest position") {
         float x, y;
@@ -118,3 +118,4 @@ TEST_SUITE("Kinematics2") {
         CHECK(fabs(k + M_PI / 2) < 0.0005);
     }
 }
+#endif

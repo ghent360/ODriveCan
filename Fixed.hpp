@@ -8,11 +8,10 @@
 #include <cstring>
 
 template<
-  typename T,
-  uint8_t sp,
-  uint8_t dp, 
-  int bias = 0,
-  bool is_signed = std::is_signed<T>::value>
+  typename T,   // storage integer type int32_t, uint32_t etc. must be large enough
+  uint8_t sp,   // number of total bits including the sign
+  uint8_t dp,   // number of bits for fractional value
+  int bias = 0> // value range is centered around the bias value
 class Fixed {
 public:
   constexpr Fixed() = default;
@@ -31,7 +30,7 @@ public:
 
     float bv = v - bias;
 
-    if (is_signed) {
+    if (std::is_signed<T>::value) {
       value_ = T(bv * (1 << dp) + (bv >= 0) ? 0.5f : -0.5f);
     } else {
       if (bv < 0) {
@@ -53,8 +52,16 @@ public:
     return reinterpret_cast<const uint8_t*>(&value_);
   }
 
+  const T value() const {
+    return value_;
+  }
+
+  static constexpr uint8_t bitSize() {
+    return sp;
+  }
+
   static constexpr Fixed maxValue() {
-    if (is_signed)
+    if (std::is_signed<T>::value)
         return fromValue((1 << (sp - 1)) - 1);
     else
         return fromValue((1 << sp) - 1);
@@ -65,7 +72,7 @@ public:
   }
 
   static constexpr Fixed minValue() {
-    if (is_signed)
+    if (std::is_signed<T>::value)
         return fromValue(-(1 << (sp - 1)) + 1);
     else
         return fromValue(0);

@@ -81,7 +81,7 @@ void Radio::poll10ms(uint32_t timeNow) {
 }
 
 bool Radio::writeTxData(const uint8_t* data, uint8_t len) {
-  return radio.writeAckPayload(1, data, len);
+  return nrf24radio.writeAckPayload(1, data, len);
 }
 
 Radio radio;

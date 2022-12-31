@@ -51,7 +51,8 @@ void Radio::initRadio() {
 }
 
 void Radio::powerDown() {
-  nrf24radio.powerDown();
+  if (init_ok_)
+    nrf24radio.powerDown();
 }
 
 void Radio::poll() {
@@ -74,14 +75,17 @@ void Radio::poll() {
 }
 
 void Radio::poll10ms(uint32_t timeNow) {
-  if ((timeNow - last_received_ts_) > rx_timeout_ms_) {
+  if (init_ok_ &&
+      ((timeNow - last_received_ts_) > rx_timeout_ms_)) {
     switchChannel(newChannelNo());
     last_received_ts_ = timeNow;
   }
 }
 
 bool Radio::writeTxData(const uint8_t* data, uint8_t len) {
-  return nrf24radio.writeAckPayload(1, data, len);
+  if (init_ok_)
+    return nrf24radio.writeAckPayload(1, data, len);
+  return false;
 }
 
 Radio radio;

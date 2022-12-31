@@ -20,8 +20,17 @@ public:
   }
 
   void powerDown();
+
+  // Call from the main app loop to handle radio data interrupts
   void poll();
+
+  // Call periodically to check if the receiver has lost connection.
   void poll10ms(uint32_t timeNow);
+
+  // Should not be smaller that the interval poll10ms is called.
+  void setRxTimeout(uint32_t timeout) {
+    rx_timeout_ms_ = timeout;
+  }
 
   uint32_t lastRxTime() const {
     return last_received_ts_;

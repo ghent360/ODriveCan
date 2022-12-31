@@ -78,7 +78,7 @@ public:
   static constexpr Fixed fromBytes(const uint8_t* data, uint8_t len) {
     Fixed result;
     if (len == sizeof(result.value_)) {
-        std::memcpy(&result.value_, data, len);
+        std::memcpy(&result.value_, data, sizeof(result.value_));
     }
     return result;
   }

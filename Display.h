@@ -125,6 +125,10 @@ public:
     can_status_.setStatus(msg);
   }
 
+  void setCanStatusColor(uint16_t color) {
+    can_status_.setColor(color);
+  }
+
   void setRadioStatus(const char* msg) {
     radio_status_.setStatus(msg);
   }
@@ -132,6 +136,11 @@ public:
   void setRadioStatus(const String& msg) {
     radio_status_.setStatus(msg);
   }
+
+  void setRadioStatusColor(uint16_t color) {
+    radio_status_.setColor(color);
+  }
+
 private:
   void drawUi();
   bool dirty() const {

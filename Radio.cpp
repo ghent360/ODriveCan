@@ -75,10 +75,15 @@ void Radio::poll() {
 }
 
 void Radio::poll10ms(uint32_t timeNow) {
-  if (init_ok_ &&
-      ((timeNow - last_received_ts_) > rx_timeout_ms_)) {
-    switchChannel(newChannelNo());
-    last_received_ts_ = timeNow;
+  if (init_ok_) {
+    if ((timeNow - last_received_ts_) > rx_timeout_ms_ / 2) {
+      display.setRadioStatusColor(ST7735_YELLOW);
+    }
+    if ((timeNow - last_received_ts_) > rx_timeout_ms_) {
+      display.setRadioStatusColor(ST7735_RED);
+      switchChannel(newChannelNo());
+      last_received_ts_ = timeNow;
+    }
   }
 }
 

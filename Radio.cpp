@@ -60,6 +60,7 @@ void Radio::poll() {
     uint8_t pipe_no;
     if (nrf24radio.available(&pipe_no)) {
       last_received_ts_ = millis();
+      display.setRadioStatusColor(ST7735_GREEN);
       uint8_t len = nrf24radio.getDynamicPayloadSize();
       nrf24radio.read(rx_data_, min(len, sizeof(rx_data_)));
       if (pipe_no == 0) {

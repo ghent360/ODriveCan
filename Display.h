@@ -63,27 +63,33 @@ public:
     : Widget(x, y), status_(), font_size_(fontSize), color_(color) {}
 
   void setStatus(const char* status) {
-    if (!dirty_) {
-      getSize(old_w_, old_h_);
+    if (status_ != status) {
+      if (!dirty_) {
+        getSize(old_w_, old_h_);
+      }
+      status_ = status;
+      dirty_ = true;
     }
-    status_ = status;
-    dirty_ = true;
   }
   
   void setStatus(const String& status) {
-    if (!dirty_) {
-      getSize(old_w_, old_h_);
+    if (status_ != status) {
+      if (!dirty_) {
+        getSize(old_w_, old_h_);
+      }
+      status_ = status;
+      dirty_ = true;
     }
-    status_ = status;
-    dirty_ = true;
   }
 
   void setColor(uint16_t color) {
-    if (!dirty_) {
-      getSize(old_w_, old_h_);
+    if (color_ != color) {
+      if (!dirty_) {
+        getSize(old_w_, old_h_);
+      }
+      color_ = color;
+      dirty_ = true;
     }
-    color_ = color;
-    dirty_ = true;
   }
 
   void init() override {};

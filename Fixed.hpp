@@ -33,9 +33,6 @@ public:
     if (std::is_signed<T>::value) {
       value_ = T(bv * (1 << dp) + ((bv >= 0) ? 0.5f : -0.5f));
     } else {
-      if (bv < 0) {
-        bv = 0;
-      }
       value_ = T(bv * (1 << dp) + 0.5f);
     }
   }

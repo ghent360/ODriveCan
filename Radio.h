@@ -18,6 +18,10 @@ public:
   void powerDown();
   void poll();
   void poll10ms(uint32_t timeNow);
+
+  uint32_t lastRxTime() const {
+    return last_received_ts_;
+  }
 private:
   uint32_t init_ok_;
   uint32_t last_received_ts_;

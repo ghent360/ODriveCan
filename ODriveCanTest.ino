@@ -101,10 +101,12 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
       allAlive = false;
     }
     if (axis.hb.error != 0) {
-      Serial.print("Axis ");
-      Serial.print(axis.node_id);
-      Serial.print(" error: 0x");
-      Serial.println(axis.hb.error, HEX);
+      String status("Axis ");
+      status += String(axis.node_id);
+      status += " error: 0x";
+      status += String(axis.hb.error, HEX);
+      Serial.println(status);
+      display.setCanStatus(status);
     }
   }
   if (!allAlive) {
@@ -192,13 +194,17 @@ static void checkAllAxesArePresent(TaskNode* self, uint32_t) {
 }
 
 static void reportAxesNotPresent(TaskNode* self, uint32_t) {
+  String status("Waiting for:");
   for(auto& axis: axes) {
     if (!axis.hb.alive) {
       Serial.print("Axis ");
       Serial.print(axis.node_id);
       Serial.println(" not responding");
+      status += " ";
+      status += String(axis.node_id);
     }
   }
+  display.setCanStatus(status);
 }
 
 static void startStateOne() {
@@ -216,6 +222,7 @@ void setup() {
   canInterface.canInit();
   voltageMonitor.initVoltageMonitor();
   radio.initRadio();
+  //while(!radio.ok());
 
   tm.addBack(tm.newPeriodicTask(
     CheckTaskDuration,

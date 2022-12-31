@@ -1,7 +1,6 @@
 #include "Radio.h"
 #include <stdint.h>
 #include <RF24.h>
-#include "nrf24l01.h"
 
 static RF24 radio(NRF24_CE_PIN, NRF24_CS_PIN);
 static const byte readAddress[6] = "OD3tg";

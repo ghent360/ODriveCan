@@ -44,7 +44,7 @@ public:
     return (float(value_) / (1 << dp)) + bias;
   }
 
-  uint8_t size() const {
+  static constexpr uint8_t size() {
     return sizeof(value_);
   }
 

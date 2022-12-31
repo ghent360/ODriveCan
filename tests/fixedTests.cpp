@@ -73,4 +73,18 @@ TEST_SUITE("Fixed template tests")
         fx2 = F8_4_b50::fromBytes(&storage, 0);
         CHECK(float(fx2) == 50);
     }
+
+    TEST_CASE("size/bitsize tests")
+    {
+        CHECK(F8_4::size() == 1);
+        CHECK(F8_4::bitSize() == 8);
+        CHECK(F8_4_b50::size() == 1);
+        CHECK(F8_4_b50::bitSize() == 8);
+        CHECK(S8_4::size() == 1);
+        CHECK(S8_4::bitSize() == 8);
+        CHECK(S8_4_b50::size() == 1);
+        CHECK(S8_4_b50::bitSize() == 8);
+        CHECK(F5_2::size() == 1);
+        CHECK(F5_2::bitSize() == 5);
+    }
 }

@@ -63,14 +63,26 @@ public:
     : Widget(x, y), status_(), font_size_(fontSize), color_(color) {}
 
   void setStatus(const char* status) {
-    getSize(old_w_, old_h_);
+    if (!dirty_) {
+      getSize(old_w_, old_h_);
+    }
     status_ = status;
     dirty_ = true;
   }
   
   void setStatus(const String& status) {
-    getSize(old_w_, old_h_);
+    if (!dirty_) {
+      getSize(old_w_, old_h_);
+    }
     status_ = status;
+    dirty_ = true;
+  }
+
+  void setColor(uint16_t color) {
+    if (!dirty_) {
+      getSize(old_w_, old_h_);
+    }
+    color_ = color;
     dirty_ = true;
   }
 
@@ -80,7 +92,7 @@ public:
 private:
   String status_;
   const uint8_t font_size_;
-  const uint16_t color_;
+  uint16_t color_;
   uint16_t old_w_;
   uint16_t old_h_;
 };

@@ -3,6 +3,10 @@
  *
  * This is my version of the control software for OpenDog V3.
 */
+
+// Enable profiling of the main loop code
+//#define PROFILE_LOOP
+
 #include "ODriveCan.hpp"
 #include "TaskManager.hpp"
 #include "kinematics.h"
@@ -18,8 +22,6 @@ using odrive::ODriveAxis;
 using odrive::VbusVoltage;
 
 TaskManager tm;
-
-//#define PROFILE_LOOP
 
 #ifdef PROFILE_LOOP
 #define PROFILE_CALL(x, v) \

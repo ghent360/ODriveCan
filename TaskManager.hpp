@@ -52,7 +52,9 @@ public:
     for(auto& node: pool_) {
       node.in_use_ = false;
     }
+#ifdef PROFILE_LOOP
     resetProfiler();
+#endif
   }
 
   // Allocate a new task. Return nullptr if we are out of task nodes.
@@ -204,13 +206,17 @@ public:
   uint32_t runNext(uint32_t time) {
     TaskNode *next = findNext(time);
     if (next) {
+#ifdef PROFILE_LOOP
       uint32_t startTime = micros();
+#endif
       next->run(time);
+#ifdef PROFILE_LOOP
       uint32_t duration = micros() - startTime;
       if (duration > max_task_time_) {
         max_task_time_ = duration;
         longest_task_id_ = next->id();
       }
+#endif
       if (next->in_use_) { // Check if the task has not been freed
         if (next->is_periodic_) {
           next->sched_time_ = time;
@@ -224,6 +230,7 @@ public:
     return time - last_idle_time_;
   }
 
+#ifdef PROFILE_LOOP
   uint32_t getMaxTaskTime() const {
     return max_task_time_;
   }
@@ -236,6 +243,7 @@ public:
     max_task_time_ = 0;
     longest_task_id_ = -1;
   }
+#endif
 private:
   void HandleOOM(const char*) {
   }
@@ -245,6 +253,8 @@ private:
   TaskNode *task_list_start_;
   TaskNode *task_list_end_;
   uint32_t last_idle_time_;
+#ifdef PROFILE_LOOP
   uint32_t max_task_time_;
   uint32_t longest_task_id_;
+#endif
 };

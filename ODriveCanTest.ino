@@ -31,10 +31,12 @@ TaskManager tm;
 
 static uint32_t canProcessDuration;
 static uint32_t radioProcessDuration;
+static uint32_t taskLoopDuration;
 
 void resetProcessProfiler() {
   canProcessDuration = 0;
   radioProcessDuration = 0;
+  taskLoopDuration = 0;
 }
 
 /*
@@ -246,18 +248,19 @@ void setup() {
     CheckTaskDuration,
     5000, // once per second
     [](TaskNode*, uint32_t) {
+    Serial.print("CAN processing ");
+    Serial.println(canProcessDuration);
+    Serial.print("Task loop ");
+    Serial.print (taskLoopDuration);
     uint32_t id = tm.getLongestTaskId();
     if (id != (uint32_t)-1) {
-      Serial.print("Longest task ID ");
+      Serial.print(" longest task ID:");
       Serial.print(id);
       Serial.print(" duration ");
-      Serial.print(tm.getMaxTaskTime());
-      Serial.println(" microseconds");
+      Serial.println(tm.getMaxTaskTime());
       tm.resetProfiler();
     }
-    Serial.print("Longest CAN processing ");
-    Serial.println(canProcessDuration);
-    Serial.print("Longest Radio processing ");
+    Serial.print("Radio processing ");
     Serial.println(radioProcessDuration);
     resetProcessProfiler();
   }));
@@ -278,6 +281,6 @@ void setup() {
 void loop() {
   uint32_t startTime, duration;
   PROFILE_CALL(canInterface.readAndProcessCan(), canProcessDuration);
-  tm.runNext(millis());
+  PROFILE_CALL(tm.runNext(millis()), taskLoopDuration);
   PROFILE_CALL(radio.poll(), radioProcessDuration);
 }

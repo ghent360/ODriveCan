@@ -18,6 +18,13 @@ using odrive::ODriveAxis;
 using odrive::VbusVoltage;
 
 TaskManager tm;
+static uint32_t canProcessDuration;
+static uint32_t radioProcessDuration;
+
+void resetProcessProfiler() {
+  canProcessDuration = 0;
+  radioProcessDuration = 0;
+}
 
 /*
  * The following code is a basic three state machine. We start with the state
@@ -237,6 +244,11 @@ void setup() {
       Serial.println(" microseconds");
       tm.resetProfiler();
     }
+    Serial.print("Longest CAN processing ");
+    Serial.println(canProcessDuration);
+    Serial.print("Longest Radio processing ");
+    Serial.println(radioProcessDuration);
+    resetProcessProfiler();
   }));
 
   tm.addBack(tm.newPeriodicTask(
@@ -253,7 +265,17 @@ void setup() {
 }
 
 void loop() {
+  uint32_t startTime = micros();
   canInterface.readAndProcessCan();
+  uint32_t duration = micros() - startTime;
+  if (duration > canProcessDuration) {
+    canProcessDuration = duration;
+  }
   tm.runNext(millis());
+  startTime = micros();
   radio.poll();
+  duration = micros() - startTime;
+  if (duration > radioProcessDuration) {
+    radioProcessDuration = duration;
+  }
 }

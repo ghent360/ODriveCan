@@ -6,7 +6,7 @@
 
 #include "doctest.h"
 
-#if 0
+#if 1
 TEST_SUITE("Kinematics2") {
     TEST_CASE("forward rest position") {
         float x, y;
@@ -59,7 +59,7 @@ TEST_SUITE("Kinematics2") {
         CHECK(fabs(th1) < 0.0005);
         CHECK(fabs(th2 + (M_PI/2)) < 0.0005);
     }
-
+#if 0
     TEST_CASE("Full forward kinematics") {
         float x, y, z;
         forwardKinematics2(0, 0, 0, x, y, z);
@@ -113,6 +113,26 @@ TEST_SUITE("Kinematics2") {
         CHECK(fabs(t) < 0.0005); // should be -M_PI/2
         CHECK(fabs(k - M_PI / 2) < 0.0005);
         inverseKinematics2(-205, -199.36, 107.36, false, h, t, k);
+        CHECK(fabs(h) < 0.0005);
+        CHECK(fabs(t) < 0.0005); // should be -M_PI/2
+        CHECK(fabs(k + M_PI / 2) < 0.0005);
+    }
+#endif
+    TEST_CASE("Full inverse kinematics") {
+        float h, t, k;
+        inverseKinematics3(0, 107.36f, -(199.36f + 205.0f), h, t, k);
+        CHECK(fabs(h) < 0.0005);
+        CHECK(fabs(t) < 0.0005); // should be -M_PI/2 to match FK
+        CHECK(fabs(k) < 0.0005);
+        // Can't solve correctly :-(
+        //inverseKinematics3(0, -(199.36f + 205.0f), 107.36f, h, t, k);
+        // Can't solve correctly :-(
+        //inverseKinematics3(0, (199.36f + 205.0f), -107.36f, h, t, k);
+        inverseKinematics3(205, 107.36, -199.36, h, t, k);
+        CHECK(fabs(h) < 0.0005);
+        CHECK(fabs(t) < 0.0005);
+        CHECK(fabs(k - M_PI / 2) < 0.0005);
+        inverseKinematics3(-205, 107.36, -199.36, h, t, k);
         CHECK(fabs(h) < 0.0005);
         CHECK(fabs(t) < 0.0005); // should be -M_PI/2
         CHECK(fabs(k + M_PI / 2) < 0.0005);

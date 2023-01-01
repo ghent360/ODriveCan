@@ -59,7 +59,7 @@ void Radio::poll() {
   if (init_ok_ && digitalReadFast(NRF24_IRQ_PIN) == 0) {
     uint8_t pipe_no;
     if (nrf24radio.available(&pipe_no)) {
-      last_received_ts_ = millis();
+      last_received_ts2_ = last_received_ts_ = millis();
       display.setRadioStatusColor(ST7735_GREEN);
       uint8_t len = nrf24radio.getDynamicPayloadSize();
       nrf24radio.read(rx_data_, min(len, sizeof(rx_data_)));
@@ -77,13 +77,15 @@ void Radio::poll() {
 
 void Radio::poll10ms(uint32_t timeNow) {
   if (init_ok_) {
-    if ((timeNow - last_received_ts_) > rx_timeout_ms_ / 2) {
+    if ((timeNow - last_received_ts_) > rx_timeout_ms_ / 3) {
       display.setRadioStatusColor(ST7735_YELLOW);
     }
     if ((timeNow - last_received_ts_) > rx_timeout_ms_) {
       display.setRadioStatusColor(ST7735_RED);
+    }
+    if ((timeNow - last_received_ts2_) > rx_timeout_ms_) {
       switchChannel(newChannelNo());
-      last_received_ts_ = timeNow;
+      last_received_ts2_ = timeNow;
     }
   }
 }

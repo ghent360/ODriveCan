@@ -44,6 +44,7 @@ public:
 private:
   uint32_t init_ok_;
   uint32_t last_received_ts_;
+  uint32_t last_received_ts2_;
   uint32_t rx_timeout_ms_;
   uint8_t rx_data_[32];
   Callback cb_;

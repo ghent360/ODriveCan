@@ -154,6 +154,7 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
 static void startStateThree() {
   Serial.println("All odrives active...");
   display.setCanStatus("Ready");
+  display.setCanStatusColor(ST7735_GREEN);
   initSerialInteraction();
   tm.addBack(tm.newPeriodicTask(StateThreeConnection, 250, checkAxisConnection));
   for(auto& axis: axes) {
@@ -200,6 +201,7 @@ static void clearErrorsAndSwitchToStateThree(TaskNode* self, uint32_t) {
 
 static void startStateTwo() {
   display.setCanStatus("Initializing axes");
+  display.setCanStatusColor(ST7735_YELLOW);
   tm.addBack(tm.newPeriodicTask(StateTwo, 250, clearErrorsAndSwitchToStateThree));
 }
 
@@ -222,7 +224,7 @@ static void checkAllAxesArePresent(TaskNode* self, uint32_t) {
 }
 
 static void reportAxesNotPresent(TaskNode* self, uint32_t) {
-  String status("Waiting for:");
+  String status("Axis:");
   for(auto& axis: axes) {
     if (!axis.hb.alive) {
       Serial.print("Axis ");
@@ -238,6 +240,7 @@ static void reportAxesNotPresent(TaskNode* self, uint32_t) {
 static void startStateOne() {
   Serial.println("Waiting for odrives to connect...");
   display.setCanStatus("Waiting to connect");
+  display.setCanStatusColor(ST7735_RED);
   tm.addBack(tm.newPeriodicTask(StateOneCheck, 250, checkAllAxesArePresent));
   tm.addBack(tm.newPeriodicTask(StateOneReport, 5000, reportAxesNotPresent));
 }

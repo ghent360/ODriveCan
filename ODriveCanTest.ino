@@ -18,6 +18,17 @@ using odrive::ODriveAxis;
 using odrive::VbusVoltage;
 
 TaskManager tm;
+
+#define PROFILE_CALL(x, v) \
+{\
+  startTime = micros();\
+  x;\
+  duration = micros() - startTime;\
+  if (duration > (v)) {\
+    (v) = duration;\
+  }\
+}
+
 static uint32_t canProcessDuration;
 static uint32_t radioProcessDuration;
 
@@ -265,17 +276,8 @@ void setup() {
 }
 
 void loop() {
-  uint32_t startTime = micros();
-  canInterface.readAndProcessCan();
-  uint32_t duration = micros() - startTime;
-  if (duration > canProcessDuration) {
-    canProcessDuration = duration;
-  }
+  uint32_t startTime, duration;
+  PROFILE_CALL(canInterface.readAndProcessCan(), canProcessDuration);
   tm.runNext(millis());
-  startTime = micros();
-  radio.poll();
-  duration = micros() - startTime;
-  if (duration > radioProcessDuration) {
-    radioProcessDuration = duration;
-  }
+  PROFILE_CALL(radio.poll(), radioProcessDuration);
 }

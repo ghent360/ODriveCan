@@ -19,6 +19,9 @@ using odrive::VbusVoltage;
 
 TaskManager tm;
 
+//#define PROFILE_LOOP
+
+#ifdef PROFILE_LOOP
 #define PROFILE_CALL(x, v) \
 {\
   startTime = micros();\
@@ -38,6 +41,9 @@ void resetProcessProfiler() {
   radioProcessDuration = 0;
   taskLoopDuration = 0;
 }
+#else
+#define PROFILE_CALL(x, v) x
+#endif
 
 /*
  * The following code is a basic three state machine. We start with the state
@@ -244,6 +250,7 @@ void setup() {
   radio.initRadio();
   //while(!radio.ok());
 
+#ifdef PROFILE_LOOP
   tm.addBack(tm.newPeriodicTask(
     CheckTaskDuration,
     5000, // once per second
@@ -264,6 +271,7 @@ void setup() {
     Serial.println(radioProcessDuration);
     resetProcessProfiler();
   }));
+#endif
 
   tm.addBack(tm.newPeriodicTask(
     DisplayUpdate,
@@ -279,7 +287,9 @@ void setup() {
 }
 
 void loop() {
+#ifdef PROFILE_LOOP
   uint32_t startTime, duration;
+#endif
   PROFILE_CALL(canInterface.readAndProcessCan(), canProcessDuration);
   PROFILE_CALL(tm.runNext(millis()), taskLoopDuration);
   PROFILE_CALL(radio.poll(), radioProcessDuration);

@@ -64,10 +64,10 @@ extern bool interpFlag;
 float constrainJointPos(DogLegJoint joint, float pos) {
     switch(jointClass[joint]) {
     case AxisClass::CLASS_KNEE: 
-        return constrain(pos, -0.8, 2.5);
+        return constrain(pos, -0.8, 3.5);
         break;
     case AxisClass::CLASS_SHOULDER: 
-        return constrain(pos, -2, 1.35);
+        return constrain(pos, -3, 1.35);
         break;
     case AxisClass::CLASS_HIP:
         return constrain(pos, -0.8, 0.2);

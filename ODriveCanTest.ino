@@ -18,6 +18,7 @@
 #include "Display.h"
 #include "Radio.h"
 
+using odrive::EncoderEstimate;
 using odrive::ODriveAxis;
 using odrive::VbusVoltage;
 
@@ -83,9 +84,9 @@ static void panic() {
 
 static void axisVbusValueCheck(
   ODriveAxis& axis, VbusVoltage&, VbusVoltage& newV) {
-  if (axis.node_id == 1) {
+  if ((axis.node_id % 2) != 0) {
     display.setBus1BatteryVoltage(newV.val);
-  } else if (axis.node_id == 2) {
+  } else {
     display.setBus3BatteryVoltage(newV.val);
   }
 
@@ -93,6 +94,11 @@ static void axisVbusValueCheck(
     Serial.println("ODrive battery voltage too low (estop)");
     panic();
   }
+}
+
+static void axisPosUpdate(
+  ODriveAxis& axis, EncoderEstimate&, EncoderEstimate& newV) {
+  display.setJoinPos(axis.node_id, newV.pos);
 }
 
 static void checkAxisVbusVoltage(TaskNode*, uint32_t) {
@@ -143,6 +149,7 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
     // Remove the voltage checking callbacks.
     for(auto& axis: axes) {
       axis.vbus.SetCallback(nullptr);
+      axis.enc_est.SetCallback(nullptr);
     }
     tm.remove(tm.findById(StateThreeODriveVoltage), true); // Remove the checkAxisVbusVoltage task.
     tm.remove(tm.findById(StateThreeBatteryVoltage), true); // Remove the checkBatteryVoltage task.
@@ -159,6 +166,7 @@ static void startStateThree() {
   tm.addBack(tm.newPeriodicTask(StateThreeConnection, 250, checkAxisConnection));
   for(auto& axis: axes) {
     axis.vbus.SetCallback(axisVbusValueCheck);
+    axis.enc_est.SetCallback(axisPosUpdate);
   }
   tm.addBack(tm.newPeriodicTask(StateThreeODriveVoltage, 1000, checkAxisVbusVoltage));
   tm.addBack(tm.newPeriodicTask(StateThreeBatteryVoltage, 1000, checkBatteryVoltage));

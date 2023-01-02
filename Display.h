@@ -32,7 +32,7 @@ public:
   BatteryWidget(const char* label, uint8_t x, uint8_t y, uint8_t numCells);
 
   void setVoltage(float v) {
-    if (fabsf(v - voltage_) > 0.01) {
+    if (fabsf(v - voltage_) > 0.01f) {
       voltage_ = v;
       dirty_ = true;
     }
@@ -103,6 +103,48 @@ private:
   uint16_t old_h_;
 };
 
+class PositionWidget: public Widget {
+public:
+  PositionWidget(uint8_t x, uint8_t y, uint8_t fontSize, uint16_t color)
+    : Widget(x, y), pos_(0), font_size_(fontSize), color_(color) {
+    convert();
+  }
+
+  void setPos(float pos) {
+    if (fabsf(pos - pos_) > 0.01f) {
+      if (!dirty_) {
+        getSize(old_w_, old_h_);
+      }
+      pos_ = pos;
+      convert();
+      dirty_ = true;
+    }
+  }
+
+  void setColor(uint16_t color) {
+    if (color_ != color) {
+      if (!dirty_) {
+        getSize(old_w_, old_h_);
+      }
+      color_ = color;
+      dirty_ = true;
+    }
+  }
+
+  void init() override {};
+  void draw() override;
+  void getSize(uint16_t &w, uint16_t &h) override;
+private:
+  void convert();
+
+  float pos_;
+  String posStr_;
+  const uint8_t font_size_;
+  uint16_t color_;
+  uint16_t old_w_;
+  uint16_t old_h_;
+};
+
 class Display {
 public:
   Display();
@@ -147,6 +189,8 @@ public:
     radio_status_.setColor(color);
   }
 
+  void setJoinPos(uint8_t aixId, float pos);
+  void setJoinColor(uint8_t aixId, uint16_t color);
 private:
   void drawUi();
   bool dirty() const {
@@ -161,12 +205,25 @@ private:
   BatteryWidget bus3_battery_;
   StatusWidget can_status_;
   StatusWidget radio_status_;
+  PositionWidget joint_pos_[12];
 
-  Widget* widgets_[5] = {
+  Widget* widgets_[17] = {
     &teensy_battery_,
     &bus1_battery_,
     &bus3_battery_,
     &can_status_,
     &radio_status_,
+    &joint_pos_[0],
+    &joint_pos_[1],
+    &joint_pos_[2],
+    &joint_pos_[3],
+    &joint_pos_[4],
+    &joint_pos_[5],
+    &joint_pos_[6],
+    &joint_pos_[7],
+    &joint_pos_[8],
+    &joint_pos_[9],
+    &joint_pos_[10],
+    &joint_pos_[11]
   };
 };

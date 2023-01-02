@@ -3,6 +3,9 @@
 */
 #pragma once
 
+constexpr float posToRad = 0.62831853071f;
+constexpr float radToPos = 1.59154943092f;
+
 enum DogLeg {
     FRONT_LEFT = 1,
     FRONT_RIGHT,

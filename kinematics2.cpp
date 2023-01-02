@@ -29,7 +29,7 @@ static void inverseKinematics(float x, float z, bool sol, float &tieAngle, float
     // if (r2 < lenDiff2) return;
     float phi = acosf((tieLength2 + shinLength2 - r2) / (2 * tieLength * shinLength));
     float xsi2 = atan2f(x, z);
-    if (x >= 0) xsi2 -= M_PI;
+    if (x > 0) xsi2 -= M_PI;
     else xsi2 += M_PI;
     float r = sqrt(r2);
     float xsi1 = acos((r2 + tieLength2 - shinLength2) / (2 * r * tieLength));

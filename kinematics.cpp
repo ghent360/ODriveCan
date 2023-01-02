@@ -64,10 +64,10 @@ extern bool interpFlag;
 float constrainJointPos(DogLegJoint joint, float pos) {
     switch(jointClass[joint]) {
     case AxisClass::CLASS_KNEE: 
-        return constrain(pos, -0.8, 3.5);
+        return constrain(pos, -0.8, 2.5);
         break;
     case AxisClass::CLASS_SHOULDER: 
-        return constrain(pos, -3, 1.35);
+        return constrain(pos, -2, 1.35);
         break;
     case AxisClass::CLASS_HIP:
         return constrain(pos, -0.8, 0.2);
@@ -81,6 +81,7 @@ void driveJoints(DogLegJoint joint, float pos) {
     // consistent, also constrains the motion limits for each joint
 
     pos = constrainJointPos(joint, pos);
+#if 0    
     switch (joint) {
     case BACK_RIGHT_KNEE:
     case FRONT_LEFT_KNEE:
@@ -93,11 +94,13 @@ void driveJoints(DogLegJoint joint, float pos) {
     default:
         break;
     }
+#endif
     if (axes[joint].hb.state == AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL) {
       axes[joint].SetInputPos(pos + jointOffsets[joint]);
     }
 }
 
+#if 0
 void kinematicsInterp(
     DogLeg leg,
     float xIn,
@@ -475,18 +478,4 @@ void kinematics(
     break;
     }
 }
-
-const float jointOffsets[numAxes] = {
-  [FRONT_RIGHT_KNEE] = 0.2,
-  [FRONT_LEFT_KNEE] = 0.22,
-  [BACK_RIGHT_KNEE] = -0.32,
-  [BACK_LEFT_KNEE] = -0.18,
-  [FRONT_RIGHT_SHOULDER] = -0.26,
-  [FRONT_LEFT_SHOULDER] = -0.08,
-  [BACK_RIGHT_SHOULDER] = 0.16,
-  [BACK_LEFT_SHOULDER] = -0.06,
-  [FRONT_RIGHT_HIP] = -0.45,
-  [FRONT_LEFT_HIP] = 0.31,
-  [BACK_RIGHT_HIP] = -0.29,
-  [BACK_LEFT_HIP] = 0.27
-};
+#endif

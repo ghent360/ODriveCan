@@ -27,7 +27,21 @@ Display::Display()
     can_status_(
       0, 5 + 4*(BatteryWidget::batteryBarHeight + 1), 8, ST7735_WHITE),
     radio_status_(
-      20 + BatteryWidget::batteryBarWidth, 5, 8, ST7735_WHITE) {
+      20 + BatteryWidget::batteryBarWidth, 5, 8, ST7735_WHITE),
+    joint_pos_{
+      PositionWidget(  0, 55, 6, ST7735_WHITE), //FRONT_RIGHT_KNEE
+      PositionWidget( 40, 55, 6, ST7735_WHITE), //FRONT_LEFT_KNEE
+      PositionWidget( 80, 55, 6, ST7735_WHITE), //BACK_RIGHT_KNEE
+      PositionWidget(120, 55, 6, ST7735_WHITE), //BACK_LEFT_KNEE
+      PositionWidget(  0, 65, 6, ST7735_WHITE), //FRONT_RIGHT_SHOULDER
+      PositionWidget( 40, 65, 6, ST7735_WHITE), //FRONT_LEFT_SHOULDER
+      PositionWidget( 80, 65, 6, ST7735_WHITE), //BACK_RIGHT_SHOULDER
+      PositionWidget(120, 65, 6, ST7735_WHITE), //BACK_LEFT_SHOULDER
+      PositionWidget(  0, 75, 6, ST7735_WHITE), //FRONT_RIGHT_HIP
+      PositionWidget( 40, 75, 6, ST7735_WHITE), //FRONT_LEFT_HIP
+      PositionWidget( 80, 75, 6, ST7735_WHITE), //BACK_RIGHT_HIP
+      PositionWidget(120, 75, 6, ST7735_WHITE)  //BACK_LEFT_HIP
+    } {
 }
 
 void Display::initDisplay() {
@@ -59,6 +73,20 @@ void Display::updateScreen() {
 void Display::drawUi() {
   for(auto widget : widgets_) {
     widget->draw();
+  }
+}
+
+void Display::setJoinColor(uint8_t axisId, uint16_t color) {
+  DogLegJoint joint = getJointByAxisId(axisId);
+  if (joint < numAxes) {
+    joint_pos_[joint].setColor(color);
+  }
+}
+
+void Display::setJoinPos(uint8_t axisId, float pos) {
+  DogLegJoint joint = getJointByAxisId(axisId);
+  if (joint < numAxes) {
+    joint_pos_[joint].setPos(pos);
   }
 }
 
@@ -158,4 +186,38 @@ void StatusWidget::getSize(uint16_t &w, uint16_t &h) {
   }
 }
 
+void PositionWidget::draw() {
+  if (!dirty_) return;
+  // Clear the old widget area
+  tft.fillRect(x_, y_, old_w_, old_h_, ST7735_BLACK);
+
+  if (posStr_.length() > 0) {
+    tft.setTextColor(color_);
+    tft.setTextSize(font_size_);
+    tft.drawString(posStr_.c_str(), x_, y_);
+  }
+  dirty_ = false;
+}
+
+void PositionWidget::getSize(uint16_t &w, uint16_t &h) {
+  if (posStr_.length() > 0) {
+    int16_t x1, y1;
+    uint16_t width, height;
+    tft.setTextSize(font_size_);
+    tft.getTextBounds(posStr_.c_str(), x_, y_, &x1, &y1, &width, &height);
+    w = width;
+    h = height;
+  } else {
+    w = 0;
+    h = 0;
+  }
+}
+
+void PositionWidget::convert() {
+  if (pos_ != 0) {
+    posStr_ = String(pos_, 3);
+  } else {
+    posStr_ = String();
+  }
+}
 Display display;

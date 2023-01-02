@@ -32,6 +32,8 @@ extern const char* axisName[numAxes]; // Index with DogLegJoint value
 // A name for each leg.
 const char* getLegName(DogLeg leg);
 
+DogLegJoint getJointByAxisId(uint16_t axisId);
+
 // Our CanInterface instance.
 extern odrive::CanInterface canInterface;
 

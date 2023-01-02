@@ -7,6 +7,23 @@ Tie pivot point center distance: 199.36mm
 Shin length: 205mm
 Foot ball radius - 32.5mm
 
+Straight down pos (shin, tie, hip):
+Front Right:  2.519,  0.713, -0.444
+Front Left : -2.116, -0.98,   0.299
+Back Right : -2.639, -0.84,  -0.286
+Back Left  :  2.05,   0.855,  0.277
+
+Rest (shin, tie, hip):
+Back Right : -0.304,  0.156, -0.286
+Front Right:  0.097, -0.29,  -0.444
+Front Left :  0.226, -0.034,  0.299
+Back Left  : -0.375, -0.171,  0.277
+
+Straight->Rest: (pos | rad)
+Back Right :  2.335,  0.996 |  1.4671,  0.6258
+Front Left :  2.342,  0.946 |  1.4715,  0.5944
+Back Left  : -2.425, -1.026 | -1.5237, -0.6447
+Front Right: -2.422, -1.003 | -1.5218, -0.6302
 
 For leg 4 the coordinate system for the leg frame and the effector is the same
 

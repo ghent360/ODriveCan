@@ -36,6 +36,15 @@ ODriveAxis axes[numAxes] = {
   [BACK_LEFT_HIP] = ODriveAxis( 9, CanInterface::sendCmdCh1)
 };
 
+DogLegJoint getJointByAxisId(uint16_t axisId) {
+  for(uint8_t idx = 0; idx <= numAxes; idx++) {
+    if (axes[idx].node_id == axisId) {
+      return DogLegJoint(idx);
+    }
+  }
+  return DogLegJoint(-1);
+}
+
 const AxisClass jointClass[numAxes] = {
   [FRONT_RIGHT_KNEE] = AxisClass::CLASS_KNEE,
   [FRONT_LEFT_KNEE] = AxisClass::CLASS_KNEE,
@@ -77,5 +86,27 @@ const char* getLegName(DogLeg leg) {
   }
   return "";
 }
+
+/*
+Straight down pos (shin, tie, hip):
+Front Right:  2.519,  0.713, -0.444
+Front Left : -2.116, -0.98,   0.299
+Back Right : -2.639, -0.84,  -0.286
+Back Left  :  2.05,   0.855,  0.277
+*/
+const float jointOffsets[numAxes] = {
+  [FRONT_RIGHT_KNEE] = 2.519,
+  [FRONT_LEFT_KNEE] = -2.116,
+  [BACK_RIGHT_KNEE] = -2.639,
+  [BACK_LEFT_KNEE] = 2.05,
+  [FRONT_RIGHT_SHOULDER] = 0.713,
+  [FRONT_LEFT_SHOULDER] = -0.98,
+  [BACK_RIGHT_SHOULDER] = -0.84,
+  [BACK_LEFT_SHOULDER] = 0.855,
+  [FRONT_RIGHT_HIP] = -0.444,
+  [FRONT_LEFT_HIP] = 0.299,
+  [BACK_RIGHT_HIP] = -0.286,
+  [BACK_LEFT_HIP] = 0.277
+};
 
 odrive::CanInterface canInterface(axes, numAxes);

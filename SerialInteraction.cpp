@@ -5,6 +5,7 @@
 #include "ODriveCan.hpp"
 #include "globals.h"
 #include "kinematics.h"
+#include "kinematics2.h"
 #include "TaskManager.hpp"
 #include "TaskIds.h"
 
@@ -34,7 +35,9 @@ static void activateLeg(DogLeg leg) {
   Serial.print("Active leg ");
   Serial.println(getLegName(leg));
   activeLeg = leg;
-  activeLegX = activeLegY = activeLegZ = 0;
+  activeLegX = 20;
+  activeLegY = 107.36;
+  activeLegZ = -380;
 }
 
 static void activateAxis(DogLegJoint axis) {
@@ -78,7 +81,7 @@ static void printAxesHomePos(TaskNode*, uint32_t) {
 
 static void setAxisLimitsAndStart() {
   for(auto& axis: axes) {
-    axis.SetLimits(6.0f, 10.0f); // Should be 6000.0f, 20.0f
+    axis.SetLimits(2.0f, 10.0f); // Should be 6000.0f, 20.0f
     axis.SetState(AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL);
   }
   tm.addBack(tm.newSimpleTask(PrintPosition, 5000, printAxesHomePos));
@@ -129,6 +132,38 @@ static void moveAxisPos() {
     Serial.print("pos = ");
     Serial.println(activeAxisPos);
     driveJoints(static_cast<DogLegJoint>(activeAxis), activeAxisPos);
+  }
+}
+
+static void computeAnglesAndMove() {
+  float ha, ta, sa;
+  inverseKinematics2(activeLegX, activeLegZ, activeLegY, true, ha, ta, sa);
+  float hp, tp, sp;
+  hp = ha * radToPos;
+  tp = ta * radToPos;
+  sp = sa * radToPos;
+  Serial.print("Leg pos x:");
+  Serial.print(activeLegX, 3);
+  Serial.print(" y:");
+  Serial.print(activeLegY, 3);
+  Serial.print(" z:");
+  Serial.println(activeLegZ, 3);
+  Serial.print("Angles shin:");
+  Serial.print(sa, 3);
+  Serial.print(" tie:");
+  Serial.print(ta, 3);
+  Serial.print(" hip:");
+  Serial.println(ha, 3);
+  Serial.print("Pos shin:");
+  Serial.print(sp, 3);
+  Serial.print(" tie:");
+  Serial.print(tp, 3);
+  Serial.print(" hip:");
+  Serial.println(hp, 3);
+  if (!isnan(sa) && !isnan(ta) && !isnan(ha)) {
+    driveJoints(BACK_RIGHT_SHOULDER, tp);
+    driveJoints(BACK_RIGHT_KNEE, -sp);
+    //driveJoints(BACK_RIGHT_HIP, ha);
   }
 }
 
@@ -229,38 +264,38 @@ void checkSerialInput(TaskNode*, uint32_t) {
           break;
       case 'x':
           if (activeLeg > 0) {
-            activeLegX += 0.1;
-            kinematics(static_cast<DogLeg>(activeLeg), activeLegX, activeLegY, activeLegZ, 0, 0, 0);
+            activeLegX += 5;
+            computeAnglesAndMove();
           }
           break;
       case 'X':
           if (activeLeg > 0) {
-            activeLegX -= 0.1;
-            kinematics(static_cast<DogLeg>(activeLeg), activeLegX, activeLegY, activeLegZ, 0, 0, 0);
+            activeLegX -= 5;
+            computeAnglesAndMove();
           }
           break;
       case 'y':
           if (activeLeg > 0) {
-            activeLegY += 0.1;
-            kinematics(static_cast<DogLeg>(activeLeg), activeLegX, activeLegY, activeLegZ, 0, 0, 0);
+            activeLegY += 5;
+            computeAnglesAndMove();
           }
           break;
       case 'Y':
           if (activeLeg > 0) {
-            activeLegY -= 0.1;
-            kinematics(static_cast<DogLeg>(activeLeg), activeLegX, activeLegY, activeLegZ, 0, 0, 0);
+            activeLegY -= 5;
+            computeAnglesAndMove();
           }
           break;
       case 'z':
           if (activeLeg > 0) {
-            activeLegZ += 0.1;
-            kinematics(static_cast<DogLeg>(activeLeg), activeLegX, activeLegY, activeLegZ, 0, 0, 0);
+            activeLegZ += 5;
+            computeAnglesAndMove();
           }
           break;
       case 'Z':
           if (activeLeg > 0) {
-            activeLegZ -= 0.1;
-            kinematics(static_cast<DogLeg>(activeLeg), activeLegX, activeLegY, activeLegZ, 0, 0, 0);
+            activeLegZ -= 5;
+            computeAnglesAndMove();
           }
           break;
       case 'h':

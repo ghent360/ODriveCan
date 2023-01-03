@@ -3,5 +3,11 @@
 */
 #pragma once
 
-void inverseKinematics2(
-    float x, float y, float z, bool posth3, float& hipAngle, float& tieAngle, float& shinAngle);
+void inverseKinematics(
+    float x,
+    float y,
+    float z,
+    bool posShinAngle,
+    float& hipAngle,
+    float& tieAngle,
+    float& shinAngle);

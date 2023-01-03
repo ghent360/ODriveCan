@@ -137,7 +137,7 @@ static void moveAxisPos() {
 
 static void computeAnglesAndMove() {
   float ha, ta, sa;
-  inverseKinematics2(activeLegX, activeLegZ, activeLegY, true, ha, ta, sa);
+  inverseKinematics(activeLegX, activeLegZ, activeLegY, true, ha, ta, sa);
   float hp, tp, sp;
   hp = ha * radToPos;
   tp = ta * radToPos;

@@ -22,7 +22,8 @@ const float sqrt2 = sqrtf(2);
 const float sqrt2Half = sqrt2 / 2;
 const float oneOverSqrt2 = 1 / sqrt2;
 
-static void inverseKinematics(float x, float z, bool sol, float &tieAngle, float &shinAngle) {
+static void inverseKinematics2d(
+  float x, float z, bool posShinAngle, float &tieAngle, float &shinAngle) {
     float r2 = x * x + z * z;
     // check the destination is reachable
     // if (r2 > (tieLength2 + shinLength2)) return;
@@ -33,18 +34,19 @@ static void inverseKinematics(float x, float z, bool sol, float &tieAngle, float
     else xsi2 += M_PI;
     float r = sqrt(r2);
     float xsi1 = acos((r2 + tieLength2 - shinLength2) / (2 * r * tieLength));
-    if (sol) {
-        shinAngle = -(M_PI - phi);
-        tieAngle = xsi2 + xsi1;
-    } else {
+    if (posShinAngle) {
         shinAngle = M_PI - phi;
         tieAngle = xsi2 - xsi1;
+    } else {
+        shinAngle = -(M_PI - phi);
+        tieAngle = xsi2 + xsi1;
     }
 }
 
-void inverseKinematics2(
-    float x, float y, float z, bool posth3, float &h, float &t, float &s) {
-    float hypz = sqrtf(z * z + y * y);
+void inverseKinematics(
+    float x, float y, float z, bool posShinAngle, float &h, float &t, float &s) {
+    float hypz2 = z * z + y * y;
+    float hypz = sqrtf(hypz2);
     float alpha = acosf(fabs(z) / hypz);
     float beta = acosf(hipLength / hypz);
     if (z > 0) {
@@ -52,8 +54,8 @@ void inverseKinematics2(
     } else {
         h = M_PI - alpha - beta;
     }
-    float yprime = -sqrtf(y*y + z*z - hipLength2);
-    inverseKinematics(-x, yprime, posth3, t, s);
+    float yprime = -sqrtf(hypz2 - hipLength2);
+    inverseKinematics2d(-x, yprime, posShinAngle, t, s);
 }
 
 #if 0

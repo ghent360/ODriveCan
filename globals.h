@@ -21,6 +21,8 @@ constexpr float cellMinVoltage = 3.35;
 
 // Static offset for each joint at its resting position.
 extern const float jointOffsets[numAxes]; // Index with DogLegJoint value
+// Parking position values for each axis - include the offsets.
+extern const float parkPosition[numAxes]; // Index with DogLegJoint value
 
 // An AxisClass for each of the axes.
 extern const AxisClass jointClass[numAxes]; // Index with DogLegJoint value

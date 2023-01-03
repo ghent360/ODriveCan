@@ -86,7 +86,7 @@ void Display::setJoinColor(uint8_t axisId, uint16_t color) {
 void Display::setJoinPos(uint8_t axisId, float pos) {
   DogLegJoint joint = getJointByAxisId(axisId);
   if (joint < numAxes) {
-    joint_pos_[joint].setPos(pos);
+    joint_pos_[joint].setPos(pos - jointOffsets[joint]);
   }
 }
 

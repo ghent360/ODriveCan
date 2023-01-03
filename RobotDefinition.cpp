@@ -109,4 +109,19 @@ const float jointOffsets[numAxes] = {
   [BACK_LEFT_HIP] = 0.277
 };
 
+const float parkPosition[numAxes] = {
+  [FRONT_RIGHT_KNEE] = 2.391,
+  [FRONT_LEFT_KNEE] = -2.336,
+  [BACK_RIGHT_KNEE] = -2.323,
+  [BACK_LEFT_KNEE] = 2.37,
+  [FRONT_RIGHT_SHOULDER] = -0.996,
+  [FRONT_LEFT_SHOULDER] = 0.935,
+  [BACK_RIGHT_SHOULDER] = 0.985,
+  [BACK_LEFT_SHOULDER] = -0.98,
+  [FRONT_RIGHT_HIP] = 0,
+  [FRONT_LEFT_HIP] = 0,
+  [BACK_RIGHT_HIP] = -0,
+  [BACK_LEFT_HIP] = 0
+};
+
 odrive::CanInterface canInterface(axes, numAxes);

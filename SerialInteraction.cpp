@@ -37,7 +37,7 @@ static void activateLeg(DogLeg leg) {
   activeLeg = leg;
   activeLegX = 20;
   activeLegY = 107.36;
-  activeLegZ = -380;
+  activeLegZ = -320;
 }
 
 static void activateAxis(DogLegJoint axis) {
@@ -68,6 +68,7 @@ static void printHelp() {
   Serial.println("  'c' - clear active axis errors.");
 }
 
+#if 0
 static void printAxesHomePos(TaskNode*, uint32_t) {
   for (int idx=0; idx<numAxes; idx++) {
     Serial.print("Axis ");
@@ -78,13 +79,14 @@ static void printAxesHomePos(TaskNode*, uint32_t) {
     Serial.println(axes[idx].enc_est.pos);
   }
 }
+#endif
 
 static void setAxisLimitsAndStart() {
   for(auto& axis: axes) {
     axis.SetLimits(2.0f, 10.0f); // Should be 6000.0f, 20.0f
     axis.SetState(AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL);
   }
-  tm.addBack(tm.newSimpleTask(PrintPosition, 5000, printAxesHomePos));
+  //tm.addBack(tm.newSimpleTask(PrintPosition, 5000, printAxesHomePos));
 }
 
 static void setAxisIdle() {
@@ -97,7 +99,7 @@ static void setAxisIdle() {
 static void axesGoHome() {
   for (int idx=0; idx<numAxes; idx++) {
     if (axes[idx].hb.state == AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL) {
-      axes[idx].SetInputPos(jointOffsets[idx]);
+      driveJoints(static_cast<DogLegJoint>(idx), parkPosition[idx]);
     } 
   }
 }
@@ -128,7 +130,7 @@ static void modifyGains() {
 
 static void moveAxisPos() {
   if (isAxisActive()) {
-    activeAxisPos = constrain(activeAxisPos, -2.5, 2.5);
+    //activeAxisPos = constrain(activeAxisPos, -2.5, 2.5);
     Serial.print("pos = ");
     Serial.println(activeAxisPos);
     driveJoints(static_cast<DogLegJoint>(activeAxis), activeAxisPos);
@@ -137,11 +139,19 @@ static void moveAxisPos() {
 
 static void computeAnglesAndMove() {
   float ha, ta, sa;
-  inverseKinematics(activeLegX, activeLegZ, activeLegY, true, ha, ta, sa);
+  bool posShinAngle = (activeLeg == BACK_RIGHT) || (activeLeg == FRONT_RIGHT);
+  float x = activeLegX;
+  float y = activeLegY;
+  float z = activeLegZ;
+  if ((activeLeg == BACK_LEFT) || (activeLeg == FRONT_LEFT)) {
+    x = -x;
+  }
+  inverseKinematics(x, z, y, posShinAngle, ha, ta, sa);
   float hp, tp, sp;
   hp = ha * radToPos;
   tp = ta * radToPos;
   sp = sa * radToPos;
+#if 0
   Serial.print("Leg pos x:");
   Serial.print(activeLegX, 3);
   Serial.print(" y:");
@@ -160,10 +170,30 @@ static void computeAnglesAndMove() {
   Serial.print(tp, 3);
   Serial.print(" hip:");
   Serial.println(hp, 3);
+#endif
   if (!isnan(sa) && !isnan(ta) && !isnan(ha)) {
-    driveJoints(BACK_RIGHT_SHOULDER, tp);
-    driveJoints(BACK_RIGHT_KNEE, -sp);
-    //driveJoints(BACK_RIGHT_HIP, ha);
+    switch (activeLeg) {
+      case BACK_RIGHT:
+        driveJoints(BACK_RIGHT_HIP, -hp);
+        driveJoints(BACK_RIGHT_SHOULDER, tp);
+        driveJoints(BACK_RIGHT_KNEE, sp);
+        break;
+      case FRONT_RIGHT:
+        driveJoints(FRONT_RIGHT_HIP, -hp);
+        driveJoints(FRONT_RIGHT_SHOULDER, tp);
+        driveJoints(FRONT_RIGHT_KNEE, sp);
+        break;
+      case BACK_LEFT:
+        driveJoints(BACK_LEFT_HIP, -hp);
+        driveJoints(BACK_LEFT_SHOULDER, tp);
+        driveJoints(BACK_LEFT_KNEE, sp);
+        break;
+      case FRONT_LEFT:
+        driveJoints(FRONT_LEFT_HIP, -hp);
+        driveJoints(FRONT_LEFT_SHOULDER, tp);
+        driveJoints(FRONT_LEFT_KNEE, sp);
+        break;
+    }
   }
 }
 

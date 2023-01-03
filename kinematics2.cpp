@@ -10,17 +10,12 @@
 constexpr float tieLength = 199.36;
 constexpr float shinLength = 205;
 constexpr float hipLength = 107.36;
-constexpr float ballRadius = 32.5;
 constexpr float tieLength2 = tieLength * tieLength;
 constexpr float shinLength2 = shinLength * shinLength;
 constexpr float hipLength2 = hipLength * hipLength;
 constexpr float lenDiff = shinLength - tieLength;
 constexpr float lenDiff2 = lenDiff * lenDiff;
-constexpr float epsilon = 0.0005f;
-
-const float sqrt2 = sqrtf(2);
-const float sqrt2Half = sqrt2 / 2;
-const float oneOverSqrt2 = 1 / sqrt2;
+//constexpr float epsilon = 0.0005f;
 
 static void inverseKinematics2d(
   float x, float z, bool posShinAngle, float &tieAngle, float &shinAngle) {
@@ -45,16 +40,16 @@ static void inverseKinematics2d(
 
 void inverseKinematics(
     float x, float y, float z, bool posShinAngle, float &h, float &t, float &s) {
-    float hypz2 = z * z + y * y;
-    float hypz = sqrtf(hypz2);
-    float alpha = acosf(fabs(z) / hypz);
-    float beta = acosf(hipLength / hypz);
-    if (z > 0) {
+    float hyp2 = z * z + y * y;
+    float hyp = sqrtf(hyp2);
+    float alpha = acosf(fabs(y) / hyp);
+    float beta = acosf(hipLength / hyp);
+    if (y > 0) {
         h = alpha - beta;
     } else {
         h = M_PI - alpha - beta;
     }
-    float yprime = -sqrtf(hypz2 - hipLength2);
+    float yprime = -sqrtf(hyp2 - hipLength2);
     inverseKinematics2d(-x, yprime, posShinAngle, t, s);
 }
 

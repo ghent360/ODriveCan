@@ -159,7 +159,7 @@ static void computeAnglesAndMove() {
   if ((activeLeg == BACK_LEFT) || (activeLeg == FRONT_LEFT)) {
     x = -x;
   }
-  inverseKinematics(x, z, y, posShinAngle, ha, ta, sa);
+  inverseKinematics(x, y, z, posShinAngle, ha, ta, sa);
   float hp, tp, sp;
   hp = -ha * radToPos;
   tp = ta * radToPos;

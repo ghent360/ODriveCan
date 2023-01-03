@@ -7,13 +7,14 @@
 */
 #include <math.h>
 #include <stdint.h>
-#include <Ramp.h>
+//#include <Ramp.h>
 #include "kinematics.h"
 #include "ODriveCan.hpp"
 #include "globals.h"
 
 using odrive::AxisState;
 
+#if 0
 class Interpolation {
 public:
     Interpolation()
@@ -60,8 +61,9 @@ Interpolation interpBLZ;
 Interpolation interpBLT;
 
 extern bool interpFlag;
+#endif
 
-float constrainJointPos(DogLegJoint joint, float pos) {
+static float constrainJointPos(DogLegJoint joint, float pos) {
     switch(jointClass[joint]) {
     case AxisClass::CLASS_KNEE: 
         return constrain(pos, -3.1, 3.1);
@@ -88,7 +90,7 @@ void driveJoints(DogLegJoint joint, float pos) {
     case FRONT_LEFT_KNEE:
     case BACK_LEFT_KNEE:
     case BACK_LEFT_HIP:
-        pos *= -1;
+        pos = -pos;
         break;
     default:
         break;

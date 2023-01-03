@@ -5,7 +5,7 @@
 #include "RobotDefinition.h"
 
 void driveJoints(DogLegJoint joint, float pos);
-
+#if 0
 void kinematicsInterp(
     DogLeg leg,
     float xIn,
@@ -28,6 +28,7 @@ void kinematics(
 
 extern uint32_t currentMillis;
 extern uint32_t previousInterpMillis;
+#endif
 
 #ifndef ARDUINO
 #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))

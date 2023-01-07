@@ -27,8 +27,9 @@ Display::Display()
     can_status_(
       0, 5 + 4*(BatteryWidget::batteryBarHeight + 1), 8, ST7735_WHITE),
     radio_status_(
-      20 + BatteryWidget::batteryBarWidth, 5, 8, ST7735_WHITE),
-    joint_pos_{
+      20 + BatteryWidget::batteryBarWidth, 5, 8, ST7735_WHITE)
+#ifdef AXIS_POS_DISPLAY
+    ,joint_pos_{
       PositionWidget(  0, 55, 6, ST7735_WHITE), //FRONT_RIGHT_KNEE
       PositionWidget( 40, 55, 6, ST7735_WHITE), //FRONT_LEFT_KNEE
       PositionWidget( 80, 55, 6, ST7735_WHITE), //BACK_RIGHT_KNEE
@@ -41,8 +42,9 @@ Display::Display()
       PositionWidget( 40, 75, 6, ST7735_WHITE), //FRONT_LEFT_HIP
       PositionWidget( 80, 75, 6, ST7735_WHITE), //BACK_RIGHT_HIP
       PositionWidget(120, 75, 6, ST7735_WHITE)  //BACK_LEFT_HIP
-    } {
-}
+    }
+#endif
+    {}
 
 void Display::initDisplay() {
   pinMode(TFT_LED, OUTPUT);
@@ -76,6 +78,7 @@ void Display::drawUi() {
   }
 }
 
+#ifdef AXIS_POS_DISPLAY
 void Display::setJoinColor(uint8_t axisId, uint16_t color) {
   DogLegJoint joint = getJointByAxisId(axisId);
   if (joint < numAxes) {
@@ -89,6 +92,7 @@ void Display::setJoinPos(uint8_t axisId, float pos) {
     joint_pos_[joint].setPos(pos - jointOffsets[joint]);
   }
 }
+#endif
 
 BatteryWidget::BatteryWidget(
   const char* label, uint8_t x, uint8_t y, uint8_t numCells)
@@ -220,4 +224,5 @@ void PositionWidget::convert() {
     posStr_ = String();
   }
 }
+
 Display display;

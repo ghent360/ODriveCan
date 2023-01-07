@@ -8,6 +8,8 @@
 #include <stdint.h>
 #include <ST7735_t3.h> // Hardware-specific library
 
+//#define AXIS_POS_DISPLAY
+
 class Widget {
 public:
   Widget(uint8_t x, uint8_t y)
@@ -189,8 +191,10 @@ public:
     radio_status_.setColor(color);
   }
 
+#ifdef AXIS_POS_DISPLAY
   void setJoinPos(uint8_t aixId, float pos);
   void setJoinColor(uint8_t aixId, uint16_t color);
+#endif
 private:
   void drawUi();
   bool dirty() const {
@@ -205,14 +209,16 @@ private:
   BatteryWidget bus3_battery_;
   StatusWidget can_status_;
   StatusWidget radio_status_;
+#ifdef AXIS_POS_DISPLAY
   PositionWidget joint_pos_[12];
-
-  Widget* widgets_[17] = {
+#endif
+  Widget* widgets_[5] = {
     &teensy_battery_,
     &bus1_battery_,
     &bus3_battery_,
     &can_status_,
     &radio_status_,
+#ifdef AXIS_POS_DISPLAY
     &joint_pos_[0],
     &joint_pos_[1],
     &joint_pos_[2],
@@ -224,6 +230,7 @@ private:
     &joint_pos_[8],
     &joint_pos_[9],
     &joint_pos_[10],
-    &joint_pos_[11]
+    &joint_pos_[11],
+#endif
   };
 };

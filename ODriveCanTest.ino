@@ -96,10 +96,12 @@ static void axisVbusValueCheck(
   }
 }
 
+#ifdef AXIS_POS_DISPLAY
 static void axisPosUpdate(
   ODriveAxis& axis, EncoderEstimate&, EncoderEstimate& newV) {
   display.setJoinPos(axis.node_id, newV.pos);
 }
+#endif
 
 static void checkAxisVbusVoltage(TaskNode*, uint32_t) {
   static uint8_t axisIdx = FRONT_RIGHT_HIP;
@@ -163,14 +165,16 @@ static void startStateThree() {
   display.setCanStatus("Ready");
   display.setCanStatusColor(ST7735_GREEN);
   initSerialInteraction();
-  tm.addBack(tm.newPeriodicTask(StateThreeConnection, 550, checkAxisConnection));
+  tm.addBack(tm.newPeriodicTask(StateThreeConnection, 750, checkAxisConnection));
   for(auto& axis: axes) {
     axis.vbus.SetCallback(axisVbusValueCheck);
+#ifdef AXIS_POS_DISPLAY
     axis.enc_est.SetCallback(axisPosUpdate);
+#endif
   }
   tm.addBack(tm.newPeriodicTask(StateThreeODriveVoltage, 1000, checkAxisVbusVoltage));
   tm.addBack(tm.newPeriodicTask(StateThreeBatteryVoltage, 1000, checkBatteryVoltage));
-  tm.addBack(tm.newPeriodicTask(StateThreeSerial, 25, checkSerialInput));
+  tm.addBack(tm.newPeriodicTask(StateThreeSerial, 20, checkSerialInput));
 }
 
 // Sometimes we get axis errors on startup. Clear the errors, if all axes

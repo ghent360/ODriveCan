@@ -263,6 +263,13 @@ void checkSerialInput(TaskNode*, uint32_t now) {
       case 'g':
           modifyGains();
           break;
+      case 'r':
+          computeAnglesAndMove(activeLegX, activeLegY, activeLegZ + 50);
+          break;
+      case 'R':
+          initStepCurve(0, 0);
+          walk(0);
+          break;
       case 'w':
           initStepCurve(0, 0);
           last = now;
@@ -371,7 +378,7 @@ void checkSerialInput(TaskNode*, uint32_t now) {
     }
   }
   if (last != 0) {
-    float t = float(now - last) / 5000;
+    float t = float(now - last) / 3000;
     if (t > 1) {
       t = 0;
       last = now;

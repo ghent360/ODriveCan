@@ -163,14 +163,14 @@ static void startStateThree() {
   display.setCanStatus("Ready");
   display.setCanStatusColor(ST7735_GREEN);
   initSerialInteraction();
-  tm.addBack(tm.newPeriodicTask(StateThreeConnection, 250, checkAxisConnection));
+  tm.addBack(tm.newPeriodicTask(StateThreeConnection, 550, checkAxisConnection));
   for(auto& axis: axes) {
     axis.vbus.SetCallback(axisVbusValueCheck);
     axis.enc_est.SetCallback(axisPosUpdate);
   }
   tm.addBack(tm.newPeriodicTask(StateThreeODriveVoltage, 1000, checkAxisVbusVoltage));
   tm.addBack(tm.newPeriodicTask(StateThreeBatteryVoltage, 1000, checkBatteryVoltage));
-  tm.addBack(tm.newPeriodicTask(StateThreeSerial, 10, checkSerialInput));
+  tm.addBack(tm.newPeriodicTask(StateThreeSerial, 25, checkSerialInput));
 }
 
 // Sometimes we get axis errors on startup. Clear the errors, if all axes

@@ -6,13 +6,14 @@
 #include "globals.h"
 #include "kinematics.h"
 #include "kinematics2.h"
+#include "stepTrajectory.h"
 #include "TaskManager.hpp"
 #include "TaskIds.h"
 
 using odrive::AxisState;
 
 //#define DEBUG_AXIS_POS
-//#define DEBUG_LEG_POS
+#define DEBUG_LEG_POS
 
 #if defined(DEBUG_AXIS_POS)
 static int8_t activeAxis = -1;
@@ -22,6 +23,7 @@ static int8_t activeLeg = -1;
 static float activeLegX = 0;
 static float activeLegY = 0;
 static float activeLegZ = 0;
+static uint32_t last = 0;
 
 #if defined(DEBUG_AXIS_POS)
 static void deactivateAxis() {
@@ -150,12 +152,17 @@ static void moveAxisPos() {
 }
 #endif
 
-static void computeAnglesAndMove() {
+static void computeAnglesAndMove(float x, float y, float z) {
   float ha, ta, sa;
+#if defined(DEBUG_LEG_POS)
+  //Serial.print("Leg pos x:");
+  //Serial.print(x, 3);
+  //Serial.print(" y:");
+  //Serial.print(y, 3);
+  //Serial.print(" z:");
+  //Serial.println(z, 3);
+#endif
   bool posShinAngle = (activeLeg == BACK_RIGHT) || (activeLeg == FRONT_RIGHT);
-  float x = activeLegX;
-  float y = activeLegY;
-  float z = activeLegZ;
   if ((activeLeg == BACK_LEFT) || (activeLeg == FRONT_LEFT)) {
     x = -x;
   }
@@ -164,26 +171,6 @@ static void computeAnglesAndMove() {
   hp = -ha * radToPos;
   tp = ta * radToPos;
   sp = sa * radToPos;
-#if defined(DEBUG_LEG_POS)
-  Serial.print("Leg pos x:");
-  Serial.print(activeLegX, 3);
-  Serial.print(" y:");
-  Serial.print(activeLegY, 3);
-  Serial.print(" z:");
-  Serial.println(activeLegZ, 3);
-  Serial.print("Angles shin:");
-  Serial.print(sa, 3);
-  Serial.print(" tie:");
-  Serial.print(ta, 3);
-  Serial.print(" hip:");
-  Serial.println(ha, 3);
-  Serial.print("Pos shin:");
-  Serial.print(sp, 3);
-  Serial.print(" tie:");
-  Serial.print(tp, 3);
-  Serial.print(" hip:");
-  Serial.println(hp, 3);
-#endif
   if (!isnan(sa) && !isnan(ta) && !isnan(ha)) {
     switch (activeLeg) {
       case BACK_RIGHT:
@@ -206,11 +193,46 @@ static void computeAnglesAndMove() {
         driveJoints(FRONT_LEFT_SHOULDER, tp);
         driveJoints(FRONT_LEFT_KNEE, sp);
         break;
+      default:
+        break;
     }
+  } else {
+#if defined(DEBUG_LEG_POS)
+    Serial.print("Leg pos x:");
+    Serial.print(x, 3);
+    Serial.print(" y:");
+    Serial.print(y, 3);
+    Serial.print(" z:");
+    Serial.println(z, 3);
+    Serial.print("Angles shin:");
+    Serial.print(sa, 3);
+    Serial.print(" tie:");
+    Serial.print(ta, 3);
+    Serial.print(" hip:");
+    Serial.println(ha, 3);
+    Serial.print("Pos shin:");
+    Serial.print(sp, 3);
+    Serial.print(" tie:");
+    Serial.print(tp, 3);
+    Serial.print(" hip:");
+    Serial.println(hp, 3);
+#endif
   }
 }
 
-void checkSerialInput(TaskNode*, uint32_t) {
+void walk(float t) {
+  float x, z;
+  gaitPos(t, x, z);
+  x += activeLegX;
+  z += activeLegZ;
+  //Serial.print("Walk x=");
+  //Serial.print(x, 3);
+  //Serial.print(" z=");
+  //Serial.println(z, 3);
+  computeAnglesAndMove(x, activeLegY, z);
+}
+
+void checkSerialInput(TaskNode*, uint32_t now) {
   if (Serial.available()) {
     auto ch = Serial.read();
     if (ch < 32) return;
@@ -240,6 +262,13 @@ void checkSerialInput(TaskNode*, uint32_t) {
           break;
       case 'g':
           modifyGains();
+          break;
+      case 'w':
+          initStepCurve(0, 0);
+          last = now;
+          break;
+      case 's':
+          last = 0;
           break;
 #if defined(DEBUG_AXIS_POS)
       case '1':
@@ -306,48 +335,58 @@ void checkSerialInput(TaskNode*, uint32_t) {
       case 'x':
           if (isLegActive()) {
             activeLegX += 5;
-            computeAnglesAndMove();
+            computeAnglesAndMove(activeLegX, activeLegY, activeLegZ);
           }
           break;
       case 'X':
           if (isLegActive()) {
             activeLegX -= 5;
-            computeAnglesAndMove();
+            computeAnglesAndMove(activeLegX, activeLegY, activeLegZ);
           }
           break;
       case 'y':
           if (isLegActive()) {
             activeLegY += 5;
-            computeAnglesAndMove();
+            computeAnglesAndMove(activeLegX, activeLegY, activeLegZ);
           }
           break;
       case 'Y':
           if (isLegActive()) {
             activeLegY -= 5;
-            computeAnglesAndMove();
+            computeAnglesAndMove(activeLegX, activeLegY, activeLegZ);
           }
           break;
       case 'z':
           if (isLegActive()) {
             activeLegZ += 5;
-            computeAnglesAndMove();
+            computeAnglesAndMove(activeLegX, activeLegY, activeLegZ);
           }
           break;
       case 'Z':
           if (isLegActive()) {
             activeLegZ -= 5;
-            computeAnglesAndMove();
+            computeAnglesAndMove(activeLegX, activeLegY, activeLegZ);
           }
           break;
     }
   }
+  if (last != 0) {
+    float t = float(now - last) / 5000;
+    if (t > 1) {
+      t = 0;
+      last = now;
+    }
+    if (t < 0) t = 0;
+    walk(t);
+  }
 }
 
 void initSerialInteraction() {
-  printHelp();
 #if defined(DEBUG_AXIS_POS)
   activeAxis = -1;
   activeAxisPos = 0;
 #endif
+  last = 0;
   activeLeg = -1;
+  printHelp();
 }

@@ -47,7 +47,7 @@ public:
     x = 0;
     y = 0;
     for(uint32_t idx = 0; idx < Npoints; idx++) {
-        fpType b = binomial_[idx] * oneOverOneMinusT * Tpower;
+        fpType b = binomial_[idx] * oneMinusTpowerN * Tpower;
         x += b * point_x_[idx];
         y += b * point_y_[idx];
         Tpower *= t;

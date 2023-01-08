@@ -96,5 +96,5 @@ public:
 
   void parkLegs();
 private:
-  Leg legs_[numLegs];
+  Leg legs_[4];
 };

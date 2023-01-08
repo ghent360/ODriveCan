@@ -176,7 +176,7 @@ static void startStateThree() {
   }
   tm.addBack(tm.newPeriodicTask(StateThreeODriveVoltage, 1000, checkAxisVbusVoltage));
   tm.addBack(tm.newPeriodicTask(StateThreeBatteryVoltage, 1000, checkBatteryVoltage));
-  tm.addBack(tm.newPeriodicTask(StateThreeSerial, 20, checkSerialInput));
+  tm.addBack(tm.newPeriodicTask(StateThreeSerial, 5, checkSerialInput));
 }
 
 // Sometimes we get axis errors on startup. Clear the errors, if all axes

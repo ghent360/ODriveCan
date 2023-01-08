@@ -95,7 +95,7 @@ static void printHelp() {
 
 static void setAxisLimitsAndStart() {
   for(auto& axis: axes) {
-    axis.SetLimits(2.0f, 10.0f); // Should be 6000.0f, 20.0f
+    axis.SetLimits(20.0f, 10.0f); // Should be 6000.0f, 20.0f
     axis.SetState(AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL);
   }
 }

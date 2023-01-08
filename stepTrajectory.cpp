@@ -6,9 +6,11 @@
 #include "bezierCurve.hpp"
 #include <math.h>
 
-#define USE_BEZIER_CURVE
+//#define USE_BEZIER_CURVE
 
+#ifdef USE_BEZIER_CURVE
 static BezierCurve<12, float> swingCurve;
+#endif
 
 static constexpr float stepHeight = 50;
 static constexpr float stepLength = 150;
@@ -18,7 +20,6 @@ static void stanceState(float t, float &x, float &y) {
     x = stepLength / 2 - stepLength * t;
     y = -stanceDepth * sinf(float(M_PI) * t);
 }
-
 
 #ifdef USE_BEZIER_CURVE
 static void swingStateBezier(float t, float &x, float &y) {
@@ -52,8 +53,9 @@ static constexpr float velocity = 1;
 static constexpr float Tsw = 0.25;
 #endif
 
+#ifdef USE_BEZIER_CURVE
 void initStepCurve(float xref, float yref) {
-    float halfStepLength = stepLength / 2;
+    const float halfStepLength = stepLength / 2;
 
 #if 0 // use velocity based P1 and P10
     swingCurve.setPoint(0, -halfStepLength + xref, yref);
@@ -83,3 +85,7 @@ void initStepCurve(float xref, float yref) {
     swingCurve.setPoint(11, halfStepLength + xref, yref);
 #endif
 }
+#else
+void initStepCurve(float xref, float yref) {
+}
+#endif

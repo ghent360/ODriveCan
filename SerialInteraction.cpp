@@ -4,9 +4,9 @@
 #include <Arduino.h>
 #include "ODriveCan.hpp"
 #include "globals.h"
-#include "jointDriver.h"
-#include "kinematics.h"
-#include "stepTrajectory.h"
+#include "JointDriver.h"
+#include "Kinematics.h"
+#include "StepTrajectory.h"
 #include "TaskManager.hpp"
 #include "TaskIds.h"
 

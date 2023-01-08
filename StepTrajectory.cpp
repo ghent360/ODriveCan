@@ -2,8 +2,8 @@
  * Copyright (c) 2023 ghent360. See LICENSE file for details.
  */
 
-#include "stepTrajectory.h"
-#include "bezierCurve.hpp"
+#include "StepTrajectory.h"
+#include "BezierCurve.hpp"
 #include <math.h>
 
 //#define USE_BEZIER_CURVE

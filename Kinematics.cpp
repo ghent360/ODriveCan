@@ -2,7 +2,7 @@
  * Copyright (c) 2022-2023 ghent360. See LICENSE file for details.
 */
 
-#include "kinematics.h"
+#include "Kinematics.h"
 #include <stdint.h>
 #include <math.h>
 

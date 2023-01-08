@@ -3,7 +3,7 @@
  */
 #include <math.h>
 #include <stdint.h>
-#include "jointDriver.h"
+#include "JointDriver.h"
 #include "ODriveCan.hpp"
 #include "globals.h"
 

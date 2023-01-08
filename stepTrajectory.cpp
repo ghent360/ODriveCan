@@ -16,7 +16,7 @@ static constexpr float stanceDepth = 10;
 
 static void stanceState(float t, float &x, float &y) {
     x = stepLength / 2 - stepLength * t;
-    y = -stanceDepth * sinf(M_PI * t);
+    y = -stanceDepth * sinf(float(M_PI) * t);
 }
 
 
@@ -70,16 +70,16 @@ void initStepCurve(float xref, float yref) {
     swingCurve.setPoint(11, halfStepLength + xref, yref);
 #else
     swingCurve.setPoint(0, -halfStepLength + xref, yref);
-    swingCurve.setPoint(1, -(1.4*halfStepLength) + xref, yref);
-    swingCurve.setPoint(2, -(1.5*halfStepLength) + xref, yref + stepHeight * 0.9);
-    swingCurve.setPoint(3, -(1.5*halfStepLength) + xref, yref + stepHeight * 0.9);
-    swingCurve.setPoint(4, -(1.5*halfStepLength) + xref, yref + stepHeight * 0.9);
-    swingCurve.setPoint(5, xref, yref + stepHeight * 0.9);
-    swingCurve.setPoint(6, xref, yref + stepHeight * 0.9);
-    swingCurve.setPoint(7, xref, yref + stepHeight * 1.36);
-    swingCurve.setPoint(8, (1.5*halfStepLength) + xref, yref + stepHeight * 1.36);
-    swingCurve.setPoint(9, (1.5*halfStepLength) + xref, yref + stepHeight * 1.36);
-    swingCurve.setPoint(10, (1.4*halfStepLength) + xref, yref);
+    swingCurve.setPoint(1, -(1.4f*halfStepLength) + xref, yref);
+    swingCurve.setPoint(2, -(1.5f*halfStepLength) + xref, yref + stepHeight * 0.9f);
+    swingCurve.setPoint(3, -(1.5f*halfStepLength) + xref, yref + stepHeight * 0.9f);
+    swingCurve.setPoint(4, -(1.5f*halfStepLength) + xref, yref + stepHeight * 0.9f);
+    swingCurve.setPoint(5, xref, yref + stepHeight * 0.9f);
+    swingCurve.setPoint(6, xref, yref + stepHeight * 0.9f);
+    swingCurve.setPoint(7, xref, yref + stepHeight * 1.36f);
+    swingCurve.setPoint(8, (1.5f*halfStepLength) + xref, yref + stepHeight * 1.36f);
+    swingCurve.setPoint(9, (1.5f*halfStepLength) + xref, yref + stepHeight * 1.36f);
+    swingCurve.setPoint(10, (1.4f*halfStepLength) + xref, yref);
     swingCurve.setPoint(11, halfStepLength + xref, yref);
 #endif
 }

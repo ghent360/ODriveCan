@@ -25,15 +25,15 @@ static void inverseKinematics2d(
     // if (r2 < lenDiff2) return;
     float phi = acosf((tieLength2 + shinLength2 - r2) / (2 * tieLength * shinLength));
     float xsi2 = atan2f(x, z);
-    if (x > 0) xsi2 -= M_PI;
-    else xsi2 += M_PI;
+    if (x > 0) xsi2 -= float(M_PI);
+    else xsi2 += float(M_PI);
     float r = sqrt(r2);
-    float xsi1 = acos((r2 + tieLength2 - shinLength2) / (2 * r * tieLength));
+    float xsi1 = acosf((r2 + tieLength2 - shinLength2) / (2 * r * tieLength));
     if (posShinAngle) {
-        shinAngle = M_PI - phi;
+        shinAngle = float(M_PI) - phi;
         tieAngle = xsi2 - xsi1;
     } else {
-        shinAngle = -(M_PI - phi);
+        shinAngle = -(float(M_PI) - phi);
         tieAngle = xsi2 + xsi1;
     }
 }
@@ -44,10 +44,10 @@ void inverseKinematics(
     float hyp = sqrtf(hyp2);
     float alpha = acosf(fabs(y) / hyp);
     float beta = acosf(hipLength / hyp);
-    if (y > 0) {
+    if (y > 0.0f) {
         h = alpha - beta;
     } else {
-        h = M_PI - alpha - beta;
+        h = float(M_PI) - alpha - beta;
     }
     float yprime = -sqrtf(hyp2 - hipLength2);
     inverseKinematics2d(-x, yprime, posShinAngle, t, s);

@@ -13,7 +13,7 @@ constexpr float posToRad = 0.62831853071f; // 2 * pi / 10
 constexpr float radToPos = 1.59154943092f; // 10 / (2 * pi)
 
 enum DogLeg {
-    FRONT_LEFT = 1,
+    FRONT_LEFT,
     FRONT_RIGHT,
     BACK_LEFT,
     BACK_RIGHT
@@ -45,7 +45,18 @@ class Leg {
 public:
   Leg(DogLeg legId);
 
-  void setPos(int16_t x, int16_t y, int16_t z, bool startMove = false);
+  bool setPos(int16_t x, int16_t y, int16_t z, bool start = false) {
+    x_ = x;
+    y_ = y;
+    z_ = z;
+    if (start) {
+      return startMove();
+    }
+    return false;
+  }
+
+  bool startMove();
+
   int16_t getPosX() const { return x_; }
   int16_t getPosY() const { return x_; }
   int16_t getPosZ() const { return x_; }
@@ -58,7 +69,9 @@ private:
   int16_t y_;
   int16_t z_;
 
-  const uint8_t hip_axis_id_;
-  const uint8_t tie_axis_id_;
-  const uint8_t shin_axis_id_;
+  const DogLegJoint hip_axis_;
+  const DogLegJoint tie_axis_;
+  const DogLegJoint shin_axis_;
+  const bool posShinAngle_;
+  const bool reverseX_;
 };

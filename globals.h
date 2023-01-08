@@ -11,8 +11,9 @@
 
 // various global data structures used by several files
 
-// My robot uses 12 axes.
+// My robot uses 12 axes and 4 legs
 constexpr int numAxes = 12;
+constexpr int numLegs = 4;
 
 // LiPO cell voltage levels
 constexpr float cellMaxVoltage = 4.2;
@@ -30,6 +31,8 @@ extern const AxisClass jointClass[numAxes]; // Index with DogLegJoint value
 extern odrive::ODriveAxis axes[numAxes]; // Index with DogLegJoint value
 // A name for each axis.
 extern const char* axisName[numAxes]; // Index with DogLegJoint value
+// The legs for the robot
+extern Leg legs[numLegs]; // Index with DogLeg value
 
 // A name for each leg.
 const char* getLegName(DogLeg leg);

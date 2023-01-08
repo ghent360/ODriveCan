@@ -6,6 +6,8 @@
 #include "CanInterface.h"
 #include "RobotDefinition.h"
 #include "globals.h"
+#include "Kinematics.h"
+#include "JointDriver.h"
 
 using odrive::ODriveAxis;
 using odrive::CanInterface;
@@ -124,4 +126,55 @@ const float parkPosition[numAxes] = {
   [BACK_LEFT_HIP] = 0
 };
 
+// Index with DogLeg value
+Leg legs[numLegs] = {
+  [FRONT_LEFT] = Leg(FRONT_LEFT),
+  [FRONT_RIGHT] = Leg(FRONT_RIGHT),
+  [BACK_LEFT] = Leg(BACK_LEFT),
+  [BACK_RIGHT] = Leg(BACK_RIGHT),
+};
+
 odrive::CanInterface canInterface(axes, numAxes);
+
+static constexpr DogLegJoint legToAxis[numLegs][3] = {
+  [FRONT_LEFT] = {FRONT_LEFT_HIP, FRONT_LEFT_TIE, FRONT_LEFT_SHIN},
+  [FRONT_RIGHT] = {FRONT_RIGHT_HIP, FRONT_RIGHT_TIE, FRONT_RIGHT_SHIN},
+  [BACK_LEFT] = {BACK_LEFT_HIP, BACK_LEFT_TIE, BACK_LEFT_SHIN},
+  [BACK_RIGHT] = {BACK_RIGHT_HIP, BACK_RIGHT_TIE, BACK_RIGHT_SHIN},
+};
+
+Leg::Leg(DogLeg legId)
+  : leg_id_(legId),
+    x_(20),
+    y_(107),
+    z_(-330),
+    hip_axis_(legToAxis[legId][0]),
+    tie_axis_(legToAxis[legId][1]),
+    shin_axis_(legToAxis[legId][2]),
+    posShinAngle_((legId == BACK_RIGHT) || (legId == FRONT_RIGHT)),
+    reverseX_((legId == BACK_LEFT) || (legId == FRONT_LEFT)) {
+}
+
+bool Leg::startMove() {
+  float ha, ta, sa;
+  inverseKinematics(
+    reverseX_ ? -x_ : x_,
+    y_,
+    z_,
+    posShinAngle_,
+    ha,
+    ta,
+    sa);
+  if (!isnan(sa) && !isnan(ta) && !isnan(ha)) {
+    driveJoints(hip_axis_, -ha * radToPos);
+    driveJoints(tie_axis_, ta * radToPos);
+    driveJoints(shin_axis_, sa * radToPos);
+    return true;
+  }
+  return false;
+}
+
+float Leg::getPosError() const {
+  // Not implemented yet.
+  return 0;
+}

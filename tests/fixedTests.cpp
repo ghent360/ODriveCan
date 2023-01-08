@@ -66,13 +66,13 @@ TEST_SUITE("Fixed template tests")
 
     TEST_CASE("conversion saturation tests")
     {
-        F8_4 f1(-1);
+        F8_4 f1(-1.0f);
         CHECK((float(f1) == 0));
         f1 = 50.0f;
         CHECK((float(f1) == (16.0f - 0.0625f)));
         F8_4_b50 f2(21.57f);
         CHECK((float(f2) == 50));
-        f2 = 100;
+        f2 = 100.0f;
         CHECK((float(f2) == F8_4_b50::max()));
     }
 

@@ -45,7 +45,7 @@ class Leg {
 public:
   Leg(DogLeg legId);
 
-  bool setPos(int16_t x, int16_t y, int16_t z, bool start = false) {
+  bool setPos(int16_t x, int16_t y, int16_t z, bool start = true) {
     x_ = x;
     y_ = y;
     z_ = z;
@@ -55,7 +55,7 @@ public:
     return false;
   }
 
-  bool resetPos(bool start = false) {
+  bool resetPos(bool start = true) {
     return setPos(20, 107, -330, start);
   }
 
@@ -78,4 +78,23 @@ private:
   const DogLegJoint shin_axis_;
   const bool posShinAngle_;
   const bool reverseX_;
+};
+
+class RobotBody {
+public:
+  RobotBody();
+
+  bool setPos(DogLeg legId, int16_t x, int16_t y, int16_t z) {
+    return legs_[legId].setPos(x, y, z, true);
+  }
+
+  void resetAll() {
+    for (auto& leg: legs_) {
+      leg.resetPos(true);
+    }
+  }
+
+  void parkLegs();
+private:
+  Leg legs_[numLegs];
 };

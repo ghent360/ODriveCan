@@ -129,14 +129,6 @@ const float parkPosition[numAxes] = {
   [BACK_LEFT_HIP] = 0
 };
 
-// Index with DogLeg value
-Leg legs[numLegs] = {
-  [FRONT_LEFT] = Leg(FRONT_LEFT),
-  [FRONT_RIGHT] = Leg(FRONT_RIGHT),
-  [BACK_LEFT] = Leg(BACK_LEFT),
-  [BACK_RIGHT] = Leg(BACK_RIGHT),
-};
-
 static constexpr DogLegJoint legToAxis[numLegs][3] = {
   [FRONT_LEFT] = {FRONT_LEFT_HIP, FRONT_LEFT_TIE, FRONT_LEFT_SHIN},
   [FRONT_RIGHT] = {FRONT_RIGHT_HIP, FRONT_RIGHT_TIE, FRONT_RIGHT_SHIN},
@@ -179,3 +171,11 @@ float Leg::getPosError() const {
   // Not implemented yet.
   return 0;
 }
+
+RobotBody::RobotBody()
+  : legs_ {
+    [FRONT_LEFT] = Leg(FRONT_LEFT),
+    [FRONT_RIGHT] = Leg(FRONT_RIGHT),
+    [BACK_LEFT] = Leg(BACK_LEFT),
+    [BACK_RIGHT] = Leg(BACK_RIGHT),
+  } {}

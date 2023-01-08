@@ -37,9 +37,6 @@ extern const AxisClass jointClass[numAxes]; // Index with DogLegJoint value
 // The actual ODriveAxis object for each motor axis.
 extern odrive::ODriveAxis axes[numAxes]; // Index with DogLegJoint value
 
-// The legs for the robot
-extern Leg legs[numLegs]; // Index with DogLeg value
-
 // A name for each axis.
 extern const char* axisName[numAxes]; // Index with DogLegJoint value
 // A name for each leg.

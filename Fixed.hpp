@@ -22,10 +22,10 @@ public:
     static_assert(
         ((sizeof(T) * 8) >= sp), "The holding type must be large enough");
 
-    if (v < min()) {
-        v = min();
-    } else if (v > max()) {
-        v = max();
+    if (v < minf()) {
+        v = minf();
+    } else if (v > maxf()) {
+        v = maxf();
     }
 
     float bv = v - bias;
@@ -37,9 +37,36 @@ public:
     }
   }
 
+  constexpr Fixed(double v) {
+    static_assert(
+        sp > dp, "Decimal bits must be less that total number of bits");
+    static_assert(
+        ((sizeof(T) * 8) >= sp), "The holding type must be large enough");
+
+    if (v < min()) {
+        v = min();
+    } else if (v > max()) {
+        v = max();
+    }
+
+    double bv = v - bias;
+
+    if (std::is_signed<T>::value) {
+      value_ = T(bv * (1 << dp) + ((bv >= 0) ? 0.5 : -0.5));
+    } else {
+      value_ = T(bv * (1 << dp) + 0.5);
+    }
+  }
+
   constexpr operator float() const {
     return (float(value_) / (1 << dp)) + bias;
   }
+
+  constexpr operator double() const {
+    return (double(value_) / (1 << dp)) + bias;
+  }
+
+  constexpr Fixed& operator = (const Fixed&_) = default;
 
   static constexpr uint8_t size() {
     return sizeof(value_);
@@ -64,8 +91,12 @@ public:
         return fromValue((1 << sp) - 1);
   }
 
-  static constexpr float max() {
+  static constexpr float maxf() {
     return float(maxValue());
+  }
+
+  static constexpr double max() {
+    return double(maxValue());
   }
 
   static constexpr Fixed minValue() {
@@ -75,8 +106,12 @@ public:
         return fromValue(0);
   }
 
-  static constexpr float min() {
+  static constexpr float minf() {
     return float(minValue());
+  }
+
+  static constexpr double min() {
+    return double(minValue());
   }
 
   static constexpr Fixed fromBytes(const uint8_t* data, uint8_t len) {

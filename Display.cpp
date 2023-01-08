@@ -30,14 +30,14 @@ Display::Display()
       20 + BatteryWidget::batteryBarWidth, 5, 8, ST7735_WHITE)
 #ifdef AXIS_POS_DISPLAY
     ,joint_pos_{
-      PositionWidget(  0, 55, 6, ST7735_WHITE), //FRONT_RIGHT_KNEE
-      PositionWidget( 40, 55, 6, ST7735_WHITE), //FRONT_LEFT_KNEE
-      PositionWidget( 80, 55, 6, ST7735_WHITE), //BACK_RIGHT_KNEE
-      PositionWidget(120, 55, 6, ST7735_WHITE), //BACK_LEFT_KNEE
-      PositionWidget(  0, 65, 6, ST7735_WHITE), //FRONT_RIGHT_SHOULDER
-      PositionWidget( 40, 65, 6, ST7735_WHITE), //FRONT_LEFT_SHOULDER
-      PositionWidget( 80, 65, 6, ST7735_WHITE), //BACK_RIGHT_SHOULDER
-      PositionWidget(120, 65, 6, ST7735_WHITE), //BACK_LEFT_SHOULDER
+      PositionWidget(  0, 55, 6, ST7735_WHITE), //FRONT_RIGHT_SHIN
+      PositionWidget( 40, 55, 6, ST7735_WHITE), //FRONT_LEFT_SHIN
+      PositionWidget( 80, 55, 6, ST7735_WHITE), //BACK_RIGHT_SHIN
+      PositionWidget(120, 55, 6, ST7735_WHITE), //BACK_LEFT_SHIN
+      PositionWidget(  0, 65, 6, ST7735_WHITE), //FRONT_RIGHT_TIE
+      PositionWidget( 40, 65, 6, ST7735_WHITE), //FRONT_LEFT_TIE
+      PositionWidget( 80, 65, 6, ST7735_WHITE), //BACK_RIGHT_TIE
+      PositionWidget(120, 65, 6, ST7735_WHITE), //BACK_LEFT_TIE
       PositionWidget(  0, 75, 6, ST7735_WHITE), //FRONT_RIGHT_HIP
       PositionWidget( 40, 75, 6, ST7735_WHITE), //FRONT_LEFT_HIP
       PositionWidget( 80, 75, 6, ST7735_WHITE), //BACK_RIGHT_HIP

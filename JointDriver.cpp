@@ -11,10 +11,10 @@ using odrive::AxisState;
 
 static float constrainJointPos(DogLegJoint joint, float pos) {
     switch(jointClass[joint]) {
-    case AxisClass::CLASS_KNEE: 
+    case AxisClass::CLASS_SHIN:
         return constrain(pos, -3.1, 3.1);
         break;
-    case AxisClass::CLASS_SHOULDER: 
+    case AxisClass::CLASS_TIE:
         return constrain(pos, -2.4, 2.4);
         break;
     case AxisClass::CLASS_HIP:
@@ -30,11 +30,11 @@ void driveJoints(DogLegJoint joint, float pos) {
 
     pos = constrainJointPos(joint, pos);
     switch (joint) {
-    case BACK_RIGHT_KNEE:
-    case FRONT_RIGHT_KNEE:
+    case BACK_RIGHT_SHIN:
+    case FRONT_RIGHT_SHIN:
     case FRONT_RIGHT_HIP:
-    case FRONT_LEFT_KNEE:
-    case BACK_LEFT_KNEE:
+    case FRONT_LEFT_SHIN:
+    case BACK_LEFT_SHIN:
     case BACK_LEFT_HIP:
         pos = -pos;
         break;

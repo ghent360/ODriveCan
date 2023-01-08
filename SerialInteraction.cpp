@@ -118,9 +118,9 @@ static void axesGoHome() {
 }
 
 static void modifyGains() {
-  constexpr float posGainKnee = 20.0f;
+  constexpr float posGainShin = 20.0f;
   constexpr float posGainHips = 60.0f;
-  constexpr float posGainShoulder = 20.0f;
+  constexpr float posGainTie = 20.0f;
   constexpr float velGain = 0.1f;
   constexpr float integrator = 0.2f;
   float posGain = 20.0f;
@@ -129,11 +129,11 @@ static void modifyGains() {
       case CLASS_HIP:
         posGain = posGainHips;
         break;
-      case CLASS_KNEE:
-        posGain = posGainKnee;
+      case CLASS_SHIN:
+        posGain = posGainShin;
         break;
-      case CLASS_SHOULDER:
-        posGain = posGainShoulder;
+      case CLASS_TIE:
+        posGain = posGainTie;
         break;
     }
     axes[idx].SetPosGain(posGain);
@@ -175,23 +175,23 @@ static void computeAnglesAndMove(float x, float y, float z) {
     switch (activeLeg) {
       case BACK_RIGHT:
         driveJoints(BACK_RIGHT_HIP, hp);
-        driveJoints(BACK_RIGHT_SHOULDER, tp);
-        driveJoints(BACK_RIGHT_KNEE, sp);
+        driveJoints(BACK_RIGHT_TIE, tp);
+        driveJoints(BACK_RIGHT_SHIN, sp);
         break;
       case FRONT_RIGHT:
         driveJoints(FRONT_RIGHT_HIP, hp);
-        driveJoints(FRONT_RIGHT_SHOULDER, tp);
-        driveJoints(FRONT_RIGHT_KNEE, sp);
+        driveJoints(FRONT_RIGHT_TIE, tp);
+        driveJoints(FRONT_RIGHT_SHIN, sp);
         break;
       case BACK_LEFT:
         driveJoints(BACK_LEFT_HIP, hp);
-        driveJoints(BACK_LEFT_SHOULDER, tp);
-        driveJoints(BACK_LEFT_KNEE, sp);
+        driveJoints(BACK_LEFT_TIE, tp);
+        driveJoints(BACK_LEFT_SHIN, sp);
         break;
       case FRONT_LEFT:
         driveJoints(FRONT_LEFT_HIP, hp);
-        driveJoints(FRONT_LEFT_SHOULDER, tp);
-        driveJoints(FRONT_LEFT_KNEE, sp);
+        driveJoints(FRONT_LEFT_TIE, tp);
+        driveJoints(FRONT_LEFT_SHIN, sp);
         break;
       default:
         break;
@@ -279,28 +279,28 @@ void checkSerialInput(TaskNode*, uint32_t now) {
           break;
 #if defined(DEBUG_AXIS_POS)
       case '1':
-          activateAxis(FRONT_LEFT_KNEE);
+          activateAxis(FRONT_LEFT_SHIN);
           break;
       case '!':
-          activateAxis(FRONT_RIGHT_KNEE);
+          activateAxis(FRONT_RIGHT_SHIN);
           break;
       case '2':
-          activateAxis(BACK_LEFT_KNEE);
+          activateAxis(BACK_LEFT_SHIN);
           break;
       case '@':
-          activateAxis(BACK_RIGHT_KNEE);
+          activateAxis(BACK_RIGHT_SHIN);
           break;
       case '3':
-          activateAxis(FRONT_LEFT_SHOULDER);
+          activateAxis(FRONT_LEFT_TIE);
           break;
       case '#':
-          activateAxis(FRONT_RIGHT_SHOULDER);
+          activateAxis(FRONT_RIGHT_TIE);
           break;
       case '4':
-          activateAxis(BACK_LEFT_SHOULDER);
+          activateAxis(BACK_LEFT_TIE);
           break;
       case '$':
-          activateAxis(BACK_RIGHT_SHOULDER);
+          activateAxis(BACK_RIGHT_TIE);
           break;
       case '5':
           activateAxis(FRONT_LEFT_HIP);

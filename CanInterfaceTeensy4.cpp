@@ -47,7 +47,7 @@ void CanInterface::sendCmdCh1(uint32_t canId, uint8_t len, uint8_t *buf) {
   do {
     ret = can1.write(msg);
     if (ret == 0) {  // TX queue is full, wait a bit.
-      delayMicroseconds(200); // Time to transmit 200 bits @ 1MBit/s
+      delayMicroseconds(170); // Time to transmit 170 bits @ 1MBit/s
     }
   } while (ret == 0);
 }

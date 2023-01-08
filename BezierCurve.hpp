@@ -66,11 +66,11 @@ private:
     static_assert(Npoints <= 13, "Maximum 13 points are supported");
     for (uint8_t idx = 0; idx < Npoints; idx++) {
         binomial_[idx] = 
-          (fpType)factorial[Npoints - 1] /
+          factorial[Npoints - 1] /
           (factorial[idx] * factorial[Npoints - 1 - idx]);
     }
   }
-  fpType binomial_[Npoints];
+  uint32_t binomial_[Npoints];
   fpType point_x_[Npoints];
   fpType point_y_[Npoints];
 };

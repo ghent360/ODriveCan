@@ -9,7 +9,6 @@
 
 #include "ODriveCan.hpp"
 #include "TaskManager.hpp"
-#include "kinematics.h"
 #include "CanInterface.h"
 #include "SerialInteraction.h"
 #include "TaskIds.h"

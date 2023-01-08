@@ -38,6 +38,9 @@ ODriveAxis axes[numAxes] = {
   [BACK_LEFT_HIP] = ODriveAxis( 9, CanInterface::sendCmdCh1)
 };
 
+// The canInterface instance depends on the axes object.
+odrive::CanInterface canInterface(axes, numAxes);
+
 DogLegJoint getJointByAxisId(uint16_t axisId) {
   for(uint8_t idx = 0; idx <= numAxes; idx++) {
     if (axes[idx].node_id == axisId) {
@@ -133,8 +136,6 @@ Leg legs[numLegs] = {
   [BACK_LEFT] = Leg(BACK_LEFT),
   [BACK_RIGHT] = Leg(BACK_RIGHT),
 };
-
-odrive::CanInterface canInterface(axes, numAxes);
 
 static constexpr DogLegJoint legToAxis[numLegs][3] = {
   [FRONT_LEFT] = {FRONT_LEFT_HIP, FRONT_LEFT_TIE, FRONT_LEFT_SHIN},

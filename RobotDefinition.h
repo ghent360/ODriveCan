@@ -21,9 +21,9 @@ enum DogLeg {
 
 // AXIS class definitions:
 enum AxisClass {
-  CLASS_SHIN = 0x1,
-  CLASS_HIP  = 0x2,
-  CLASS_TIE = 0x3
+  CLASS_SHIN,
+  CLASS_HIP,
+  CLASS_TIE
 };
 
 enum DogLegJoint {
@@ -53,6 +53,10 @@ public:
       return startMove();
     }
     return false;
+  }
+
+  bool resetPos(bool start = false) {
+    return setPos(20, 107, -330, start);
   }
 
   bool startMove();

@@ -11,7 +11,7 @@
 
 // various global data structures used by several files
 
-// My robot uses 12 axes and 4 legs
+// My robot uses 12 motor axes and 4 legs
 constexpr int numAxes = 12;
 constexpr int numLegs = 4;
 
@@ -20,23 +20,32 @@ constexpr float cellMaxVoltage = 4.2;
 constexpr float cellWarnVoltage = 3.5;
 constexpr float cellMinVoltage = 3.35;
 
-// Static offset for each joint at its resting position.
+// Static offset for each joint. Because each joint encoder is not
+// at the same position we have static offset in each joint position.
+//
+// These are calculated by moving each leg straight down with the hip
+// horizontal and recording the leg axis reported position at that point.
 extern const float jointOffsets[numAxes]; // Index with DogLegJoint value
+
+// Axis positions to park the legs at the stand.
 // Parking position values for each axis - include the offsets.
 extern const float parkPosition[numAxes]; // Index with DogLegJoint value
 
 // An AxisClass for each of the axes.
 extern const AxisClass jointClass[numAxes]; // Index with DogLegJoint value
+
 // The actual ODriveAxis object for each motor axis.
 extern odrive::ODriveAxis axes[numAxes]; // Index with DogLegJoint value
-// A name for each axis.
-extern const char* axisName[numAxes]; // Index with DogLegJoint value
+
 // The legs for the robot
 extern Leg legs[numLegs]; // Index with DogLeg value
 
+// A name for each axis.
+extern const char* axisName[numAxes]; // Index with DogLegJoint value
 // A name for each leg.
 const char* getLegName(DogLeg leg);
 
+// Convert from CAN axisId to DogLegJoint
 DogLegJoint getJointByAxisId(uint16_t axisId);
 
 // Our CanInterface instance.

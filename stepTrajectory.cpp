@@ -3,7 +3,7 @@
  */
 
 #include "stepTrajectory.h"
-#include "berierCurve.hpp"
+#include "bezierCurve.hpp"
 #include <math.h>
 
 #define USE_BEZIER_CURVE

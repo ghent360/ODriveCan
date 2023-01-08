@@ -5,6 +5,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <cmath>
 
 template<uint8_t Npoints, typename fpType=double>
 class BezierCurve {
@@ -23,13 +24,14 @@ public:
   }
 
   void calculate(fpType t, fpType& x, fpType& y) const {
+#if 0
     fpType oneMinusTpowers[Npoints];
     fpType tmp = 1;
     for(uint32_t idx = 0; idx < Npoints; idx++) {
         oneMinusTpowers[idx] = tmp;
         tmp *= (1 - t);
     }
-    fpType Tpower = 1; // t^0 == 1
+    fpType Tpower = 1; // t^0 = 1
     x = 0;
     y = 0;
     for(uint32_t idx = 0; idx < Npoints; idx++) {
@@ -38,6 +40,21 @@ public:
         y += b * point_y_[idx];
         Tpower *= t;
     }
+#else
+    fpType oneMinusTpowerN = std::pow(1 - t, Npoints - 1);
+    const fpType oneOverOneMinusT = 1 / (1 - t);
+    fpType Tpower = 1; // t^0 = 1
+    x = 0;
+    y = 0;
+    for(uint32_t idx = 0; idx < Npoints; idx++) {
+        fpType b = binomial_[idx] * oneOverOneMinusT * Tpower;
+        x += b * point_x_[idx];
+        y += b * point_y_[idx];
+        Tpower *= t;
+         // Avoid fp division by multiplying by 1 / (1-t)
+        oneMinusTpowerN *= oneOverOneMinusT;
+    }
+#endif
   }
 private:
   void initBinomial() {

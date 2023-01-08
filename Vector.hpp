@@ -5,6 +5,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <cmath>
 
 template<typename T, uint8_t N = 3>
 class Vector {
@@ -13,11 +14,29 @@ public:
   constexpr Vector(const Vector&) = default;
   constexpr Vector& operator = (const Vector&_) = default;
 
-  constexpr Vector(const T (&comp)[N]) : comp_(comp) {}
+  constexpr Vector(const T (&comp)[N]) {
+    for(uint8_t idx = 0; idx < N; idx++) {
+      comp_[idx] = comp[idx];
+    }
+  }
 
-  constexpr T get(uint_t idx) const {
+  constexpr T get(uint8_t idx) const {
     if (idx < N) return comp_[idx];
     return 0;
+  }
+
+  constexpr T getX() const {
+    return comp_[0];
+  }
+
+  constexpr T getY() const {
+    static_assert(N >= 2, "Can't use getX() on 1D vector.");
+    return comp_[1];
+  }
+
+  constexpr T getZ() const {
+    static_assert(N >= 3, "Can't use getZ() on 2D vector.");
+    return comp_[2];
   }
 
   constexpr T getSize() const {
@@ -25,7 +44,7 @@ public:
     for(auto v: comp_) {
         size += (v*v);
     }
-    return size;
+    return std::sqrt(size);
   }
 
   void normalize() {
@@ -35,8 +54,8 @@ public:
     }
   }
 
-  constexpr operator T() const {
-    return getSize();
+  constexpr T operator [](uint8_t idx) const {
+    return get(idx);
   }
 
   constexpr T dot(const Vector& v) const {
@@ -58,7 +77,7 @@ public:
   constexpr Vector operator - () const {
     Vector result;
     for(uint8_t idx = 0; idx < N; idx++) {
-        result.com_ = -comp_[idx];
+        result.comp_[idx] = -comp_[idx];
     }
     return result;
   }
@@ -66,7 +85,7 @@ public:
   constexpr Vector operator + (const Vector& v) const {
     Vector result;
     for(uint8_t idx = 0; idx < N; idx++) {
-        result.com_ = comp_[idx] + v.comp_[idx];
+        result.comp_[idx] = comp_[idx] + v.comp_[idx];
     }
     return result;
   }
@@ -74,21 +93,51 @@ public:
   constexpr Vector operator - (const Vector& v) const {
     Vector result;
     for(uint8_t idx = 0; idx < N; idx++) {
-        result.com_ = comp_[idx] - v.comp_[idx];
+        result.comp_[idx] = comp_[idx] - v.comp_[idx];
     }
     return result;
   }
 
-  constexpr Vector& operator += (const Vector& v) const {
+  constexpr Vector& operator += (const Vector& v) {
     for(uint8_t idx = 0; idx < N; idx++) {
         comp_[idx] += v.comp_[idx];
     }
     return *this;
   }
 
-  constexpr Vector& operator -= (const Vector& v) const {
+  constexpr Vector& operator -= (const Vector& v) {
     for(uint8_t idx = 0; idx < N; idx++) {
         comp_[idx] -= v.comp_[idx];
+    }
+    return *this;
+  }
+
+  constexpr Vector operator * (T v) const {
+    Vector result;
+    for(uint8_t idx = 0; idx < N; idx++) {
+        result.comp_[idx] = comp_[idx] * v;
+    }
+    return result;
+  }
+
+  constexpr Vector operator / (T v) const {
+    Vector result;
+    for(uint8_t idx = 0; idx < N; idx++) {
+        result.comp_[idx] = comp_[idx] * v;
+    }
+    return result;
+  }
+
+  constexpr Vector& operator *= (T v) {
+    for(uint8_t idx = 0; idx < N; idx++) {
+        comp_[idx] *= v;
+    }
+    return *this;
+  }
+
+  constexpr Vector& operator /= (T v) {
+    for(uint8_t idx = 0; idx < N; idx++) {
+        comp_[idx] /= v;
     }
     return *this;
   }

@@ -9,8 +9,9 @@
 #include "Kinematics.h"
 #include "JointDriver.h"
 
-using odrive::ODriveAxis;
+using odrive::AxisState;
 using odrive::CanInterface;
+using odrive::ODriveAxis;
 
 // We communicate with 6 ODrive boards, each board has 2 axes. Each axis
 // has to be setup separately. If you have boards that are connected to a
@@ -179,3 +180,12 @@ RobotBody::RobotBody()
     [BACK_LEFT] = Leg(BACK_LEFT),
     [BACK_RIGHT] = Leg(BACK_RIGHT),
   } {}
+
+void RobotBody::parkLegs() {
+  for (int idx=0; idx<numAxes; idx++) {
+    if (axes[idx].hb.state == AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL) {
+      driveJoints(static_cast<DogLegJoint>(idx), parkPosition[idx]);
+    } 
+  }
+}
+

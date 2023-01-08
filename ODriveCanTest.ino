@@ -38,11 +38,13 @@ TaskManager tm;
 static uint32_t canProcessDuration;
 static uint32_t radioProcessDuration;
 static uint32_t taskLoopDuration;
+static uint32_t yieldDuration;
 
 void resetProcessProfiler() {
   canProcessDuration = 0;
   radioProcessDuration = 0;
   taskLoopDuration = 0;
+  yieldDuration = 0;
 }
 #else
 #define PROFILE_CALL(x, v) x
@@ -287,6 +289,9 @@ void setup() {
     Serial.print("Radio processing ");
     Serial.println(radioProcessDuration);
     resetProcessProfiler();
+    Serial.print("Yield duration ");
+    Serial.println(yieldDuration);
+    resetProcessProfiler();
   }));
 #endif
 
@@ -310,4 +315,5 @@ void loop() {
   PROFILE_CALL(canInterface.readAndProcessCan(), canProcessDuration);
   PROFILE_CALL(tm.runNext(millis()), taskLoopDuration);
   PROFILE_CALL(radio.poll(), radioProcessDuration);
+  PROFILE_CALL(yield(), yieldDuration);
 }

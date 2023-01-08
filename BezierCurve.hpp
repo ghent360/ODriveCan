@@ -6,7 +6,7 @@
 
 #include <stdint.h>
 
-template<uint8_t Npoints, typename fp=double>
+template<uint8_t Npoints, typename fpType=double>
 class BezierCurve {
 public:
   BezierCurve() {
@@ -15,25 +15,25 @@ public:
   }
 
   // Point index: [0..Npoints-1]
-  void setPoint(uint8_t idx, fp x, fp y) {
+  void setPoint(uint8_t idx, fpType x, fpType y) {
     if (idx < Npoints) {
         point_x_[idx] = x;
         point_y_[idx] = y;
     }
   }
 
-  void calculate(fp t, fp& x, fp& y) const {
-    fp oneMinusTpowers[Npoints];
-    fp tmp = 1;
+  void calculate(fpType t, fpType& x, fpType& y) const {
+    fpType oneMinusTpowers[Npoints];
+    fpType tmp = 1;
     for(uint32_t idx = 0; idx < Npoints; idx++) {
         oneMinusTpowers[idx] = tmp;
         tmp *= (1 - t);
     }
-    fp Tpower = 1; // t^0 == 1
+    fpType Tpower = 1; // t^0 == 1
     x = 0;
     y = 0;
     for(uint32_t idx = 0; idx < Npoints; idx++) {
-        fp b = binomial_[idx] * oneMinusTpowers[Npoints - 1 - idx] * Tpower;
+        fpType b = binomial_[idx] * oneMinusTpowers[Npoints - 1 - idx] * Tpower;
         x += b * point_x_[idx];
         y += b * point_y_[idx];
         Tpower *= t;
@@ -49,11 +49,11 @@ private:
     static_assert(Npoints <= 13, "Maximum 13 points are supported");
     for (uint8_t idx = 0; idx < Npoints; idx++) {
         binomial_[idx] = 
-          (fp)factorial[Npoints - 1] /
+          (fpType)factorial[Npoints - 1] /
           (factorial[idx] * factorial[Npoints - 1 - idx]);
     }
   }
-  fp binomial_[Npoints];
-  fp point_x_[Npoints];
-  fp point_y_[Npoints];
+  fpType binomial_[Npoints];
+  fpType point_x_[Npoints];
+  fpType point_y_[Npoints];
 };

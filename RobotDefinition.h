@@ -3,6 +3,8 @@
  */
 #pragma once
 
+#include <stdint.h>
+
 // The ODrive controller uses 'revolution' as positioning system
 // Where position 1 means one full revolution of the motor.
 // We also have 10:1 gearbox on each motor.

@@ -8,9 +8,9 @@
 #include <cmath>
 
 template<uint8_t Npoints, typename fpType=double>
-class BezierCurve {
+class BezierCurve2D {
 public:
-  BezierCurve() {
+  BezierCurve2D() {
     static_assert(Npoints > 2, "Minimum 3 points are supported");
     initBinomial();
   }

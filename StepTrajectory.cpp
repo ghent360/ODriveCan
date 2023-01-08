@@ -9,7 +9,7 @@
 //#define USE_BEZIER_CURVE
 
 #ifdef USE_BEZIER_CURVE
-static BezierCurve<12, float> swingCurve;
+static BezierCurve2D<12, float> swingCurve;
 #endif
 
 static constexpr float stepHeight = 50;

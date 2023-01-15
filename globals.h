@@ -56,3 +56,7 @@ extern Display display;
 
 // The Radio instance.
 extern Radio radio;
+
+// Call this function from a 'long running' operation.
+// Should be used sparingly.
+void robotYield();

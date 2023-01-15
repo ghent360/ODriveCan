@@ -307,12 +307,23 @@ void setup() {
   startStateOne();
 }
 
-void loop() {
+void runRobotControlCycle() {
 #ifdef PROFILE_LOOP
   uint32_t startTime, duration;
 #endif
   PROFILE_CALL(canInterface.readAndProcessCan(), canProcessDuration);
-  PROFILE_CALL(tm.runNext(millis()), taskLoopDuration);
+  PROFILE_CALL(tm.runNext(), taskLoopDuration);
   PROFILE_CALL(radio.poll(), radioProcessDuration);
+}
+
+void robotYield() {
+  runRobotControlCycle();
+}
+
+void loop() {
+#ifdef PROFILE_LOOP
+  uint32_t startTime, duration;
+#endif
+  runRobotControlCycle();
   PROFILE_CALL(yield(), yieldDuration);
 }

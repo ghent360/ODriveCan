@@ -155,6 +155,11 @@ public:
   bool incrementZ(DogLeg legId, int16_t v, bool start = true) {
     return legs_[legId].incrementZ(v, start);
   }
+  static void setAxisIdle();
+  static void setAxisActive();
+  static void modifyAxisGains();
 private:
+  static void scheduleRecalculateLogPosition(uint32_t delay_ms);
+
   RobotLeg legs_[4];
 };

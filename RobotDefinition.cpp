@@ -201,11 +201,54 @@ void RobotBody::parkLegs() {
       driveJoints(static_cast<DogLegJoint>(idx), parkPosition[idx]);
     } 
   }
+  // Wait 1 sec for the axes to complete the move.
+  scheduleRecalculateLogPosition(1000);
+}
+
+void RobotBody::modifyAxisGains() {
+  constexpr float posGainShin = 20.0f;
+  constexpr float posGainHips = 60.0f;
+  constexpr float posGainTie = 20.0f;
+  constexpr float velGain = 0.1f;
+  constexpr float integrator = 0.2f;
+  float posGain = 20.0f;
+  for (int idx=0; idx<numAxes; idx++) {
+    switch(jointClass[idx]) {
+      case CLASS_HIP:
+        posGain = posGainHips;
+        break;
+      case CLASS_SHIN:
+        posGain = posGainShin;
+        break;
+      case CLASS_TIE:
+        posGain = posGainTie;
+        break;
+    }
+    axes[idx].SetPosGain(posGain);
+    axes[idx].SetVelGains(velGain, integrator);
+  }
+}
+
+void RobotBody::setAxisActive() {
+  for(auto& axis: axes) {
+    axis.SetLimits(20.0f, 10.0f); // Should be 6000.0f, 20.0f
+    axis.SetState(AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL);
+  }
+  scheduleRecalculateLogPosition(100);
+}
+
+void RobotBody::setAxisIdle() {
+  for(auto& axis: axes) {
+    axis.SetState(AxisState::AXIS_STATE_IDLE);
+  }
+}
+
+void RobotBody::scheduleRecalculateLogPosition(uint32_t delay_ms) {
   // remove previous task instance
   tm.remove(tm.findById(RebotBodyRecalsLegPos), true);
 
   // Recalculate position in 500ms
-  tm.newSimpleTask(RebotBodyRecalsLegPos, 500, [](TaskNode*, uint32_t) {
+  tm.newSimpleTask(RebotBodyRecalsLegPos, delay_ms, [](TaskNode*, uint32_t) {
     robotBody.recalculateLegPositions();
   });
 }

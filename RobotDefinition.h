@@ -18,6 +18,8 @@ using Vector3f = Vector<float, 3>;
 constexpr float posToRad = 0.62831853071f; // 2 * pi / 10
 constexpr float radToPos = 1.59154943092f; // 10 / (2 * pi)
 
+// We use these enums as indexes in arrays, so it is important that
+// they start from 0.
 enum DogLeg {
     FRONT_LEFT,
     FRONT_RIGHT,
@@ -68,9 +70,11 @@ public:
   bool startMove();
 
   int16_t getPosX() const { return x_; }
-  int16_t getPosY() const { return x_; }
-  int16_t getPosZ() const { return x_; }
+  int16_t getPosY() const { return y_; }
+  int16_t getPosZ() const { return z_; }
+
   float getPosError() const;
+
   void calcPosFromAxis() {
     float x, y, z;
     calcPosFromAxis(x, y, z);
@@ -107,6 +111,9 @@ private:
 
 class RobotBody {
 public:
+  // leg reference center distances
+  static constexpr float length = 531.72;
+  static constexpr float width = 118.28;
   RobotBody();
 
   bool setPos(
@@ -154,6 +161,22 @@ public:
   }
   bool incrementZ(DogLeg legId, int16_t v, bool start = true) {
     return legs_[legId].incrementZ(v, start);
+  }
+
+  void incrementAllX(DogLeg legId, int16_t v, bool start = true) {
+    for(auto& leg : legs_) {
+      leg.incrementX(v, start);
+    }
+  }
+  void incrementAllY(DogLeg legId, int16_t v, bool start = true) {
+    for(auto& leg : legs_) {
+      leg.incrementY(v, start);
+    }
+  }
+  void incrementAllZ(DogLeg legId, int16_t v, bool start = true) {
+    for(auto& leg : legs_) {
+      leg.incrementZ(v, start);
+    }
   }
   static void setAxisIdle();
   static void setAxisActive();

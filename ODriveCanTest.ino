@@ -21,7 +21,7 @@ using odrive::EncoderEstimate;
 using odrive::ODriveAxis;
 using odrive::VbusVoltage;
 
-TaskManager tm;
+TaskManager taskManager;
 
 #ifdef PROFILE_LOOP
 #define PROFILE_CALL(x, v) \
@@ -148,15 +148,19 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
   }
   if (!allAlive) {
     // Clean state three and switch back to first state:
-    tm.remove(tm.findById(StateThreeSerial), true); // Remove the checkSerialInput task.
+    // Remove the checkSerialInput task.
+    taskManager.remove(taskManager.findById(StateThreeSerial), true);
     // Remove the voltage checking callbacks.
     for(auto& axis: axes) {
       axis.vbus.SetCallback(nullptr);
       axis.enc_est.SetCallback(nullptr);
     }
-    tm.remove(tm.findById(StateThreeODriveVoltage), true); // Remove the checkAxisVbusVoltage task.
-    tm.remove(tm.findById(StateThreeBatteryVoltage), true); // Remove the checkBatteryVoltage task.
-    tm.remove(self, true); // Remove the checkAxisConnection task.
+    // Remove the checkAxisVbusVoltage task.
+    taskManager.remove(taskManager.findById(StateThreeODriveVoltage), true);
+    // Remove the checkBatteryVoltage task.
+    taskManager.remove(taskManager.findById(StateThreeBatteryVoltage), true);
+    // Remove the checkAxisConnection task.
+    taskManager.remove(self, true);
     startStateOne();
   }
 }
@@ -166,16 +170,23 @@ static void startStateThree() {
   display.setCanStatus("Ready");
   display.setCanStatusColor(ST7735_GREEN);
   initSerialInteraction();
-  tm.addBack(tm.newPeriodicTask(StateThreeConnection, 750, checkAxisConnection));
+  taskManager.addBack(
+    taskManager.newPeriodicTask(
+      StateThreeConnection, 750, checkAxisConnection));
   for(auto& axis: axes) {
     axis.vbus.SetCallback(axisVbusValueCheck);
 #ifdef AXIS_POS_DISPLAY
     axis.enc_est.SetCallback(axisPosUpdate);
 #endif
   }
-  tm.addBack(tm.newPeriodicTask(StateThreeODriveVoltage, 1000, checkAxisVbusVoltage));
-  tm.addBack(tm.newPeriodicTask(StateThreeBatteryVoltage, 1000, checkBatteryVoltage));
-  tm.addBack(tm.newPeriodicTask(StateThreeSerial, 5, checkSerialInput));
+  taskManager.addBack(
+    taskManager.newPeriodicTask(
+      StateThreeODriveVoltage, 1000, checkAxisVbusVoltage));
+  taskManager.addBack(
+    taskManager.newPeriodicTask(
+      StateThreeBatteryVoltage, 1000, checkBatteryVoltage));
+  taskManager.addBack(
+    taskManager.newPeriodicTask(StateThreeSerial, 5, checkSerialInput));
 }
 
 // Sometimes we get axis errors on startup. Clear the errors, if all axes
@@ -190,7 +201,7 @@ static void clearErrorsAndSwitchToStateThree(TaskNode* self, uint32_t) {
       Serial.print("Lost connection to axis ");
       Serial.println(axis.node_id);
       // Lost axis connection, back to square one:
-      tm.remove(self, true);
+      taskManager.remove(self, true);
       startStateOne();
       return;
     }
@@ -208,14 +219,17 @@ static void clearErrorsAndSwitchToStateThree(TaskNode* self, uint32_t) {
     return;
   }
   // All is good switch to state three.
-  tm.remove(self, true); // Remove the clearErrorsAndSwitchToStateThree task.
+  // Remove the clearErrorsAndSwitchToStateThree task.
+  taskManager.remove(self, true);
   startStateThree();
 }
 
 static void startStateTwo() {
   display.setCanStatus("Initializing axes");
   display.setCanStatusColor(ST7735_YELLOW);
-  tm.addBack(tm.newPeriodicTask(StateTwo, 250, clearErrorsAndSwitchToStateThree));
+  taskManager.addBack(
+    taskManager.newPeriodicTask(
+      StateTwo, 250, clearErrorsAndSwitchToStateThree));
 }
 
 // This function implements state one - we wait until we receive heartbeat
@@ -230,8 +244,10 @@ static void checkAllAxesArePresent(TaskNode* self, uint32_t) {
   }
   if (allAlive) {
     // Switch to state two.
-    tm.remove(tm.findById(StateOneReport), true); // Remove the reportAxesNotPresent task.
-    tm.remove(self, true); // Remove the checkAllAxesArePresent task.
+    // Remove the reportAxesNotPresent task.
+    taskManager.remove(taskManager.findById(StateOneReport), true);
+    // Remove the checkAllAxesArePresent task.
+    taskManager.remove(self, true);
     startStateTwo();
   }
 }
@@ -254,8 +270,10 @@ static void startStateOne() {
   Serial.println("Waiting for odrives to connect...");
   display.setCanStatus("Waiting to connect");
   display.setCanStatusColor(ST7735_RED);
-  tm.addBack(tm.newPeriodicTask(StateOneCheck, 250, checkAllAxesArePresent));
-  tm.addBack(tm.newPeriodicTask(StateOneReport, 5000, reportAxesNotPresent));
+  taskManager.addBack(
+    taskManager.newPeriodicTask(StateOneCheck, 250, checkAllAxesArePresent));
+  taskManager.addBack(
+    taskManager.newPeriodicTask(StateOneReport, 5000, reportAxesNotPresent));
 }
 
 void setup() {
@@ -294,12 +312,12 @@ void setup() {
   }));
 #endif
 
-  tm.addBack(tm.newPeriodicTask(
+  taskManager.addBack(taskManager.newPeriodicTask(
     DisplayUpdate,
     66, // 15 fps should be good enough for now
     [](TaskNode*, uint32_t) { display.updateScreen(); }));
 
-  tm.addBack(tm.newPeriodicTask(
+  taskManager.addBack(taskManager.newPeriodicTask(
     RadioUpdate,
     10,
     [](TaskNode*, uint32_t now) { radio.poll10ms(now); }));
@@ -312,7 +330,7 @@ void runRobotControlCycle() {
   uint32_t startTime, duration;
 #endif
   PROFILE_CALL(canInterface.readAndProcessCan(), canProcessDuration);
-  PROFILE_CALL(tm.runNext(), taskLoopDuration);
+  PROFILE_CALL(taskManager.runNext(), taskLoopDuration);
   PROFILE_CALL(radio.poll(), radioProcessDuration);
 }
 

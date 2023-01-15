@@ -12,80 +12,78 @@
 static BezierCurve2D<12, float> swingCurve;
 #endif
 
-static constexpr float stepHeight = 50;
-static constexpr float stepLength = 150;
-static constexpr float stanceDepth = 10;
-
-static void stanceState(float t, float &x, float &y) {
-    x = stepLength / 2 - stepLength * t;
-    y = -stanceDepth * sinf(float(M_PI) * t);
+StepTrajectory::StepTrajectory() {
+  reset();
 }
 
-#ifdef USE_BEZIER_CURVE
-static void swingStateBezier(float t, float &x, float &y) {
-    swingCurve.calculate(t, x, y);
-}
-#else
-static void swingStateEllipse(float t, float &x, float &y) {
-    float lhalf = stepLength / 2;
-    float lhalf2 = lhalf * lhalf;
-    x = -stepLength / 2 + stepLength * t;
-    y = stepHeight * sqrtf(1 - x * x / lhalf2);
-}
-#endif
-
-void gaitPos(float t, float& x, float& y) {
-    constexpr float stepOffset = 0.75f;
-    if ( t <= stepOffset) {
-        stanceState(t / stepOffset, x, y);
-    } else {
-        t = (t - stepOffset) / (1 - stepOffset);
-#ifdef USE_BEZIER_CURVE
-        swingStateBezier(t, x, y);
-#else
-        swingStateEllipse(t, x, y);
-#endif
-    }
-}
-
+void StepTrajectory::reset() {
+  step_height_ = 50;
+  step_length_ = 150;
+  stance_depth_ = 10;
+  step_offset_ = 0.75f;
 #if 0
-static constexpr float velocity = 1;
-static constexpr float Tsw = 0.25;
+  velocity_ = 1;
+  Tsw_ = 0.25;
 #endif
+  initStepCurve();
+}
 
+void StepTrajectory::stanceState2D(float t, float &x, float &y) {
+  x = step_length_ / 2 - step_length_ * t;
+  y = -stance_depth_ * sinf(float(M_PI) * t);
+}
+
+void StepTrajectory::swingState2D(float t, float &x, float &y) {
 #ifdef USE_BEZIER_CURVE
-void initStepCurve(float xref, float yref) {
-    const float halfStepLength = stepLength / 2;
+  swing_curve_.calculate(t, x, y);
+#else
+  float lhalf = step_length_ / 2;
+  float lhalf2 = lhalf * lhalf;
+  x = -step_length_ / 2 + step_length_ * t;
+  y = step_height_ * sqrtf(1 - x * x / lhalf2);
+#endif
+}
+
+
+void StepTrajectory::gaitPos(float t, float& x, float& y) {
+  if ( t <= step_offset_) {
+    stanceState2D(t / step_offset_, x, y);
+  } else {
+    t = (t - step_offset_) / (1 - step_offset_);
+    swingState2D(t, x, y);
+  }
+}
+
+void StepTrajectory::initStepCurve() {
+#ifdef USE_BEZIER_CURVE
+  const float halfStepLength = step_length_ / 2;
 
 #if 0 // use velocity based P1 and P10
-    swingCurve.setPoint(0, -halfStepLength + xref, yref);
-    swingCurve.setPoint(1, -halfStepLength + xref - velocity / (12*Tsw), yref);
-    swingCurve.setPoint(2, -(1.76*halfStepLength) + xref, yref + stepHeight * 0.9);
-    swingCurve.setPoint(3, -(1.76*halfStepLength) + xref, yref + stepHeight * 0.9);
-    swingCurve.setPoint(4, -(1.76*halfStepLength) + xref, yref + stepHeight * 0.9);
-    swingCurve.setPoint(5, xref, yref + stepHeight * 0.9);
-    swingCurve.setPoint(6, xref, yref + stepHeight * 0.9);
-    swingCurve.setPoint(7, xref, yref + stepHeight * 1.36);
-    swingCurve.setPoint(8, (1.76*halfStepLength) + xref, yref + stepHeight * 1.36);
-    swingCurve.setPoint(9, (1.76*halfStepLength) + xref, yref + stepHeight * 1.36);
-    swingCurve.setPoint(10, halfStepLength + xref + velocity / (12*Tsw), yref);
-    swingCurve.setPoint(11, halfStepLength + xref, yref);
+  swingCurve.setPoint(0, -halfStepLength, 0);
+  swingCurve.setPoint(1, -halfStepLength - velocity_ / (12*Tsw_), 0);
+  swingCurve.setPoint(2, -(1.76*halfStepLength), step_height_ * 0.9);
+  swingCurve.setPoint(3, -(1.76*halfStepLength), step_height_ * 0.9);
+  swingCurve.setPoint(4, -(1.76*halfStepLength), step_height_ * 0.9);
+  swingCurve.setPoint(5, 0, step_height_ * 0.9);
+  swingCurve.setPoint(6, 0, step_height_ * 0.9);
+  swingCurve.setPoint(7, 0, step_height_ * 1.36);
+  swingCurve.setPoint(8, (1.76*halfStepLength), step_height_ * 1.36);
+  swingCurve.setPoint(9, (1.76*halfStepLength), step_height_ * 1.36);
+  swingCurve.setPoint(10, halfStepLength + velocity_ / (12*Tsw_), 0);
+  swingCurve.setPoint(11, halfStepLength, 0);
 #else
-    swingCurve.setPoint(0, -halfStepLength + xref, yref);
-    swingCurve.setPoint(1, -(1.4f*halfStepLength) + xref, yref);
-    swingCurve.setPoint(2, -(1.5f*halfStepLength) + xref, yref + stepHeight * 0.9f);
-    swingCurve.setPoint(3, -(1.5f*halfStepLength) + xref, yref + stepHeight * 0.9f);
-    swingCurve.setPoint(4, -(1.5f*halfStepLength) + xref, yref + stepHeight * 0.9f);
-    swingCurve.setPoint(5, xref, yref + stepHeight * 0.9f);
-    swingCurve.setPoint(6, xref, yref + stepHeight * 0.9f);
-    swingCurve.setPoint(7, xref, yref + stepHeight * 1.36f);
-    swingCurve.setPoint(8, (1.5f*halfStepLength) + xref, yref + stepHeight * 1.36f);
-    swingCurve.setPoint(9, (1.5f*halfStepLength) + xref, yref + stepHeight * 1.36f);
-    swingCurve.setPoint(10, (1.4f*halfStepLength) + xref, yref);
-    swingCurve.setPoint(11, halfStepLength + xref, yref);
+  swingCurve.setPoint(0, -halfStepLength, 0);
+  swingCurve.setPoint(1, -(1.4f*halfStepLength), 0);
+  swingCurve.setPoint(2, -(1.5f*halfStepLength), step_height_ * 0.9f);
+  swingCurve.setPoint(3, -(1.5f*halfStepLength), step_height_ * 0.9f);
+  swingCurve.setPoint(4, -(1.5f*halfStepLength), step_height_ * 0.9f);
+  swingCurve.setPoint(5, 0, step_height_ * 0.9f);
+  swingCurve.setPoint(6, 0, step_height_ * 0.9f);
+  swingCurve.setPoint(7, 0, step_height_ * 1.36f);
+  swingCurve.setPoint(8, (1.5f*halfStepLength), step_height_ * 1.36f);
+  swingCurve.setPoint(9, (1.5f*halfStepLength), step_height_ * 1.36f);
+  swingCurve.setPoint(10, (1.4f*halfStepLength), 0);
+  swingCurve.setPoint(11, halfStepLength, 0);
 #endif
+#endif // USE_BEZIER_CURVE
 }
-#else
-void initStepCurve(float xref, float yref) {
-}
-#endif

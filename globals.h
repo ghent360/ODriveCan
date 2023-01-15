@@ -59,7 +59,7 @@ extern Display display;
 extern Radio radio;
 
 // The task manager instance.
-extern TaskManager tm;
+extern TaskManager taskManager;
 
 // The RobotBody instance.
 extern RobotBody robotBody;

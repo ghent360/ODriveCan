@@ -25,18 +25,37 @@ public:
     return 0;
   }
 
+  constexpr void set(uint8_t idx, T v) {
+    if (idx < N)
+      comp_[idx] = v;
+  }
+
   constexpr T getX() const {
     return comp_[0];
   }
 
+  constexpr void setX(T v) {
+    comp_[0] = v;
+  }
+
   constexpr T getY() const {
-    static_assert(N >= 2, "Can't use getX() on 1D vector.");
+    static_assert(N >= 2, "Can't use getY() on 1D vector.");
     return comp_[1];
+  }
+
+  constexpr void setY(T v) {
+    static_assert(N >= 2, "Can't use setY() on 1D vector.");
+    comp_[1] = v;
   }
 
   constexpr T getZ() const {
     static_assert(N >= 3, "Can't use getZ() on 2D vector.");
     return comp_[2];
+  }
+
+  constexpr void setZ(T v) {
+    static_assert(N >= 3, "Can't use setZ() on 2D vector.");
+    comp_[2] = v;
   }
 
   constexpr T getSize() const {
@@ -145,3 +164,25 @@ public:
 private:
   T comp_[N];
 };
+
+template<typename T, uint8_t N = 3>
+constexpr Vector<T, N> normalize(const Vector<T, N>& v) {
+  Vector<T, N> r(v);
+  r.normalize();
+  return r;
+}
+
+template<typename T, uint8_t N = 3>
+constexpr T distance2(const Vector<T, N>& v1, const Vector<T, N>& v2) {
+  T r = 0;
+  for(uint8_t idx = 0; idx < N; idx++) {
+    T d = v1[idx] - v2[idx];
+    r += d * d;
+  }
+  return r;
+}
+
+template<typename T, uint8_t N = 3>
+constexpr T distance(const Vector<T, N>& v1, const Vector<T, N>& v2) {
+  return std::sqrt(distance2(v1, v2));
+}

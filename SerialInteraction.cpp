@@ -11,6 +11,8 @@
 
 using odrive::AxisState;
 
+StepTrajectory traj;
+
 //#define DEBUG_AXIS_POS
 #define DEBUG_LEG_POS
 
@@ -221,7 +223,7 @@ static void computeAnglesAndMove(float x, float y, float z) {
 
 void walk(float t) {
   float x, z;
-  gaitPos(t, x, z);
+  traj.gaitPos(t, x, z);
   x += activeLegX;
   z += activeLegZ;
   //Serial.print("Walk x=");
@@ -266,11 +268,9 @@ void checkSerialInput(TaskNode*, uint32_t now) {
           computeAnglesAndMove(activeLegX, activeLegY, activeLegZ + 50);
           break;
       case 'R':
-          initStepCurve(0, 0);
           walk(0);
           break;
       case 'w':
-          initStepCurve(0, 0);
           last = now;
           break;
       case 's':

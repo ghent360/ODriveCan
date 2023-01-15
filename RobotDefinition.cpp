@@ -245,10 +245,11 @@ void RobotBody::setAxisIdle() {
 
 void RobotBody::scheduleRecalculateLogPosition(uint32_t delay_ms) {
   // remove previous task instance
-  tm.remove(tm.findById(RebotBodyRecalsLegPos), true);
+  taskManager.remove(taskManager.findById(RebotBodyRecalsLegPos), true);
 
   // Recalculate position in 500ms
-  tm.newSimpleTask(RebotBodyRecalsLegPos, delay_ms, [](TaskNode*, uint32_t) {
+  taskManager.newSimpleTask(
+    RebotBodyRecalsLegPos, delay_ms, [](TaskNode*, uint32_t) {
     robotBody.recalculateLegPositions();
   });
 }

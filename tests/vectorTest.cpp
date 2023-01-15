@@ -63,6 +63,8 @@ TEST_SUITE("Vector template tests")
         auto v = v1 + v2;
         v1.normalize();
         CHECK(fabs(v1.getSize() - 1) < 1E-15);
+        auto v2n = normalize(v2);
+        CHECK(fabs(v2n.getSize() - 1) < 1E-15);
         CHECK(v.get(0) == 400);
         CHECK(v.get(1) == 400);
         CHECK(v.get(2) == 400);

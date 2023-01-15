@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2022 ghent360. See LICENSE file for details.
  */
+#include <Arduino.h>
 #include <math.h>
 #include <stdint.h>
 #include "JointDriver.h"

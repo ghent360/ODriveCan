@@ -2,6 +2,7 @@
  * Copyright (c) 2022 ghent360. See LICENSE file for details.
  *
 */
+#include <Arduino.h>
 #include "ODriveCan.hpp"
 #include "CanInterface.h"
 #include "RobotDefinition.h"
@@ -137,7 +138,7 @@ static constexpr DogLegJoint legToAxis[numLegs][3] = {
   [BACK_RIGHT] = {BACK_RIGHT_HIP, BACK_RIGHT_TIE, BACK_RIGHT_SHIN},
 };
 
-Leg::Leg(DogLeg legId)
+RobotLeg::RobotLeg(DogLeg legId)
   : leg_id_(legId),
     x_(20),
     y_(107),
@@ -149,7 +150,7 @@ Leg::Leg(DogLeg legId)
     reverse_x_((legId == BACK_LEFT) || (legId == FRONT_LEFT)) {
 }
 
-bool Leg::startMove() {
+bool RobotLeg::startMove() {
   float ha, ta, sa;
   inverseKinematics(
     reverse_x_ ? -x_ : x_,
@@ -159,7 +160,7 @@ bool Leg::startMove() {
     ha,
     ta,
     sa);
-  if (!isnan(sa) && !isnan(ta) && !isnan(ha)) {
+  if (!std::isnan(sa) && !std::isnan(ta) && !std::isnan(ha)) {
     driveJoints(hip_axis_, -ha * radToPos);
     driveJoints(tie_axis_, ta * radToPos);
     driveJoints(shin_axis_, sa * radToPos);
@@ -168,17 +169,29 @@ bool Leg::startMove() {
   return false;
 }
 
-float Leg::getPosError() const {
-  // Not implemented yet.
-  return 0;
+void RobotLeg::calcPosFromAxis(float &x, float &y, float &z) const {
+  float ha, ta, sa;
+  ha = (axes[hip_axis_].enc_est.pos - jointOffsets[hip_axis_]) * posToRad;
+  ta = (axes[tie_axis_].enc_est.pos - jointOffsets[tie_axis_]) * posToRad;
+  sa = (axes[shin_axis_].enc_est.pos - jointOffsets[shin_axis_]) * posToRad;
+  forwardKinematics(ha, ta, sa, x, y, z);
+}
+
+float RobotLeg::getPosError() const {
+  float x, y, z;
+  calcPosFromAxis(x, y, z);
+  x -= x_;
+  y -= y_;
+  z -= z_;
+  return (x * x) + (y * y) + (z * z);
 }
 
 RobotBody::RobotBody()
   : legs_ {
-    [FRONT_LEFT] = Leg(FRONT_LEFT),
-    [FRONT_RIGHT] = Leg(FRONT_RIGHT),
-    [BACK_LEFT] = Leg(BACK_LEFT),
-    [BACK_RIGHT] = Leg(BACK_RIGHT),
+    [FRONT_LEFT] = RobotLeg(FRONT_LEFT),
+    [FRONT_RIGHT] = RobotLeg(FRONT_RIGHT),
+    [BACK_LEFT] = RobotLeg(BACK_LEFT),
+    [BACK_RIGHT] = RobotLeg(BACK_RIGHT),
   } {}
 
 void RobotBody::parkLegs() {
@@ -187,5 +200,10 @@ void RobotBody::parkLegs() {
       driveJoints(static_cast<DogLegJoint>(idx), parkPosition[idx]);
     } 
   }
+  // Recalculate position in 500ms
+  tm.newSimpleTask(-1, 500, [](TaskNode*, uint32_t) {
+    robotBody.recalculateLegPositions();
+  });
 }
 
+RobotBody robotBody;

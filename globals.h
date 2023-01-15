@@ -5,6 +5,7 @@
 #include "RobotDefinition.h"
 #include "ODriveCan.hpp"
 #include "CanInterface.h"
+#include "TaskManager.hpp"
 #include "VoltageMonitor.h"
 #include "Display.h"
 #include "Radio.h"
@@ -56,6 +57,12 @@ extern Display display;
 
 // The Radio instance.
 extern Radio radio;
+
+// The task manager instance.
+extern TaskManager tm;
+
+// The RobotBody instance.
+extern RobotBody robotBody;
 
 // Call this function from a 'long running' operation.
 // Should be used sparingly.

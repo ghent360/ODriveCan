@@ -53,6 +53,21 @@ void inverseKinematics(
     inverseKinematics2d(-x, yprime, posShinAngle, t, s);
 }
 
+void forwardKinematics(
+    float h, float t, float s, float &x, float &y, float &z) {
+    float ch = cosf(h);
+    float sh = sinf(h);
+    float ct = cosf(t);
+    float st = sinf(t);
+    float cs = cosf(s);
+    float ss = sinf(s);
+    y = -(tieLength * ct * sh - hipLength * ch +
+          tieLength * ct * cs * sh - shinLength * sh * st * ss);
+    z = shinLength * ch * st * ss - tieLength * ch * ct -
+        shinLength * ch * ct * cs - hipLength * sh;
+    x = tieLength * st + shinLength * ct * ss + shinLength * cs * st;
+}
+
 #if 0
 // A more forgiving asin and acos functions when the argument is slightly larger 
 // than 1 or smaller than -1

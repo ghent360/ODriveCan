@@ -2,13 +2,12 @@
  * Copyright (c) 2022 ghent360. See LICENSE file for details.
 */
 #include <Arduino.h>
+#include <cmath>
 #include "ODriveCan.hpp"
 #include "globals.h"
 #include "JointDriver.h"
 #include "Kinematics.h"
 #include "StepTrajectory.h"
-#include "TaskManager.hpp"
-#include "TaskIds.h"
 
 using odrive::AxisState;
 
@@ -171,7 +170,7 @@ static void computeAnglesAndMove(float x, float y, float z) {
   hp = -ha * radToPos;
   tp = ta * radToPos;
   sp = sa * radToPos;
-  if (!isnan(sa) && !isnan(ta) && !isnan(ha)) {
+  if (!std::isnan(sa) && !std::isnan(ta) && !std::isnan(ha)) {
     switch (activeLeg) {
       case BACK_RIGHT:
         driveJoints(BACK_RIGHT_HIP, hp);

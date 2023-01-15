@@ -11,3 +11,6 @@ void inverseKinematics(
     float& hipAngle,
     float& tieAngle,
     float& shinAngle);
+
+void forwardKinematics(
+    float h, float t, float s, float &x, float &y, float &z);

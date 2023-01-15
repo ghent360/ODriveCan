@@ -4,6 +4,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <cmath>
 #include "Vector.hpp"
 
 using Vector3f = Vector<float, 3>;
@@ -46,9 +47,9 @@ enum DogLegJoint {
     BACK_LEFT_HIP
 };
 
-class Leg {
+class RobotLeg {
 public:
-  Leg(DogLeg legId);
+  RobotLeg(DogLeg legId);
 
   bool setPos(int16_t x, int16_t y, int16_t z, bool start = true) {
     x_ = x;
@@ -70,7 +71,16 @@ public:
   int16_t getPosY() const { return x_; }
   int16_t getPosZ() const { return x_; }
   float getPosError() const;
+  void calcPosFromAxis() {
+    float x, y, z;
+    calcPosFromAxis(x, y, z);
+    x_ = std::roundf(x);
+    y_ = std::roundf(y);
+    z_ = std::roundf(z);
+  }
 private:
+  void calcPosFromAxis(float &x, float &y, float &z) const;
+
   const uint8_t leg_id_;
   // Position accuracy is not that great that we allow sub 1mm position.
   // Leg position in the leg reference frame in mm. z_ should be negative.
@@ -100,6 +110,11 @@ public:
   }
 
   void parkLegs();
+  void recalculateLegPositions() {
+    for(auto& leg : legs_) {
+      leg.calcPosFromAxis();
+    }
+  }
 private:
-  Leg legs_[4];
+  RobotLeg legs_[4];
 };

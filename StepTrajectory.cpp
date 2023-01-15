@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 ghent360. See LICENSE file for details.
+ * Copyright (c) 2023 ghent360@iqury.us. See LICENSE file for details.
  */
 
 #include "StepTrajectory.h"

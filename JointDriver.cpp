@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 ghent360. See LICENSE file for details.
+ * Copyright (c) 2022-2023 ghent360@iqury.us. See LICENSE file for details.
  */
 #include <Arduino.h>
 #include <math.h>

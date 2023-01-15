@@ -205,7 +205,7 @@ void RobotBody::parkLegs() {
   scheduleRecalculateLogPosition(1000);
 }
 
-void RobotBody::modifyAxisGains() {
+void RobotBody::modifyAxesGains() {
   constexpr float posGainShin = 20.0f;
   constexpr float posGainHips = 60.0f;
   constexpr float posGainTie = 20.0f;
@@ -229,15 +229,15 @@ void RobotBody::modifyAxisGains() {
   }
 }
 
-void RobotBody::setAxisActive() {
+void RobotBody::setAllAxesActive() {
   for(auto& axis: axes) {
-    axis.SetLimits(20.0f, 10.0f); // Should be 6000.0f, 20.0f
+    axis.SetLimits(6.0f, 10.0f); // Should be 6000.0f, 20.0f
     axis.SetState(AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL);
   }
   scheduleRecalculateLogPosition(100);
 }
 
-void RobotBody::setAxisIdle() {
+void RobotBody::setAllAxesIdle() {
   for(auto& axis: axes) {
     axis.SetState(AxisState::AXIS_STATE_IDLE);
   }

@@ -128,11 +128,19 @@ public:
     return result;
   }
 
-  void resetAll() {
+  void resetLeg(DogLeg legId, bool start = true) {
+    legs_[legId].resetPos(start);
+    updateReferencePos(legId);
+  }
+
+  void resetAll(bool start = true) {
     for (uint8_t idx = 0; idx < numberOfLegs; idx++) {
-      legs_[idx].resetPos();
-      updateReferencePos(DogLeg(idx));
+      resetLeg(DogLeg(idx), start);
     }
+  }
+
+  bool startLeg(DogLeg legId) {
+    return legs_[legId].startMove();
   }
 
   void startAll() {
@@ -208,9 +216,9 @@ public:
 
   void parkLegs();
 
-  static void setAxisIdle();
-  static void setAxisActive();
-  static void modifyAxisGains();
+  static void setAllAxesIdle();
+  static void setAllAxesActive();
+  static void modifyAxesGains();
 
   static float legToBodyX(DogLeg legId, float v) {
     float offset = 0;
@@ -231,11 +239,11 @@ public:
     switch (legId) {
       case FRONT_LEFT:
       case BACK_LEFT:
-        offset = halfWidth;
+        offset = -halfWidth;
         break;
       case FRONT_RIGHT:
       case BACK_RIGHT:
-        offset = -halfWidth;
+        offset = halfWidth;
         break;
     }
     return v + offset;
@@ -262,11 +270,11 @@ public:
     switch (legId) {
       case FRONT_LEFT:
       case BACK_LEFT:
-        offset = halfWidth;
+        offset = -halfWidth;
         break;
       case FRONT_RIGHT:
       case BACK_RIGHT:
-        offset = -halfWidth;
+        offset = halfWidth;
         break;
     }
     return v - offset;

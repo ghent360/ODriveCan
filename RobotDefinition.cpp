@@ -9,6 +9,7 @@
 #include "globals.h"
 #include "Kinematics.h"
 #include "JointDriver.h"
+#include "TaskIds.h"
 
 using odrive::AxisState;
 using odrive::CanInterface;
@@ -200,8 +201,11 @@ void RobotBody::parkLegs() {
       driveJoints(static_cast<DogLegJoint>(idx), parkPosition[idx]);
     } 
   }
+  // remove previous task instance
+  tm.remove(tm.findById(RebotBodyRecalsLegPos), true);
+
   // Recalculate position in 500ms
-  tm.newSimpleTask(-1, 500, [](TaskNode*, uint32_t) {
+  tm.newSimpleTask(RebotBodyRecalsLegPos, 500, [](TaskNode*, uint32_t) {
     robotBody.recalculateLegPositions();
   });
 }

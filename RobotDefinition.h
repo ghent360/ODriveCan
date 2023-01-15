@@ -78,6 +78,16 @@ public:
     y_ = std::roundf(y);
     z_ = std::roundf(z);
   }
+
+  bool incrementX(int16_t v, bool start = true) {
+    return setPos(x_ + v, y_, z_, start);
+  }
+  bool incrementY(int16_t v, bool start = true) {
+    return setPos(x_, y_ + v, z_, start);
+  }
+  bool incrementZ(int16_t v, bool start = true) {
+    return setPos(x_, y_, z_ + v, start);
+  }
 private:
   void calcPosFromAxis(float &x, float &y, float &z) const;
 
@@ -99,14 +109,34 @@ class RobotBody {
 public:
   RobotBody();
 
-  bool setPos(DogLeg legId, int16_t x, int16_t y, int16_t z) {
-    return legs_[legId].setPos(x, y, z, true);
+  bool setPos(
+    DogLeg legId, int16_t x, int16_t y, int16_t z, bool start = true) {
+    return legs_[legId].setPos(x, y, z, start);
   }
 
   void resetAll() {
     for (auto& leg: legs_) {
-      leg.resetPos(true);
+      leg.resetPos();
     }
+  }
+
+  void startAll() {
+    for (auto& leg: legs_) {
+      leg.startMove();
+    }
+  }
+
+  int16_t getPosX(DogLeg legId) const {
+    return legs_[legId].getPosX();
+  }
+  int16_t getPosY(DogLeg legId) const {
+    return legs_[legId].getPosY();
+  }
+  int16_t getPosZ(DogLeg legId) const {
+    return legs_[legId].getPosZ();
+  }
+  float getPosError(DogLeg legId) const {
+    return legs_[legId].getPosError();
   }
 
   void parkLegs();
@@ -114,6 +144,16 @@ public:
     for(auto& leg : legs_) {
       leg.calcPosFromAxis();
     }
+  }
+
+  bool incrementX(DogLeg legId, int16_t v, bool start = true) {
+    return legs_[legId].incrementX(v, start);
+  }
+  bool incrementY(DogLeg legId, int16_t v, bool start = true) {
+    return legs_[legId].incrementY(v, start);
+  }
+  bool incrementZ(DogLeg legId, int16_t v, bool start = true) {
+    return legs_[legId].incrementZ(v, start);
   }
 private:
   RobotLeg legs_[4];

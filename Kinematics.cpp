@@ -27,7 +27,7 @@ static void inverseKinematics2d(
     float xsi2 = atan2f(x, z);
     if (x > 0) xsi2 -= float(M_PI);
     else xsi2 += float(M_PI);
-    float r = sqrt(r2);
+    float r = sqrtf(r2);
     float xsi1 = acosf((r2 + tieLength2 - shinLength2) / (2 * r * tieLength));
     if (posShinAngle) {
         shinAngle = float(M_PI) - phi;

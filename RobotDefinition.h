@@ -4,6 +4,9 @@
 #pragma once
 
 #include <stdint.h>
+#include "Vector.hpp"
+
+using Vector3f = Vector<float, 3>;
 
 // The ODrive controller uses 'revolution' as positioning system
 // Where position 1 means one full revolution of the motor.
@@ -78,8 +81,8 @@ private:
   const DogLegJoint hip_axis_;
   const DogLegJoint tie_axis_;
   const DogLegJoint shin_axis_;
-  const bool posShinAngle_;
-  const bool reverseX_;
+  const bool positive_shin_angle_;
+  const bool reverse_x_;
 };
 
 class RobotBody {

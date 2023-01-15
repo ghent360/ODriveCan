@@ -145,17 +145,17 @@ Leg::Leg(DogLeg legId)
     hip_axis_(legToAxis[legId][0]),
     tie_axis_(legToAxis[legId][1]),
     shin_axis_(legToAxis[legId][2]),
-    posShinAngle_((legId == BACK_RIGHT) || (legId == FRONT_RIGHT)),
-    reverseX_((legId == BACK_LEFT) || (legId == FRONT_LEFT)) {
+    positive_shin_angle_((legId == BACK_RIGHT) || (legId == FRONT_RIGHT)),
+    reverse_x_((legId == BACK_LEFT) || (legId == FRONT_LEFT)) {
 }
 
 bool Leg::startMove() {
   float ha, ta, sa;
   inverseKinematics(
-    reverseX_ ? -x_ : x_,
+    reverse_x_ ? -x_ : x_,
     y_,
     z_,
-    posShinAngle_,
+    positive_shin_angle_,
     ha,
     ta,
     sa);

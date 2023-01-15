@@ -23,13 +23,16 @@ public:
   uint32_t id() const { return id_; }
   void run(uint32_t timeNow) {
     if (cb_) {
+      running_ = true;
       cb_(this, timeNow);
+      running_ = false;
     }
   }
 
   friend class TaskManager;
 private:
   bool in_use_;
+  bool running_;
   TaskNode *prev_;
   TaskNode *next_;
   uint32_t id_;
@@ -48,9 +51,9 @@ public:
   // Reset the task manager to empty state.
   void reset() {
     task_list_start_ = task_list_end_ = nullptr;
-    last_idle_time_ = 0;
     for(auto& node: pool_) {
       node.in_use_ = false;
+      node.running_ = false;
     }
 #ifdef PROFILE_LOOP
     resetProfiler();
@@ -74,6 +77,7 @@ public:
         node.is_periodic_ = isPeriodic;
         node.prev_ = nullptr;
         node.next_ = nullptr;
+        node.running_ = false;
         return &node;
       }
     }
@@ -109,6 +113,7 @@ public:
       node->cb_ = nullptr;
       node->prev_ = nullptr;
       node->next_ = nullptr;
+      node->running_ = false;
     }
   }
 
@@ -193,9 +198,9 @@ public:
 
   // Finds the next task that can me scheduled at this time or return
   // nullptr if no such task exists.
-  TaskNode* findNext(uint32_t time) const {
+  TaskNode* findNextRunnable(uint32_t time) const {
     return findFirst([time](const TaskNode* node) {
-      return ((time - node->sched_time_) >= node->interval_);
+      return ((time - node->sched_time_) >= node->interval_) && !node->running_;
     });
   }
 
@@ -203,8 +208,8 @@ public:
   // it for the next time. If not, remove the task from the queue and free it.
   //
   // Return the time in ms since we could not schedule any tasks.
-  uint32_t runNext(uint32_t time) {
-    TaskNode *next = findNext(time);
+  void runNext(uint32_t time) {
+    TaskNode *next = findNextRunnable(time);
     if (next) {
 #ifdef PROFILE_LOOP
       uint32_t startTime = micros();
@@ -219,17 +224,17 @@ public:
 #endif
       if (next->in_use_) { // Check if the task has not been freed
         if (next->is_periodic_) {
-          next->sched_time_ = time;
+          next->sched_time_ = millis();
         } else {
           remove(next, true);
         }
       }
-    } else {
-      last_idle_time_ = time;
     }
-    return time - last_idle_time_;
   }
 
+  void runNext() {
+    runNext(millis());
+  }
 #ifdef PROFILE_LOOP
   uint32_t getMaxTaskTime() const {
     return max_task_time_;
@@ -252,7 +257,6 @@ private:
   TaskNode pool_[32];
   TaskNode *task_list_start_;
   TaskNode *task_list_end_;
-  uint32_t last_idle_time_;
 #ifdef PROFILE_LOOP
   uint32_t max_task_time_;
   uint32_t longest_task_id_;

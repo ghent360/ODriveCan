@@ -219,6 +219,7 @@ public:
   }
 
   void startWalking();
+  void stopWalking();
   void parkLegs();
 
   void printPositions() const;

@@ -80,11 +80,14 @@ void checkSerialInput(TaskNode*, uint32_t now) {
       case 'g':
           robotBody.modifyAxesGains();
           break;
-      case 's':
+      case 't':
           robotBody.resetAll();
           break;
       case 'w':
           robotBody.startWalking();
+          break;
+      case 's':
+          robotBody.stopWalking();
           break;
       case 'p':
           robotBody.printPositions();

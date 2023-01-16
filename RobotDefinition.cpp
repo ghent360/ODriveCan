@@ -10,6 +10,9 @@
 #include "JointDriver.h"
 #include "TaskIds.h"
 
+#define MOVE_PREP
+#define MOVE_WALK
+
 using odrive::AxisState;
 using odrive::CanInterface;
 using odrive::ODriveAxis;
@@ -309,7 +312,7 @@ void RobotBody::startWalking() {
   gait_x -= leg_reference_pos_[FRONT_LEFT][0];
   prep_trajectory_.setStepParams(25, gait_x, 0);
   prep_step_half_size_ = gait_x / 2;
-#if 0  
+#ifdef DEBUG_PREP
   Serial.print("Front left pos X: ");
   Serial.print(leg_reference_pos_[FRONT_LEFT][0]);
   Serial.print(" Z: ");
@@ -326,6 +329,11 @@ void RobotBody::startWalking() {
       }));
 }
 
+void RobotBody::stopWalking() {
+  state_ = STATE_IDLE;
+  taskManager.removeById(RobotBodyStateExecutor);
+}
+
 void RobotBody::runState(uint32_t now) {
   if (state_ == STATE_IDLE) {
     taskManager.removeById(RobotBodyStateExecutor);
@@ -333,19 +341,19 @@ void RobotBody::runState(uint32_t now) {
   }
   uint32_t elapsed = now - step_start_;
   float t, gait_x, gait_z;
+  t = float(elapsed) / prep_step_duration_;
   switch(state_) {
   case STATE_PREPARE_FRONT_LEFT: {
-    t = float(elapsed) / prep_step_duration_;
     if (t > 1) {
       walk_trajectory_.gaitPos(0, gait_x, gait_z);
-#if 0
+#ifdef DEBUG_PREP_END
       Serial.print("Front left prep end. Adjusting X: ");
       Serial.print(gait_x);
       Serial.print(" Z: ");
       Serial.println(leg_reference_pos_[FRONT_LEFT][2] + gait_z);
 #endif
       leg_reference_pos_[FRONT_LEFT][0] = 0;
-#if 1
+#ifdef MOVE_PREP
       legs_[FRONT_LEFT].setPos(
         leg_reference_pos_[FRONT_LEFT][0] + gait_x,
         leg_reference_pos_[FRONT_LEFT][1],
@@ -356,7 +364,7 @@ void RobotBody::runState(uint32_t now) {
       gait_x -= leg_reference_pos_[BACK_RIGHT][0];
       prep_trajectory_.setStepParams(25, gait_x, 0);
       prep_step_half_size_ = gait_x / 2;
-#if 0
+#ifdef DEBUG_PREP
       Serial.print("Back right pos X: ");
       Serial.print(leg_reference_pos_[BACK_RIGHT][0]);
       Serial.print(" Z: ");
@@ -365,17 +373,17 @@ void RobotBody::runState(uint32_t now) {
       Serial.println(gait_x);
 #endif
       state_ = STATE_PREPARE_BACK_RIGHT;
-      step_start_ = millis();
+      step_start_ = now;
     } else {
       t /= 4;
       prep_trajectory_.gaitPos(t + 0.75f, gait_x, gait_z);
-#if 0
+#ifdef DEBUG_PREP
       Serial.print("Front left prep X: ");
       Serial.print(leg_reference_pos_[FRONT_LEFT][0] + gait_x + prep_step_half_size_);
       Serial.print(" Z: ");
       Serial.println(leg_reference_pos_[FRONT_LEFT][2] + gait_z);
 #endif
-#if 1
+#ifdef MOVE_PREP
       legs_[FRONT_LEFT].setPos(
         leg_reference_pos_[FRONT_LEFT][0] + gait_x + prep_step_half_size_,
         leg_reference_pos_[FRONT_LEFT][1],
@@ -386,17 +394,16 @@ void RobotBody::runState(uint32_t now) {
   }
   break;
   case STATE_PREPARE_BACK_RIGHT: {
-    t = float(elapsed) / prep_step_duration_;
     if (t > 1) {
       walk_trajectory_.gaitPos(0.25f, gait_x, gait_z);
-#if 0
+#ifdef DEBUG_PREP_END
       Serial.print("Back right prep end. Adjusting X: ");
       Serial.print(gait_x);
       Serial.print(" Z: ");
       Serial.println(leg_reference_pos_[BACK_RIGHT][2] + gait_z);
 #endif
       leg_reference_pos_[BACK_RIGHT][0] = 0;
-#if 1
+#ifdef MOVE_PREP
       legs_[BACK_RIGHT].setPos(
         leg_reference_pos_[BACK_RIGHT][0] + gait_x,
         leg_reference_pos_[BACK_RIGHT][1],
@@ -407,7 +414,7 @@ void RobotBody::runState(uint32_t now) {
       gait_x -= leg_reference_pos_[FRONT_RIGHT][0];
       prep_trajectory_.setStepParams(25, gait_x, 0);
       prep_step_half_size_ = gait_x / 2;
-#if 0
+#ifdef DEBUG_PREP
       Serial.print("Front right pos X: ");
       Serial.print(leg_reference_pos_[FRONT_RIGHT][0]);
       Serial.print(" Z: ");
@@ -416,17 +423,17 @@ void RobotBody::runState(uint32_t now) {
       Serial.println(gait_x);
 #endif
       state_ = STATE_PREPARE_FRONT_RIGHT;
-      step_start_ = millis();
+      step_start_ = now;
     } else {
       t /= 4;
       prep_trajectory_.gaitPos(t + 0.75f, gait_x, gait_z);
-#if 0
+#ifdef DEBUG_PREP
       Serial.print("Back right prep X: ");
       Serial.print(leg_reference_pos_[BACK_RIGHT][0] + gait_x + prep_step_half_size_);
       Serial.print(" Z: ");
       Serial.println(leg_reference_pos_[BACK_RIGHT][2] + gait_z);
 #endif
-#if 1
+#ifdef MOVE_PREP
       legs_[BACK_RIGHT].setPos(
         leg_reference_pos_[BACK_RIGHT][0] + gait_x + prep_step_half_size_,
         leg_reference_pos_[BACK_RIGHT][1],
@@ -437,17 +444,16 @@ void RobotBody::runState(uint32_t now) {
   }
   break;
   case STATE_PREPARE_FRONT_RIGHT: {
-    t = float(elapsed) / prep_step_duration_;
     if (t > 1) {
       walk_trajectory_.gaitPos(0.5f, gait_x, gait_z);
-#if 0
+#ifdef DEBUG_PREP_END
       Serial.print("Front right prep end. Adjusting X: ");
       Serial.print(gait_x);
       Serial.print(" Z: ");
       Serial.println(leg_reference_pos_[FRONT_RIGHT][2] + gait_z);
 #endif
       leg_reference_pos_[FRONT_RIGHT][0] = 0;
-#if 1
+#ifdef MOVE_PREP
       legs_[FRONT_RIGHT].setPos(
         leg_reference_pos_[FRONT_RIGHT][0] + gait_x,
         leg_reference_pos_[FRONT_RIGHT][1],
@@ -458,7 +464,7 @@ void RobotBody::runState(uint32_t now) {
       gait_x -= leg_reference_pos_[BACK_LEFT][0];
       prep_trajectory_.setStepParams(25, gait_x, 0);
       prep_step_half_size_ = gait_x / 2;
-#if 0
+#ifdef DEBUG_PREP
       Serial.print("Back left pos X: ");
       Serial.print(leg_reference_pos_[BACK_LEFT][0]);
       Serial.print(" Z: ");
@@ -467,17 +473,17 @@ void RobotBody::runState(uint32_t now) {
       Serial.println(gait_x);
 #endif
       state_ = STATE_PREPARE_BACK_LEFT;
-      step_start_ = millis();
+      step_start_ = now;
     } else {
       t /= 4;
       prep_trajectory_.gaitPos(t + 0.75f, gait_x, gait_z);
-#if 0
+#ifdef DEBUG_PREP
       Serial.print("Front right prep X: ");
       Serial.print(leg_reference_pos_[FRONT_RIGHT][0] + gait_x + prep_step_half_size_);
       Serial.print(" Z: ");
       Serial.println(leg_reference_pos_[FRONT_RIGHT][2] + gait_z);
 #endif
-#if 1
+#ifdef MOVE_PREP
       legs_[FRONT_RIGHT].setPos(
         leg_reference_pos_[FRONT_RIGHT][0] + gait_x + prep_step_half_size_,
         leg_reference_pos_[FRONT_RIGHT][1],
@@ -488,39 +494,34 @@ void RobotBody::runState(uint32_t now) {
   }
   break;
   case STATE_PREPARE_BACK_LEFT: {
-    t = float(elapsed) / prep_step_duration_;
     if (t > 1) {
       walk_trajectory_.gaitPos(0.75f, gait_x, gait_z);
-#if 0
+#ifdef DEBUG_PREP_END
       Serial.print("Back left prep end. Adjusting X: ");
       Serial.print(gait_x);
       Serial.print(" Z: ");
       Serial.println(leg_reference_pos_[BACK_LEFT][2] + gait_z);
 #endif
       leg_reference_pos_[BACK_LEFT][0] = 0;
-#if 1
+#ifdef MOVE_PREP
       legs_[BACK_LEFT].setPos(
         leg_reference_pos_[BACK_LEFT][0] + gait_x,
         leg_reference_pos_[BACK_LEFT][1],
         leg_reference_pos_[BACK_LEFT][2] + gait_z
       );
 #endif
-#if 0
       state_ = STATE_EXECUTE_GAIT;
-      step_start_ = millis();
-#else
-      state_ = STATE_IDLE;
-#endif
+      step_start_ = now;
     } else {
       t /= 4;
       prep_trajectory_.gaitPos(t + 0.75f, gait_x, gait_z);
-#if 0
+#ifdef DEBUG_PREP
       Serial.print("Back left prep X: ");
       Serial.print(leg_reference_pos_[BACK_LEFT][0] + gait_x + prep_step_half_size_);
       Serial.print(" Z: ");
       Serial.println(leg_reference_pos_[BACK_LEFT][2] + gait_z);
 #endif
-#if 1
+#ifdef MOVE_PREP
       legs_[BACK_LEFT].setPos(
         leg_reference_pos_[BACK_LEFT][0] + gait_x + prep_step_half_size_,
         leg_reference_pos_[BACK_LEFT][1],
@@ -529,6 +530,74 @@ void RobotBody::runState(uint32_t now) {
 #endif
     }
   }
+  break;
+  case STATE_EXECUTE_GAIT:
+    if (t > 1) {
+      t = 0;
+      step_start_ = now;
+    }
+    walk_trajectory_.gaitPos(t, gait_x, gait_z);
+#ifdef DEBUG_WALK
+    Serial.print("Front left X: ");
+    Serial.print(leg_reference_pos_[FRONT_LEFT][0] + gait_x);
+    Serial.print(" Z: ");
+    Serial.println(leg_reference_pos_[FRONT_LEFT][2] + gait_z);
+#endif
+#ifdef MOVE_WALK
+    legs_[FRONT_LEFT].setPos(
+      leg_reference_pos_[FRONT_LEFT][0] + gait_x,
+      leg_reference_pos_[FRONT_LEFT][1],
+      leg_reference_pos_[FRONT_LEFT][2] + gait_z
+    );
+#endif
+    t += 0.25f;
+    if (t > 1) t -= 1;
+    walk_trajectory_.gaitPos(t, gait_x, gait_z);
+#ifdef DEBUG_WALK
+    Serial.print("Back right X: ");
+    Serial.print(leg_reference_pos_[BACK_RIGHT][0] + gait_x);
+    Serial.print(" Z: ");
+    Serial.println(leg_reference_pos_[BACK_RIGHT][2] + gait_z);
+#endif
+#ifdef MOVE_WALK
+    legs_[BACK_RIGHT].setPos(
+      leg_reference_pos_[BACK_RIGHT][0] + gait_x,
+      leg_reference_pos_[BACK_RIGHT][1],
+      leg_reference_pos_[BACK_RIGHT][2] + gait_z
+    );
+#endif
+    t += 0.25f;
+    if (t > 1) t -= 1;
+    walk_trajectory_.gaitPos(t, gait_x, gait_z);
+#ifdef DEBUG_WALK
+    Serial.print("Front right X: ");
+    Serial.print(leg_reference_pos_[FRONT_RIGHT][0] + gait_x);
+    Serial.print(" Z: ");
+    Serial.println(leg_reference_pos_[FRONT_RIGHT][2] + gait_z);
+#endif
+#ifdef MOVE_WALK
+    legs_[FRONT_RIGHT].setPos(
+      leg_reference_pos_[FRONT_RIGHT][0] + gait_x,
+      leg_reference_pos_[FRONT_RIGHT][1],
+      leg_reference_pos_[FRONT_RIGHT][2] + gait_z
+    );
+#endif
+    t += 0.25f;
+    if (t > 1) t -= 1;
+#ifdef DEBUG_WALK
+    Serial.print("Back left X: ");
+    Serial.print(leg_reference_pos_[BACK_LEFT][0] + gait_x);
+    Serial.print(" Z: ");
+    Serial.println(leg_reference_pos_[BACK_LEFT][2] + gait_z);
+#endif
+#ifdef MOVE_WALK
+    walk_trajectory_.gaitPos(t, gait_x, gait_z);
+    legs_[BACK_LEFT].setPos(
+      leg_reference_pos_[BACK_LEFT][0] + gait_x,
+      leg_reference_pos_[BACK_LEFT][1],
+      leg_reference_pos_[BACK_LEFT][2] + gait_z
+    );
+#endif
   break;
   default:
     state_ = STATE_IDLE;

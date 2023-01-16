@@ -165,6 +165,10 @@ public:
     }
   }
 
+  void removeById(uint32_t id) {
+    remove(findById(id), true);
+  }
+
   template<typename Functor>
   TaskNode* findFirst(Functor cond) const {
     TaskNode* node = task_list_start_;

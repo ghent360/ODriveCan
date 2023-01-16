@@ -148,17 +148,18 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
   }
   if (!allAlive) {
     // Clean state three and switch back to first state:
+    taskManager.removeById(RebotBodyRecalsLegPos);
     // Remove the checkSerialInput task.
-    taskManager.remove(taskManager.findById(StateThreeSerial), true);
+    taskManager.removeById(StateThreeSerial);
     // Remove the voltage checking callbacks.
     for(auto& axis: axes) {
       axis.vbus.SetCallback(nullptr);
       axis.enc_est.SetCallback(nullptr);
     }
     // Remove the checkAxisVbusVoltage task.
-    taskManager.remove(taskManager.findById(StateThreeODriveVoltage), true);
+    taskManager.removeById(StateThreeODriveVoltage);
     // Remove the checkBatteryVoltage task.
-    taskManager.remove(taskManager.findById(StateThreeBatteryVoltage), true);
+    taskManager.removeById(StateThreeBatteryVoltage);
     // Remove the checkAxisConnection task.
     taskManager.remove(self, true);
     startStateOne();
@@ -245,7 +246,7 @@ static void checkAllAxesArePresent(TaskNode* self, uint32_t) {
   if (allAlive) {
     // Switch to state two.
     // Remove the reportAxesNotPresent task.
-    taskManager.remove(taskManager.findById(StateOneReport), true);
+    taskManager.removeById(StateOneReport);
     // Remove the checkAllAxesArePresent task.
     taskManager.remove(self, true);
     startStateTwo();

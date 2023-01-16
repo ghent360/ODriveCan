@@ -188,6 +188,7 @@ float RobotLeg::getPosError() const {
 
 RobotBody::RobotBody()
   : axes_active_(false),
+    state_(STATE_IDLE),
     legs_ {
       [FRONT_LEFT] = RobotLeg(FRONT_LEFT),
       [FRONT_RIGHT] = RobotLeg(FRONT_RIGHT),
@@ -201,7 +202,7 @@ RobotBody::RobotBody()
 }
 
 void RobotBody::parkLegs() {
-  if (!axes_active_) return;
+  if (!isActiveAndIdle()) return;
   for (int idx=0; idx<numAxes; idx++) {
     if (axes[idx].hb.state == AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL) {
       driveJoints(static_cast<DogLegJoint>(idx), parkPosition[idx]);
@@ -253,7 +254,7 @@ void RobotBody::setAllAxesIdle() {
 
 void RobotBody::scheduleRecalculateLogPosition(uint32_t delay_ms) {
   // remove previous task instance
-  taskManager.remove(taskManager.findById(RebotBodyRecalsLegPos), true);
+  taskManager.removeById(RebotBodyRecalsLegPos);
 
   // Recalculate position in 500ms
   taskManager.addBack(

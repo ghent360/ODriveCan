@@ -186,7 +186,7 @@ static void startStateThree() {
     taskManager.newPeriodicTask(
       StateThreeBatteryVoltage, 1000, checkBatteryVoltage));
   taskManager.addBack(
-    taskManager.newPeriodicTask(StateThreeSerial, 5, checkSerialInput));
+    taskManager.newPeriodicTask(StateThreeSerial, 20, checkSerialInput));
 }
 
 // Sometimes we get axis errors on startup. Clear the errors, if all axes

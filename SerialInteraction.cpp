@@ -11,7 +11,7 @@ static int8_t activeLeg = -1;
 static void activateLeg(DogLeg leg) {
   Serial.print("Active leg ");
   Serial.println(getLegName(leg));
-  robotBody.resetLeg(leg, false);
+  //robotBody.resetLeg(leg, false);
   activeLeg = leg;
 }
 
@@ -106,6 +106,9 @@ void checkSerialInput(TaskNode*, uint32_t now) {
       case '0':
           activateLeg(BACK_RIGHT);
           break;
+      case '-':
+          activeLeg = -1;
+          break;
       case 'x':
           if (isLegActive()) {
             robotBody.incrementX(DogLeg(activeLeg), 5);
@@ -137,6 +140,10 @@ void checkSerialInput(TaskNode*, uint32_t now) {
           }
           break;
     }
+  }
+  if (isLegActive()) {
+    Serial.print("Leg position error ");
+    Serial.println(robotBody.getPosError(DogLeg(activeLeg)), 3);
   }
 #if 0  
   if (last != 0) {

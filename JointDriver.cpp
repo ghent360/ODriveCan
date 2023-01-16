@@ -46,3 +46,20 @@ void driveJoints(DogLegJoint joint, float pos) {
       axes[joint].SetInputPos(pos + jointOffsets[joint]);
     }
 }
+
+float getJoinPos(DogLegJoint joint) {
+    float pos = axes[joint].enc_est.pos - jointOffsets[joint];
+    switch (joint) {
+    case BACK_RIGHT_SHIN:
+    case FRONT_RIGHT_SHIN:
+    case FRONT_RIGHT_HIP:
+    case FRONT_LEFT_SHIN:
+    case BACK_LEFT_SHIN:
+    case BACK_LEFT_HIP:
+        pos = -pos;
+        break;
+    default:
+        break;
+    }
+    return pos;
+}

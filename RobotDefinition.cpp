@@ -172,9 +172,9 @@ bool RobotLeg::startMove() {
 
 void RobotLeg::calcPosFromAxis(float &x, float &y, float &z) const {
   float ha, ta, sa;
-  ha = (axes[hip_axis_].enc_est.pos - jointOffsets[hip_axis_]) * posToRad;
-  ta = (axes[tie_axis_].enc_est.pos - jointOffsets[tie_axis_]) * posToRad;
-  sa = (axes[shin_axis_].enc_est.pos - jointOffsets[shin_axis_]) * posToRad;
+  ha = -(getJoinPos(hip_axis_) * posToRad);
+  ta = getJoinPos(tie_axis_) * posToRad;
+  sa = getJoinPos(shin_axis_) * posToRad;
   forwardKinematics(ha, ta, sa, x, y, z);
 }
 
@@ -257,10 +257,11 @@ void RobotBody::scheduleRecalculateLogPosition(uint32_t delay_ms) {
   taskManager.remove(taskManager.findById(RebotBodyRecalsLegPos), true);
 
   // Recalculate position in 500ms
-  taskManager.newSimpleTask(
-    RebotBodyRecalsLegPos, delay_ms, [](TaskNode*, uint32_t) {
-    robotBody.recalculateLegPositions();
-  });
+  taskManager.addBack(
+    taskManager.newSimpleTask(
+      RebotBodyRecalsLegPos, delay_ms, [](TaskNode*, uint32_t) {
+      robotBody.recalculateLegPositions();
+    }));
 }
 
 RobotBody robotBody;

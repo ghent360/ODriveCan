@@ -64,7 +64,7 @@ public:
   }
 
   bool resetPos(bool start = true) {
-    return setPos(20, 107, -330, start);
+    return setPos(0, 107, -350, start);
   }
 
   bool startMove();

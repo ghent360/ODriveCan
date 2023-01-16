@@ -80,6 +80,15 @@ void checkSerialInput(TaskNode*, uint32_t now) {
       case 'g':
           robotBody.modifyAxesGains();
           break;
+      case 's':
+          robotBody.resetAll();
+          break;
+      case 'w':
+          robotBody.startWalking();
+          break;
+      case 'p':
+          robotBody.printPositions();
+          break;
 #if 0
       case 'r':
           computeAnglesAndMove(activeLegX, activeLegY, activeLegZ + 50);

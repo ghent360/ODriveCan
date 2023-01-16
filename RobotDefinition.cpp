@@ -169,12 +169,22 @@ bool RobotLeg::startMove() {
   return false;
 }
 
+bool RobotLeg::allAxesActive() const {
+  return
+    axes[hip_axis_].hb.state == AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL &&
+    axes[tie_axis_].hb.state == AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL &&
+    axes[shin_axis_].hb.state == AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL;
+}
+
 void RobotLeg::calcPosFromAxis(float &x, float &y, float &z) const {
   float ha, ta, sa;
   ha = -(getJoinPos(hip_axis_) * posToRad);
   ta = getJoinPos(tie_axis_) * posToRad;
   sa = getJoinPos(shin_axis_) * posToRad;
   forwardKinematics(ha, ta, sa, x, y, z);
+  if (reverse_x_) {
+    x = -x;
+  }
 }
 
 float RobotLeg::getPosError() const {
@@ -189,6 +199,8 @@ float RobotLeg::getPosError() const {
 RobotBody::RobotBody()
   : axes_active_(false),
     state_(STATE_IDLE),
+    prep_step_duration_(1500),
+    walk_step_duration_(3000),
     legs_ {
       [FRONT_LEFT] = RobotLeg(FRONT_LEFT),
       [FRONT_RIGHT] = RobotLeg(FRONT_RIGHT),
@@ -254,14 +266,293 @@ void RobotBody::setAllAxesIdle() {
 
 void RobotBody::scheduleRecalculateLogPosition(uint32_t delay_ms) {
   // remove previous task instance
-  taskManager.removeById(RebotBodyRecalsLegPos);
+  taskManager.removeById(RobotBodyRecalcLegPos);
 
   // Recalculate position in 500ms
   taskManager.addBack(
     taskManager.newSimpleTask(
-      RebotBodyRecalsLegPos, delay_ms, [](TaskNode*, uint32_t) {
+      RobotBodyRecalcLegPos, delay_ms, [](TaskNode*, uint32_t) {
       robotBody.recalculateLegPositions();
     }));
+}
+
+void RobotBody::init() {
+  state_ = STATE_IDLE;
+  axes_active_ =
+    legs_[FRONT_LEFT].allAxesActive() &&
+    legs_[FRONT_RIGHT].allAxesActive() &&
+    legs_[BACK_LEFT].allAxesActive() &&
+    legs_[BACK_RIGHT].allAxesActive();
+  if (axes_active_) {
+    scheduleRecalculateLogPosition(250);
+  }
+}
+
+void RobotBody::startWalking() {
+  if (!isActiveAndIdle()) return;
+  // Init walk trajectory
+  // ...
+#if 0
+  // Level all 4 legs on the Z axis
+  int16_t body_height = 0;
+  for (uint8_t idx = 0; idx < numberOfLegs; idx++) {
+    body_height += leg_reference_pos_[idx][2];
+  }
+  body_height += numberOfLegs / 2;
+  body_height /= numberOfLegs;
+  for (uint8_t idx = 0; idx < numberOfLegs; idx++) {
+    leg_reference_pos_[idx][2] = body_height;
+  }
+#endif
+  float gait_x, gait_z;
+  walk_trajectory_.gaitPos(0, gait_x, gait_z);
+  gait_x -= leg_reference_pos_[FRONT_LEFT][0];
+  prep_trajectory_.setStepParams(25, gait_x, 0);
+  prep_step_half_size_ = gait_x / 2;
+#if 0  
+  Serial.print("Front left pos X: ");
+  Serial.print(leg_reference_pos_[FRONT_LEFT][0]);
+  Serial.print(" Z: ");
+  Serial.println(leg_reference_pos_[FRONT_LEFT][2]);
+  Serial.print("Prep front left step: ");
+  Serial.println(gait_x);
+#endif
+  state_ = STATE_PREPARE_FRONT_LEFT;
+  step_start_ = millis();
+  taskManager.addBack(
+    taskManager.newPeriodicTask(
+      RobotBodyStateExecutor, 5, [](TaskNode*, uint32_t now){
+        robotBody.runState(now);
+      }));
+}
+
+void RobotBody::runState(uint32_t now) {
+  if (state_ == STATE_IDLE) {
+    taskManager.removeById(RobotBodyStateExecutor);
+    return;
+  }
+  uint32_t elapsed = now - step_start_;
+  float t, gait_x, gait_z;
+  switch(state_) {
+  case STATE_PREPARE_FRONT_LEFT: {
+    t = float(elapsed) / prep_step_duration_;
+    if (t > 1) {
+      walk_trajectory_.gaitPos(0, gait_x, gait_z);
+#if 0
+      Serial.print("Front left prep end. Adjusting X: ");
+      Serial.print(gait_x);
+      Serial.print(" Z: ");
+      Serial.println(leg_reference_pos_[FRONT_LEFT][2] + gait_z);
+#endif
+      leg_reference_pos_[FRONT_LEFT][0] = 0;
+#if 1
+      legs_[FRONT_LEFT].setPos(
+        leg_reference_pos_[FRONT_LEFT][0] + gait_x,
+        leg_reference_pos_[FRONT_LEFT][1],
+        leg_reference_pos_[FRONT_LEFT][2] + gait_z
+      );
+#endif
+      walk_trajectory_.gaitPos(0.25f, gait_x, gait_z);
+      gait_x -= leg_reference_pos_[BACK_RIGHT][0];
+      prep_trajectory_.setStepParams(25, gait_x, 0);
+      prep_step_half_size_ = gait_x / 2;
+#if 0
+      Serial.print("Back right pos X: ");
+      Serial.print(leg_reference_pos_[BACK_RIGHT][0]);
+      Serial.print(" Z: ");
+      Serial.println(leg_reference_pos_[BACK_RIGHT][2]);
+      Serial.print("Prep back right step: ");
+      Serial.println(gait_x);
+#endif
+      state_ = STATE_PREPARE_BACK_RIGHT;
+      step_start_ = millis();
+    } else {
+      t /= 4;
+      prep_trajectory_.gaitPos(t + 0.75f, gait_x, gait_z);
+#if 0
+      Serial.print("Front left prep X: ");
+      Serial.print(leg_reference_pos_[FRONT_LEFT][0] + gait_x + prep_step_half_size_);
+      Serial.print(" Z: ");
+      Serial.println(leg_reference_pos_[FRONT_LEFT][2] + gait_z);
+#endif
+#if 1
+      legs_[FRONT_LEFT].setPos(
+        leg_reference_pos_[FRONT_LEFT][0] + gait_x + prep_step_half_size_,
+        leg_reference_pos_[FRONT_LEFT][1],
+        leg_reference_pos_[FRONT_LEFT][2] + gait_z
+      );
+#endif
+    }
+  }
+  break;
+  case STATE_PREPARE_BACK_RIGHT: {
+    t = float(elapsed) / prep_step_duration_;
+    if (t > 1) {
+      walk_trajectory_.gaitPos(0.25f, gait_x, gait_z);
+#if 0
+      Serial.print("Back right prep end. Adjusting X: ");
+      Serial.print(gait_x);
+      Serial.print(" Z: ");
+      Serial.println(leg_reference_pos_[BACK_RIGHT][2] + gait_z);
+#endif
+      leg_reference_pos_[BACK_RIGHT][0] = 0;
+#if 1
+      legs_[BACK_RIGHT].setPos(
+        leg_reference_pos_[BACK_RIGHT][0] + gait_x,
+        leg_reference_pos_[BACK_RIGHT][1],
+        leg_reference_pos_[BACK_RIGHT][2] + gait_z
+      );
+#endif
+      walk_trajectory_.gaitPos(0.5f, gait_x, gait_z);
+      gait_x -= leg_reference_pos_[FRONT_RIGHT][0];
+      prep_trajectory_.setStepParams(25, gait_x, 0);
+      prep_step_half_size_ = gait_x / 2;
+#if 0
+      Serial.print("Front right pos X: ");
+      Serial.print(leg_reference_pos_[FRONT_RIGHT][0]);
+      Serial.print(" Z: ");
+      Serial.println(leg_reference_pos_[FRONT_RIGHT][2]);
+      Serial.print("Prep front right step: ");
+      Serial.println(gait_x);
+#endif
+      state_ = STATE_PREPARE_FRONT_RIGHT;
+      step_start_ = millis();
+    } else {
+      t /= 4;
+      prep_trajectory_.gaitPos(t + 0.75f, gait_x, gait_z);
+#if 0
+      Serial.print("Back right prep X: ");
+      Serial.print(leg_reference_pos_[BACK_RIGHT][0] + gait_x + prep_step_half_size_);
+      Serial.print(" Z: ");
+      Serial.println(leg_reference_pos_[BACK_RIGHT][2] + gait_z);
+#endif
+#if 1
+      legs_[BACK_RIGHT].setPos(
+        leg_reference_pos_[BACK_RIGHT][0] + gait_x + prep_step_half_size_,
+        leg_reference_pos_[BACK_RIGHT][1],
+        leg_reference_pos_[BACK_RIGHT][2] + gait_z
+      );
+#endif
+    }
+  }
+  break;
+  case STATE_PREPARE_FRONT_RIGHT: {
+    t = float(elapsed) / prep_step_duration_;
+    if (t > 1) {
+      walk_trajectory_.gaitPos(0.5f, gait_x, gait_z);
+#if 0
+      Serial.print("Front right prep end. Adjusting X: ");
+      Serial.print(gait_x);
+      Serial.print(" Z: ");
+      Serial.println(leg_reference_pos_[FRONT_RIGHT][2] + gait_z);
+#endif
+      leg_reference_pos_[FRONT_RIGHT][0] = 0;
+#if 1
+      legs_[FRONT_RIGHT].setPos(
+        leg_reference_pos_[FRONT_RIGHT][0] + gait_x,
+        leg_reference_pos_[FRONT_RIGHT][1],
+        leg_reference_pos_[FRONT_RIGHT][2] + gait_z
+      );
+#endif
+      walk_trajectory_.gaitPos(0.75f, gait_x, gait_z);
+      gait_x -= leg_reference_pos_[BACK_LEFT][0];
+      prep_trajectory_.setStepParams(25, gait_x, 0);
+      prep_step_half_size_ = gait_x / 2;
+#if 0
+      Serial.print("Back left pos X: ");
+      Serial.print(leg_reference_pos_[BACK_LEFT][0]);
+      Serial.print(" Z: ");
+      Serial.println(leg_reference_pos_[BACK_LEFT][2]);
+      Serial.print("Prep back left step: ");
+      Serial.println(gait_x);
+#endif
+      state_ = STATE_PREPARE_BACK_LEFT;
+      step_start_ = millis();
+    } else {
+      t /= 4;
+      prep_trajectory_.gaitPos(t + 0.75f, gait_x, gait_z);
+#if 0
+      Serial.print("Front right prep X: ");
+      Serial.print(leg_reference_pos_[FRONT_RIGHT][0] + gait_x + prep_step_half_size_);
+      Serial.print(" Z: ");
+      Serial.println(leg_reference_pos_[FRONT_RIGHT][2] + gait_z);
+#endif
+#if 1
+      legs_[FRONT_RIGHT].setPos(
+        leg_reference_pos_[FRONT_RIGHT][0] + gait_x + prep_step_half_size_,
+        leg_reference_pos_[FRONT_RIGHT][1],
+        leg_reference_pos_[FRONT_RIGHT][2] + gait_z
+      );
+#endif
+    }
+  }
+  break;
+  case STATE_PREPARE_BACK_LEFT: {
+    t = float(elapsed) / prep_step_duration_;
+    if (t > 1) {
+      walk_trajectory_.gaitPos(0.75f, gait_x, gait_z);
+#if 0
+      Serial.print("Back left prep end. Adjusting X: ");
+      Serial.print(gait_x);
+      Serial.print(" Z: ");
+      Serial.println(leg_reference_pos_[BACK_LEFT][2] + gait_z);
+#endif
+      leg_reference_pos_[BACK_LEFT][0] = 0;
+#if 1
+      legs_[BACK_LEFT].setPos(
+        leg_reference_pos_[BACK_LEFT][0] + gait_x,
+        leg_reference_pos_[BACK_LEFT][1],
+        leg_reference_pos_[BACK_LEFT][2] + gait_z
+      );
+#endif
+#if 0
+      state_ = STATE_EXECUTE_GAIT;
+      step_start_ = millis();
+#else
+      state_ = STATE_IDLE;
+#endif
+    } else {
+      t /= 4;
+      prep_trajectory_.gaitPos(t + 0.75f, gait_x, gait_z);
+#if 0
+      Serial.print("Back left prep X: ");
+      Serial.print(leg_reference_pos_[BACK_LEFT][0] + gait_x + prep_step_half_size_);
+      Serial.print(" Z: ");
+      Serial.println(leg_reference_pos_[BACK_LEFT][2] + gait_z);
+#endif
+#if 1
+      legs_[BACK_LEFT].setPos(
+        leg_reference_pos_[BACK_LEFT][0] + gait_x + prep_step_half_size_,
+        leg_reference_pos_[BACK_LEFT][1],
+        leg_reference_pos_[BACK_LEFT][2] + gait_z
+      );
+#endif
+    }
+  }
+  break;
+  default:
+    state_ = STATE_IDLE;
+    taskManager.removeById(RobotBodyStateExecutor);
+    break;
+  }
+}
+
+void RobotBody::printPositions() const {
+  for(uint8_t idx = 0; idx < numberOfLegs; idx++) {
+    Serial.println(getLegName(DogLeg(idx)));
+    Serial.print("  Pos X: ");
+    Serial.print(legs_[idx].getPosX());
+    Serial.print(" Y: ");
+    Serial.print(legs_[idx].getPosY());
+    Serial.print(" Z: ");
+    Serial.println(legs_[idx].getPosZ());
+    Serial.print("  Ref X: ");
+    Serial.print(leg_reference_pos_[idx][0]);
+    Serial.print(" Y: ");
+    Serial.print(leg_reference_pos_[idx][1]);
+    Serial.print(" Z: ");
+    Serial.println(leg_reference_pos_[idx][2]);
+  }
 }
 
 RobotBody robotBody;

@@ -75,8 +75,6 @@ static void startStateOne();
 static void startStateTwo();
 static void startStateThree();
 
-//RadioV2 radio(NRF24_CE_PIN, NRF24_CS_PIN, NRF24_IRQ_PIN);
-
 static void panic() {
   for(auto& axis: axes) {
     axis.EStop(); // Call EStop to reduce the axis power consumption.
@@ -96,13 +94,6 @@ static void axisVbusValueCheck(
     panic();
   }
 }
-
-#ifdef AXIS_POS_DISPLAY
-static void axisPosUpdate(
-  ODriveAxis& axis, EncoderEstimate&, EncoderEstimate& newV) {
-  display.setJoinPos(axis.node_id, newV.pos);
-}
-#endif
 
 static void checkAxisVbusVoltage(TaskNode*, uint32_t) {
   static uint8_t axisIdx = FRONT_RIGHT_HIP;
@@ -148,7 +139,8 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
   }
   if (!allAlive) {
     // Clean state three and switch back to first state:
-    taskManager.removeById(RebotBodyRecalsLegPos);
+    taskManager.removeById(RobotBodyStateExecutor);
+    taskManager.removeById(RobotBodyRecalcLegPos);
     // Remove the checkSerialInput task.
     taskManager.removeById(StateThreeSerial);
     // Remove the voltage checking callbacks.
@@ -161,8 +153,8 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
     // Remove the checkBatteryVoltage task.
     taskManager.removeById(StateThreeBatteryVoltage);
     // Remove the checkAxisConnection task.
-    taskManager.remove(self, true);
     startStateOne();
+    taskManager.remove(self, true);
   }
 }
 
@@ -171,14 +163,12 @@ static void startStateThree() {
   display.setCanStatus("Ready");
   display.setCanStatusColor(ST7735_GREEN);
   initSerialInteraction();
+  robotBody.init();
   taskManager.addBack(
     taskManager.newPeriodicTask(
       StateThreeConnection, 750, checkAxisConnection));
   for(auto& axis: axes) {
     axis.vbus.SetCallback(axisVbusValueCheck);
-#ifdef AXIS_POS_DISPLAY
-    axis.enc_est.SetCallback(axisPosUpdate);
-#endif
   }
   taskManager.addBack(
     taskManager.newPeriodicTask(
@@ -202,8 +192,8 @@ static void clearErrorsAndSwitchToStateThree(TaskNode* self, uint32_t) {
       Serial.print("Lost connection to axis ");
       Serial.println(axis.node_id);
       // Lost axis connection, back to square one:
-      taskManager.remove(self, true);
       startStateOne();
+      taskManager.remove(self, true);
       return;
     }
     if (axis.hb.error != 0) {
@@ -221,8 +211,8 @@ static void clearErrorsAndSwitchToStateThree(TaskNode* self, uint32_t) {
   }
   // All is good switch to state three.
   // Remove the clearErrorsAndSwitchToStateThree task.
-  taskManager.remove(self, true);
   startStateThree();
+  taskManager.remove(self, true);
 }
 
 static void startStateTwo() {
@@ -248,8 +238,8 @@ static void checkAllAxesArePresent(TaskNode* self, uint32_t) {
     // Remove the reportAxesNotPresent task.
     taskManager.removeById(StateOneReport);
     // Remove the checkAllAxesArePresent task.
-    taskManager.remove(self, true);
     startStateTwo();
+    taskManager.remove(self, true);
   }
 }
 

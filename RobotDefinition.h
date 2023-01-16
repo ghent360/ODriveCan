@@ -5,9 +5,7 @@
 
 #include <stdint.h>
 #include <cmath>
-#include "Vector.hpp"
-
-using Vector3f = Vector<float, 3>;
+#include "StepTrajectory.h"
 
 // The ODrive controller uses 'revolution' as positioning system
 // Where position 1 means one full revolution of the motor.
@@ -83,6 +81,8 @@ public:
     z_ = std::roundf(z);
   }
 
+  bool allAxesActive() const;
+
   bool incrementX(int16_t v, bool start = true) {
     return setPos(x_ + v, y_, z_, start);
   }
@@ -118,6 +118,8 @@ public:
   static constexpr float width = 118.28;
   static constexpr float halfWidth = width / 2;
   RobotBody();
+
+  void init();
 
   bool setPos(
     DogLeg legId, int16_t x, int16_t y, int16_t z, bool start = true) {
@@ -216,8 +218,10 @@ public:
     }
   }
 
+  void startWalking();
   void parkLegs();
 
+  void printPositions() const;
   void setAllAxesIdle();
   void setAllAxesActive();
   static void modifyAxesGains();
@@ -288,14 +292,14 @@ private:
   enum RobotState {
     STATE_IDLE,
     STATE_PREPARE_FRONT_LEFT,
+    STATE_PREPARE_BACK_RIGHT,
     STATE_PREPARE_FRONT_RIGHT,
     STATE_PREPARE_BACK_LEFT,
-    STATE_PREPARE_BACK_RIGHT,
     STATE_EXECUTE_GAIT,
     STATE_FINALIZE_FRONT_LEFT,
+    STATE_FINALIZE_BACK_RIGHT,
     STATE_FINALIZE_FRONT_RIGHT,
-    STATE_FINALIZE_BACK_LEFT,
-    STATE_FINALIZE_BACK_RIGHT
+    STATE_FINALIZE_BACK_LEFT
   };
 
   bool isActiveAndIdle() const {
@@ -321,6 +325,12 @@ private:
 
   bool axes_active_;
   RobotState state_;
+  uint32_t step_start_;
+  float prep_step_half_size_;
+  uint32_t prep_step_duration_;
+  uint32_t walk_step_duration_;
+  StepTrajectory prep_trajectory_;
+  StepTrajectory walk_trajectory_;
   int16_t leg_reference_pos_[numberOfLegs][3];
   RobotLeg legs_[numberOfLegs];
 };

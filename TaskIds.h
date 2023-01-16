@@ -14,7 +14,8 @@ enum PeriodicTaskId {
   StateThreeODriveVoltage,
   StateThreeBatteryVoltage,
   StateThreeSerial,
-  RebotBodyRecalsLegPos,
+  RobotBodyRecalcLegPos,
+  RobotBodyStateExecutor,
 };
 
 enum SimpleTaskId {

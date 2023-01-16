@@ -23,15 +23,9 @@ public:
   float getStepOffset() const { return step_offset_; }
 
   void setStepParams(float height, float length, float depth) {
-    if (height >= 0) {
-      step_height_ = height;
-    }
-    if (length >= 0) {
-      step_length_ = length;
-    }
-    if (depth >= 0) {
-      stance_depth_ = depth;
-    }
+    step_height_ = height;
+    step_length_ = length;
+    stance_depth_ = depth;
     initStepCurve();
   }
 

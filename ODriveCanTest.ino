@@ -2,7 +2,7 @@
  * Copyright (c) 2022-2023 ghent360@iqury.us. See LICENSE file for details.
  *
  * This is my version of the control software for OpenDog V3.
-*/
+ */
 
 // Enable profiling of the main loop code
 //#define PROFILE_LOOP

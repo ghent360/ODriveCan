@@ -1,7 +1,7 @@
 
 /*
  * Copyright (c) 2022-2023 ghent360@iqury.us. See LICENSE file for details.
-*/
+ */
 #include <Arduino.h>
 #include <ADC.h>
 #include <ADC_util.h>

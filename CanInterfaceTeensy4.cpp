@@ -1,7 +1,6 @@
 /*
  * Copyright (c) 2022-2023 ghent360@iqury.us. See LICENSE file for details.
- *
-*/
+ */
 #include "CanInterface.h"
 #include "CanInterfaceCommon.h"
 #include "ODriveCan.hpp"

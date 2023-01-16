@@ -15,7 +15,7 @@ enum ODriveCanCMD {
   MSG_CO_NMT_CTRL = 0x000,  // CANOpen NMT Message REC
   MSG_ODRIVE_HEARTBEAT,
   MSG_ODRIVE_ESTOP,
-  MSG_GET_MOTOR_ERROR,  // Errors
+  MSG_GET_MOTOR_ERROR,
   MSG_GET_ENCODER_ERROR,
   MSG_GET_SENSORLESS_ERROR,
   MSG_SET_AXIS_NODE_ID,
@@ -44,19 +44,19 @@ enum ODriveCanCMD {
 };
 
 enum AxisState {
-  AXIS_STATE_UNDEFINED             = 0,
-  AXIS_STATE_IDLE                  = 1,
-  AXIS_STATE_STARTUP_SEQUENCE      = 2,
-  AXIS_STATE_FULL_CALIBRATION_SEQUENCE = 3,
-  AXIS_STATE_MOTOR_CALIBRATION     = 4,
-  AXIS_STATE_ENCODER_INDEX_SEARCH  = 6,
-  AXIS_STATE_ENCODER_OFFSET_CALIBRATION = 7,
-  AXIS_STATE_CLOSED_LOOP_CONTROL   = 8,
-  AXIS_STATE_LOCKIN_SPIN           = 9,
-  AXIS_STATE_ENCODER_DIR_FIND      = 10,
-  AXIS_STATE_HOMING                = 11,
+  AXIS_STATE_UNDEFINED                         = 0,
+  AXIS_STATE_IDLE                              = 1,
+  AXIS_STATE_STARTUP_SEQUENCE                  = 2,
+  AXIS_STATE_FULL_CALIBRATION_SEQUENCE         = 3,
+  AXIS_STATE_MOTOR_CALIBRATION                 = 4,
+  AXIS_STATE_ENCODER_INDEX_SEARCH              = 6,
+  AXIS_STATE_ENCODER_OFFSET_CALIBRATION        = 7,
+  AXIS_STATE_CLOSED_LOOP_CONTROL               = 8,
+  AXIS_STATE_LOCKIN_SPIN                       = 9,
+  AXIS_STATE_ENCODER_DIR_FIND                  = 10,
+  AXIS_STATE_HOMING                            = 11,
   AXIS_STATE_ENCODER_HALL_POLARITY_CALIBRATION = 12,
-  AXIS_STATE_ENCODER_HALL_PHASE_CALIBRATION = 13,
+  AXIS_STATE_ENCODER_HALL_PHASE_CALIBRATION    = 13,
 };
 
 enum ControlMode {
@@ -95,22 +95,24 @@ struct Heartbeat {
   bool     alive;
   uint32_t error;
   uint8_t  state; // AxisState enum above
+  // Bit 0 - controller error flag
+  // Bit 7 - trajectory complete flag
   uint8_t  ctrl_state;
 
   enum Error {
-    ERROR_NONE                       = 0x00000000,
-    ERROR_INVALID_STATE              = 0x00000001,
-    ERROR_MOTOR_FAILED               = 0x00000040,
+    ERROR_NONE                        = 0x00000000,
+    ERROR_INVALID_STATE               = 0x00000001,
+    ERROR_MOTOR_FAILED                = 0x00000040,
     ERROR_SENSORLESS_ESTIMATOR_FAILED = 0x00000080,
-    ERROR_ENCODER_FAILED             = 0x00000100,
-    ERROR_CONTROLLER_FAILED          = 0x00000200,
-    ERROR_WATCHDOG_TIMER_EXPIRED     = 0x00000800,
-    ERROR_MIN_ENDSTOP_PRESSED        = 0x00001000,
-    ERROR_MAX_ENDSTOP_PRESSED        = 0x00002000,
-    ERROR_ESTOP_REQUESTED            = 0x00004000,
-    ERROR_HOMING_WITHOUT_ENDSTOP     = 0x00020000,
-    ERROR_OVER_TEMP                  = 0x00040000,
-    ERROR_UNKNOWN_POSITION           = 0x00080000,
+    ERROR_ENCODER_FAILED              = 0x00000100,
+    ERROR_CONTROLLER_FAILED           = 0x00000200,
+    ERROR_WATCHDOG_TIMER_EXPIRED      = 0x00000800,
+    ERROR_MIN_ENDSTOP_PRESSED         = 0x00001000,
+    ERROR_MAX_ENDSTOP_PRESSED         = 0x00002000,
+    ERROR_ESTOP_REQUESTED             = 0x00004000,
+    ERROR_HOMING_WITHOUT_ENDSTOP      = 0x00020000,
+    ERROR_OVER_TEMP                   = 0x00040000,
+    ERROR_UNKNOWN_POSITION            = 0x00080000,
   };
 
   typedef void (*Callback)(
@@ -127,10 +129,10 @@ struct Heartbeat {
     if (cmdId == MSG_ODRIVE_HEARTBEAT && dataLen == 8) {
       Heartbeat newHb;
       newHb.error = can_getSignal<uint32_t>(msg, 0, 32, true);
-      newHb.state = can_getSignal<uint8_t>(msg, 4*8, 8, true);
-      //newHb.motor_flags = can_getSignal<uint8_t>(msg, 5*8, 8, true);
-      //newHb.encoder_flags = can_getSignal<uint8_t>(msg, 6*8, 8, true);
-      newHb.ctrl_state = can_getSignal<uint8_t>(msg, 7*8, 8, true);
+      newHb.state = can_getSignal<uint8_t>(msg, 32, 8, true);
+      //newHb.motor_flags = can_getSignal<uint8_t>(msg, 40, 8, true);
+      //newHb.encoder_flags = can_getSignal<uint8_t>(msg, 48, 8, true);
+      newHb.ctrl_state = can_getSignal<uint8_t>(msg, 56, 8, true);
       newHb.alive = true;
       newHb.alive_hb_ = true;
       if (cb_) {
@@ -303,34 +305,34 @@ struct MotorError {
   uint64_t err;
 
   enum Error {
-    ERROR_NONE                       = 0x00000000,
-    ERROR_PHASE_RESISTANCE_OUT_OF_RANGE = 0x00000001,
-    ERROR_PHASE_INDUCTANCE_OUT_OF_RANGE = 0x00000002,
-    ERROR_DRV_FAULT                  = 0x00000008,
-    ERROR_CONTROL_DEADLINE_MISSED    = 0x00000010,
-    ERROR_MODULATION_MAGNITUDE       = 0x00000080,
-    ERROR_CURRENT_SENSE_SATURATION   = 0x00000400,
-    ERROR_CURRENT_LIMIT_VIOLATION    = 0x00001000,
-    ERROR_MODULATION_IS_NAN          = 0x00010000,
-    ERROR_MOTOR_THERMISTOR_OVER_TEMP = 0x00020000,
-    ERROR_FET_THERMISTOR_OVER_TEMP   = 0x00040000,
-    ERROR_TIMER_UPDATE_MISSED        = 0x00080000,
+    ERROR_NONE                            = 0x00000000,
+    ERROR_PHASE_RESISTANCE_OUT_OF_RANGE   = 0x00000001,
+    ERROR_PHASE_INDUCTANCE_OUT_OF_RANGE   = 0x00000002,
+    ERROR_DRV_FAULT                       = 0x00000008,
+    ERROR_CONTROL_DEADLINE_MISSED         = 0x00000010,
+    ERROR_MODULATION_MAGNITUDE            = 0x00000080,
+    ERROR_CURRENT_SENSE_SATURATION        = 0x00000400,
+    ERROR_CURRENT_LIMIT_VIOLATION         = 0x00001000,
+    ERROR_MODULATION_IS_NAN               = 0x00010000,
+    ERROR_MOTOR_THERMISTOR_OVER_TEMP      = 0x00020000,
+    ERROR_FET_THERMISTOR_OVER_TEMP        = 0x00040000,
+    ERROR_TIMER_UPDATE_MISSED             = 0x00080000,
     ERROR_CURRENT_MEASUREMENT_UNAVAILABLE = 0x00100000,
-    ERROR_CONTROLLER_FAILED          = 0x00200000,
-    ERROR_I_BUS_OUT_OF_RANGE         = 0x00400000,
-    ERROR_BRAKE_RESISTOR_DISARMED    = 0x00800000,
-    ERROR_SYSTEM_LEVEL               = 0x01000000,
-    ERROR_BAD_TIMING                 = 0x02000000,
-    ERROR_UNKNOWN_PHASE_ESTIMATE     = 0x04000000,
-    ERROR_UNKNOWN_PHASE_VEL          = 0x08000000,
-    ERROR_UNKNOWN_TORQUE             = 0x10000000,
-    ERROR_UNKNOWN_CURRENT_COMMAND    = 0x20000000,
-    ERROR_UNKNOWN_CURRENT_MEASUREMENT = 0x40000000,
-    ERROR_UNKNOWN_VBUS_VOLTAGE       = 0x80000000,
-    ERROR_UNKNOWN_VOLTAGE_COMMAND    = 0x100000000,
-    ERROR_UNKNOWN_GAINS              = 0x200000000,
-    ERROR_CONTROLLER_INITIALIZING    = 0x400000000,
-    ERROR_UNBALANCED_PHASES          = 0x800000000,
+    ERROR_CONTROLLER_FAILED               = 0x00200000,
+    ERROR_I_BUS_OUT_OF_RANGE              = 0x00400000,
+    ERROR_BRAKE_RESISTOR_DISARMED         = 0x00800000,
+    ERROR_SYSTEM_LEVEL                    = 0x01000000,
+    ERROR_BAD_TIMING                      = 0x02000000,
+    ERROR_UNKNOWN_PHASE_ESTIMATE          = 0x04000000,
+    ERROR_UNKNOWN_PHASE_VEL               = 0x08000000,
+    ERROR_UNKNOWN_TORQUE                  = 0x10000000,
+    ERROR_UNKNOWN_CURRENT_COMMAND         = 0x20000000,
+    ERROR_UNKNOWN_CURRENT_MEASUREMENT     = 0x40000000,
+    ERROR_UNKNOWN_VBUS_VOLTAGE            = 0x80000000,
+    ERROR_UNKNOWN_VOLTAGE_COMMAND         = 0x100000000,
+    ERROR_UNKNOWN_GAINS                   = 0x200000000,
+    ERROR_CONTROLLER_INITIALIZING         = 0x400000000,
+    ERROR_UNBALANCED_PHASES               = 0x800000000,
   };
 
   typedef void (*Callback)(
@@ -406,8 +408,8 @@ struct SensorlessError {
   uint32_t err;
 
   enum Error {
-    ERROR_NONE                       = 0x00000000,
-    ERROR_UNSTABLE_GAIN              = 0x00000001,
+    ERROR_NONE                        = 0x00000000,
+    ERROR_UNSTABLE_GAIN               = 0x00000001,
     ERROR_UNKNOWN_CURRENT_MEASUREMENT = 0x00000002,
   };
   
@@ -484,9 +486,9 @@ public:
   // The Sensorless messages are not handled (commented out).
   Heartbeat           hb;
   EncoderEstimate     enc_est;
-  EncoderCount        enc_count;
+  //EncoderCount        enc_count;
   EncoderError        enc_err;
-  IqValues            iq;
+  //IqValues            iq;
   //SensorlessEstimates sens_est;
   //SensorlessError     sens_err;
   MotorError          mot_err;
@@ -501,9 +503,9 @@ public:
   bool Parse(uint8_t cmdId, uint8_t dataLen, const CanMsgData& msg) {
     if (hb.Parse(*this, cmdId, dataLen, msg)) return true;
     if (enc_est.Parse(*this, cmdId, dataLen, msg)) return true;
-    if (enc_count.Parse(*this, cmdId, dataLen, msg)) return true;
+    //if (enc_count.Parse(*this, cmdId, dataLen, msg)) return true;
     if (enc_err.Parse(*this, cmdId, dataLen, msg)) return true;
-    if (iq.Parse(*this, cmdId, dataLen, msg)) return true;
+    //if (iq.Parse(*this, cmdId, dataLen, msg)) return true;
     //if (sens_est.Parse(*this, cmdId, dataLen, msg)) return true;
     //if (sens_err.Parse(*this, cmdId, dataLen, msg)) return true;
     if (mot_err.Parse(*this, cmdId, dataLen, msg)) return true;

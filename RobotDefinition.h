@@ -121,7 +121,7 @@ public:
 
   bool setPos(
     DogLeg legId, int16_t x, int16_t y, int16_t z, bool start = true) {
-    auto result = legs_[legId].setPos(x, y, z, start);
+    auto result = legs_[legId].setPos(x, y, z, start && axes_active_);
     leg_reference_pos_[legId][0] = x;
     leg_reference_pos_[legId][1] = y;
     leg_reference_pos_[legId][2] = z;
@@ -129,21 +129,23 @@ public:
   }
 
   void resetLeg(DogLeg legId, bool start = true) {
-    legs_[legId].resetPos(start);
+    legs_[legId].resetPos(start && axes_active_);
     updateReferencePos(legId);
   }
 
   void resetAll(bool start = true) {
     for (uint8_t idx = 0; idx < numberOfLegs; idx++) {
-      resetLeg(DogLeg(idx), start);
+      resetLeg(DogLeg(idx), start && axes_active_);
     }
   }
 
   bool startLeg(DogLeg legId) {
+    if (!axes_active_) return false;
     return legs_[legId].startMove();
   }
 
   void startAll() {
+    if (!axes_active_) return;
     for (auto& leg: legs_) {
       leg.startMove();
     }
@@ -180,44 +182,44 @@ public:
   }
 
   bool incrementX(DogLeg legId, int16_t v, bool start = true) {
-    auto result = legs_[legId].incrementX(v, start);
+    auto result = legs_[legId].incrementX(v, start && axes_active_);
     leg_reference_pos_[legId][0] = legs_[legId].getPosX();
     return result;
   }
   bool incrementY(DogLeg legId, int16_t v, bool start = true) {
-    auto result = legs_[legId].incrementY(v, start);
+    auto result = legs_[legId].incrementY(v, start && axes_active_);
     leg_reference_pos_[legId][1] = legs_[legId].getPosY();
     return result;
   }
   bool incrementZ(DogLeg legId, int16_t v, bool start = true) {
-    auto result = legs_[legId].incrementZ(v, start);
+    auto result = legs_[legId].incrementZ(v, start && axes_active_);
     leg_reference_pos_[legId][2] = legs_[legId].getPosZ();
     return result;
   }
 
   void incrementAllX(DogLeg legId, int16_t v, bool start = true) {
     for (uint8_t idx = 0; idx < numberOfLegs; idx++) {
-      legs_[idx].incrementX(v, start);
+      legs_[idx].incrementX(v, start && axes_active_);
       leg_reference_pos_[idx][0] = legs_[idx].getPosX();
     }
   }
   void incrementAllY(DogLeg legId, int16_t v, bool start = true) {
     for (uint8_t idx = 0; idx < numberOfLegs; idx++) {
-      legs_[idx].incrementY(v, start);
+      legs_[idx].incrementY(v, start && axes_active_);
       leg_reference_pos_[idx][1] = legs_[idx].getPosY();
     }
   }
   void incrementAllZ(DogLeg legId, int16_t v, bool start = true) {
     for (uint8_t idx = 0; idx < numberOfLegs; idx++) {
-      legs_[idx].incrementZ(v, start);
+      legs_[idx].incrementZ(v, start && axes_active_);
       leg_reference_pos_[idx][2] = legs_[idx].getPosZ();
     }
   }
 
   void parkLegs();
 
-  static void setAllAxesIdle();
-  static void setAllAxesActive();
+  void setAllAxesIdle();
+  void setAllAxesActive();
   static void modifyAxesGains();
 
   static float legToBodyX(DogLeg legId, float v) {
@@ -298,6 +300,7 @@ private:
 
   static void scheduleRecalculateLogPosition(uint32_t delay_ms);
 
+  bool axes_active_;
   int16_t leg_reference_pos_[numberOfLegs][3];
   RobotLeg legs_[numberOfLegs];
 };

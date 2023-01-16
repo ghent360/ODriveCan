@@ -141,9 +141,9 @@ static constexpr DogLegJoint legToAxis[numLegs][3] = {
 
 RobotLeg::RobotLeg(DogLeg legId)
   : leg_id_(legId),
-    x_(20),
+    x_(0),
     y_(107),
-    z_(-330),
+    z_(-350),
     hip_axis_(legToAxis[legId][0]),
     tie_axis_(legToAxis[legId][1]),
     shin_axis_(legToAxis[legId][2]),
@@ -188,14 +188,21 @@ float RobotLeg::getPosError() const {
 }
 
 RobotBody::RobotBody()
-  : legs_ {
-    [FRONT_LEFT] = RobotLeg(FRONT_LEFT),
-    [FRONT_RIGHT] = RobotLeg(FRONT_RIGHT),
-    [BACK_LEFT] = RobotLeg(BACK_LEFT),
-    [BACK_RIGHT] = RobotLeg(BACK_RIGHT),
-  } {}
+  : axes_active_(false),
+    legs_ {
+      [FRONT_LEFT] = RobotLeg(FRONT_LEFT),
+      [FRONT_RIGHT] = RobotLeg(FRONT_RIGHT),
+      [BACK_LEFT] = RobotLeg(BACK_LEFT),
+      [BACK_RIGHT] = RobotLeg(BACK_RIGHT),
+  } {
+  updateReferencePos(FRONT_LEFT);
+  updateReferencePos(FRONT_RIGHT);
+  updateReferencePos(BACK_LEFT);
+  updateReferencePos(BACK_RIGHT);
+}
 
 void RobotBody::parkLegs() {
+  if (!axes_active_) return;
   for (int idx=0; idx<numAxes; idx++) {
     if (axes[idx].hb.state == AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL) {
       driveJoints(static_cast<DogLegJoint>(idx), parkPosition[idx]);
@@ -234,6 +241,7 @@ void RobotBody::setAllAxesActive() {
     axis.SetLimits(6.0f, 10.0f); // Should be 6000.0f, 20.0f
     axis.SetState(AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL);
   }
+  axes_active_ = true;
   scheduleRecalculateLogPosition(100);
 }
 
@@ -241,6 +249,7 @@ void RobotBody::setAllAxesIdle() {
   for(auto& axis: axes) {
     axis.SetState(AxisState::AXIS_STATE_IDLE);
   }
+  axes_active_ = false;
 }
 
 void RobotBody::scheduleRecalculateLogPosition(uint32_t delay_ms) {

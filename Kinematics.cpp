@@ -54,12 +54,12 @@ void inverseKinematics(
 
 void inverseKinematics_new(
     float x, float y, float z, bool posShinAngle, float &h, float &t, float &s) {
-    float hyp2 = y*y + z*z - hipLength2;
+    float hyp2 = y * y + z * z - hipLength2;
     float hyp = sqrtf(hyp2);
-    h = -(float(M_PI) - atan2f(-z,y) - atan2f(hyp, -hipLength));
-    float d = (hyp2 + x*x - tieLength2 - shinLength2) /
+    h = -(float(M_PI) - atan2f(-z, y) - atan2f(hyp, -hipLength));
+    float d = (hyp2 + x * x - tieLength2 - shinLength2) /
         (2 * tieLength * shinLength);
-    float q = sqrtf(1 - d*d);
+    float q = sqrtf(1 - d * d);
     if (posShinAngle) {
         s = atan2(-q, d);
     } else {

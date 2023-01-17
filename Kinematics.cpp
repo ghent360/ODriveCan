@@ -15,7 +15,6 @@ constexpr float shinLength2 = shinLength * shinLength;
 constexpr float hipLength2 = hipLength * hipLength;
 constexpr float lenDiff = shinLength - tieLength;
 constexpr float lenDiff2 = lenDiff * lenDiff;
-//constexpr float epsilon = 0.0005f;
 
 static void inverseKinematics2d(
   float x, float z, bool posShinAngle, float &tieAngle, float &shinAngle) {
@@ -51,6 +50,23 @@ void inverseKinematics(
     }
     float yprime = -sqrtf(hyp2 - hipLength2);
     inverseKinematics2d(-x, yprime, posShinAngle, t, s);
+}
+
+void inverseKinematics_new(
+    float x, float y, float z, bool posShinAngle, float &h, float &t, float &s) {
+    float hyp2 = y*y + z*z - hipLength2;
+    float hyp = sqrtf(hyp2);
+    h = -(float(M_PI) - atan2f(-z,y) - atan2f(hyp, -hipLength));
+    float d = (hyp2 + x*x - tieLength2 - shinLength2) /
+        (2 * tieLength * shinLength);
+    float q = sqrtf(1 - d*d);
+    if (posShinAngle) {
+        s = atan2(-q, d);
+    } else {
+        s = atan2(q, d);
+    }
+    t = atan2f(x, hyp) -
+        atan2f(shinLength * sinf(s), tieLength + shinLength * cosf(s));
 }
 
 void forwardKinematics(

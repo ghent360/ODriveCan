@@ -3,6 +3,7 @@
  *
  * This is my version of the control software for OpenDog V3.
  */
+#include <Arduino.h>
 
 // Enable profiling of the main loop code
 //#define PROFILE_LOOP

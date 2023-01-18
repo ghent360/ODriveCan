@@ -25,12 +25,6 @@ endif
 ARM_HEX = $(ARM_CP) -O ihex
 ARM_BIN = $(ARM_CP) -O binary -S
 
-ARM_FPU = -mfpu=fpv5-d16
-ARM_FLOAT = -mfloat-abi=hard 
-ARM_OPT = -O2
-ARM_CPU = -mcpu=cortex-m7
-ARM_MCU = $(ARM_CPU) -mthumb $(ARM_FPU) $(ARM_FLOAT-ABI)
-
 ARM_AS_DEFS =
 
 ARM_C_DEFS =  \
@@ -168,6 +162,12 @@ SKETCH = \
   ODriveCanTest.ino
 
 LDSCRIPT = $(ARDUINO_TEENSY_CORE)/imxrt1062_t41.ld
+
+ARM_FPU = -mfpu=fpv5-d16
+ARM_FLOAT-ABI = -mfloat-abi=hard
+ARM_OPT = -O2
+ARM_CPU = -mcpu=cortex-m7
+ARM_MCU = $(ARM_CPU) -mthumb $(ARM_FPU) $(ARM_FLOAT-ABI)
 
 ARM_ASFLAGS = $(ARM_MCU) $(ARM_AS_DEFS) $(ARM_AS_INCLUDES) $(ARM_OPT) -Wall -fdata-sections -ffunction-sections
 

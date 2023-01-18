@@ -174,7 +174,7 @@ ARM_ASFLAGS = $(ARM_MCU) $(ARM_AS_DEFS) $(ARM_AS_INCLUDES) $(ARM_OPT) -Wall -fda
 ARM_CFLAGS += $(ARM_MCU) $(ARM_C_DEFS) $(ARM_C_INCLUDES) $(ARM_OPT) -Wall -fdata-sections -ffunction-sections
 
 ARM_CFLAGS += -g -nostdlib -MMD
-ARM_CXXFLAGS = -std=gnu++14 -fno-exceptions -fpermissive -fno-rtti \
+ARM_CXXFLAGS = -std=gnu++14 -fno-exceptions -fno-rtti \
   -fno-threadsafe-statics -felide-constructors -Wno-error=narrowing
 
 # Generate dependency information

@@ -73,9 +73,9 @@ static void SCB_CleanDCache (void) {
 }
 
 static void SCB_DisableDCache (void) {
-    register uint32_t ccsidr;
-    register uint32_t sets;
-    register uint32_t ways;
+    uint32_t ccsidr;
+    uint32_t sets;
+    uint32_t ways;
     
     SCB_ID_CSSELR = 0U; // Level 1 data cache
     __asm volatile ( "dsb \n" );

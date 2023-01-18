@@ -1,7 +1,9 @@
 TARGET = OpenDogV3
 BUILD_DIR = build
 
-ARDUINO_TEENSY_HOME = $(HOME)/.arduino15/packages/teensy/hardware/avr/1.57.1
+ARDUINO_TEENSY_PACKAGE = $(HOME)/.arduino15/packages/teensy
+ARDUINO_TEENSY_HOME = $(ARDUINO_TEENSY_PACKAGE)/hardware/avr/1.57.1
+ARDUINO_TEENSY_TOOLS = $(ARDUINO_TEENSY_PACKAGE)/tools/teensy-tools/1.57.1
 ARDUINO_TEENSY_LIBRARIES = $(ARDUINO_TEENSY_HOME)/libraries
 ARDUINO_TEENSY_CORE = $(ARDUINO_TEENSY_HOME)/cores/teensy4
 ARDUINO_LIBRARIES = $(HOME)/Arduino/libraries
@@ -212,6 +214,7 @@ $(BUILD_DIR)/%.o: %.S makefile | $(BUILD_DIR)
 $(BUILD_DIR)/$(TARGET).elf: $(OBJECTS) makefile
 	$(ARM_CXX) $(OBJECTS) $(ARM_LDFLAGS) -o $@
 	$(ARM_SZ) $@
+	$(ARDUINO_TEENSY_TOOLS)/teensy_size $@
 
 $(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
 	$(ARM_HEX) $< $@

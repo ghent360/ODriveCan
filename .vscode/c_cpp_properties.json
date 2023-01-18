@@ -1,0 +1,29 @@
+{
+    "configurations": [
+        {
+            "name": "Teensy 4.1",
+            "includePath": [
+                "${HOME}/.arduino15/packages/teensy/hardware/avr/1.57.1/cores/teensy4",
+                "${HOME}/.arduino15/packages/teensy/hardware/avr/1.57.1/libraries/ST7735_t3",
+                "${HOME}/.arduino15/packages/teensy/hardware/avr/1.57.1/libraries/SPI",
+                "${HOME}/.arduino15/packages/teensy/hardware/avr/1.57.1/libraries/FlexCAN_T4",
+                "${HOME}/.arduino15/packages/teensy/hardware/avr/1.57.1/libraries/ADC",
+                "${HOME}/Arduino/libraries/RF24"
+            ],
+            "defines": [
+                "__IMXRT1062__",
+                "TEENSYDUINO=157",
+                "ARDUINO=10819",
+                "ARDUINO_TEENSY41",
+                "F_CPU=600000000",
+                "USB_SERIAL",
+                "LAYOUT_US_ENGLISH"
+            ],
+            "intelliSenseMode": "gcc-arm",
+            "compilerPath": "/opt/gcc-arm-11.2-2022.02-x86_64-arm-none-eabi/bin/arm-none-eabi-gcc",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17"
+        }
+    ],
+    "version": 4
+}

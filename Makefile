@@ -199,19 +199,19 @@ vpath %.ino $(sort $(dir $(SKETCH)))
 OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(ASM_SOURCES:.S=.o)))
 vpath %.S $(sort $(dir $(ASM_SOURCES)))
 
-$(BUILD_DIR)/%.o: %.c makefile | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: %.c Makefile | $(BUILD_DIR)
 	$(ARM_CC) -c $(ARM_CFLAGS) -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.c=.lst)) $< -o $@
 
-$(BUILD_DIR)/%.o: %.cpp makefile | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: %.cpp Makefile | $(BUILD_DIR)
 	$(ARM_CXX) -c $(ARM_CFLAGS) $(ARM_CXXFLAGS) -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.cpp=.lst)) $< -o $@
 
-$(BUILD_DIR)/%.o: %.ino makefile | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: %.ino Makefile | $(BUILD_DIR)
 	$(ARM_CXX) -c -x c++ $(ARM_CFLAGS) $(ARM_CXXFLAGS) -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.cpp=.lst)) $< -o $@
 
-$(BUILD_DIR)/%.o: %.S makefile | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: %.S Makefile | $(BUILD_DIR)
 	$(ARM_AS) -c $(ARM_CFLAGS) $< -o $@
 
-$(BUILD_DIR)/$(TARGET).elf: $(OBJECTS) makefile
+$(BUILD_DIR)/$(TARGET).elf: $(OBJECTS) Makefile
 	$(ARM_CXX) $(OBJECTS) $(ARM_LDFLAGS) -o $@
 	$(ARM_SZ) $@
 	$(ARDUINO_TEENSY_TOOLS)/teensy_size $@

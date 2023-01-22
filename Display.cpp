@@ -159,7 +159,8 @@ void BatteryWidget::draw() {
   if (barWidth) {
     tft.fillRect(x + 1, y + 1, barWidth, batteryBarHeight - 2, color);
   }
-  String voltageStr(voltage, 2);
+  int16_t voltageInt = std::roundf(voltage * 100);
+  String voltageStr = String(voltageInt / 100) + String(".") + String(voltageInt % 100);
   tft.drawString(voltageStr, x + batteryBarWidth + 2, y_ + label_y_offset_);
   int16_t x1, y1;
   uint16_t voltageW, voltageH;

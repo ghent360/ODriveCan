@@ -16,11 +16,12 @@ public:
 
   void reset();
   void gaitPos(float t, float& x, float& y);
+  void stanceState2D(float t, float &x, float &y);
+  void swingState2D(float t, float &x, float &y);
 
   float getStepHeight() const { return step_height_; }
   float getStepLength() const { return step_length_; }
   float getStanceDepth() const { return stance_depth_; }
-  float getStepOffset() const { return step_offset_; }
 
   void setStepParams(float height, float length, float depth) {
     step_height_ = height;
@@ -34,10 +35,9 @@ public:
       step_offset_ = offset;
     }
   }
+
 private:
   void initStepCurve();
-  void stanceState2D(float t, float &x, float &y);
-  void swingState2D(float t, float &x, float &y);
 
   float step_height_;
   float step_length_;

@@ -303,6 +303,10 @@ private:
     STATE_FINALIZE_BACK_LEFT
   };
 
+  struct GaitPlan {
+    float leg_offset_[numberOfLegs];
+  };
+
   bool isActiveAndIdle() const {
     return axes_active_ && state_ == STATE_IDLE;
   }
@@ -320,7 +324,28 @@ private:
     }
   }
 
+  void setCreepGaitPlan() {
+    gait_plan_.leg_offset_[FRONT_LEFT] = 0;
+    gait_plan_.leg_offset_[BACK_RIGHT] = 0.25f;
+    gait_plan_.leg_offset_[FRONT_RIGHT] = 0.5f;
+    gait_plan_.leg_offset_[BACK_LEFT] = 0.75f;
+    walk_trajectory_.setStepOffset(0.75f);
+  }
+
+  void setTrotGaitPlan() {
+    gait_plan_.leg_offset_[FRONT_LEFT] = 0;
+    gait_plan_.leg_offset_[BACK_RIGHT] = 0;
+    gait_plan_.leg_offset_[FRONT_RIGHT] = 0.5f;
+    gait_plan_.leg_offset_[BACK_LEFT] = 0.5f;
+    walk_trajectory_.setStepOffset(0.5f);
+  }
+
   void runState(uint32_t now);
+  void planStepStart(DogLeg legId);
+  void moveStepStart(DogLeg legId, float t);
+  void finishStepStart(DogLeg legId);
+  void moveLegWalk(DogLeg legId, float t);
+  void moveWalk(float t);
 
   static void scheduleRecalculateLogPosition(uint32_t delay_ms);
 
@@ -328,10 +353,12 @@ private:
   RobotState state_;
   uint32_t step_start_;
   float prep_step_half_size_;
+  int32_t prep_step_height_;
   uint32_t prep_step_duration_;
   uint32_t walk_step_duration_;
   StepTrajectory prep_trajectory_;
   StepTrajectory walk_trajectory_;
+  GaitPlan gait_plan_;
   int16_t leg_reference_pos_[numberOfLegs][3];
   RobotLeg legs_[numberOfLegs];
 };

@@ -340,12 +340,12 @@ private:
     walk_trajectory_.setStepOffset(0.5f);
   }
 
-  void planStepStart(DogLeg legId);
+  bool planStepStart(DogLeg legId);
   void moveStepStart(DogLeg legId, float t);
   void finishStepStart(DogLeg legId);
   void moveLegWalk(DogLeg legId, float t);
   void moveWalk(float t);
-  void planStepEnd(DogLeg legId);
+  bool planStepEnd(DogLeg legId);
   void moveStepEnd(DogLeg legId, float t);
   void finishStepEnd(DogLeg legId);
   void runState(uint32_t now);

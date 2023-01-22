@@ -39,8 +39,11 @@ void StepTrajectory::swingState2D(float t, float &x, float &y) {
 #else
   float lhalf = step_length_ / 2;
   float lhalf2 = lhalf * lhalf;
-  x = -step_length_ / 2 + step_length_ * t;
-  y = step_height_ * sqrtf(1 - x * x / lhalf2);
+  x = step_length_ * t - lhalf;
+  float d = 1.0f - x * x / lhalf2;
+  if (d < 0) d = 0;
+  if (d > 1) d = 1;
+  y = step_height_ * sqrtf(d);
 #endif
 }
 

@@ -12,7 +12,10 @@
 
 #define MOVE_PREP
 #define MOVE_WALK
-#define DEBUG_END
+#define MOVE_END
+//#define DEBUG_PREP
+//#define DEBUG_WALK
+//#define DEBUG_END
 
 using odrive::AxisState;
 using odrive::CanInterface;
@@ -293,10 +296,11 @@ void RobotBody::init() {
   }
 }
 
-void RobotBody::planStepStart(DogLeg legId) {
+bool RobotBody::planStepStart(DogLeg legId) {
   float gait_x, gait_z;
   walk_trajectory_.gaitPos(gait_plan_.leg_offset_[legId], gait_x, gait_z);
   gait_x -= leg_reference_pos_[legId][0];
+  if (gait_x == 0) return false;
   prep_trajectory_.setStepParams(prep_step_height_, gait_x, 0);
   prep_step_half_size_ = gait_x / 2;
 #ifdef DEBUG_PREP
@@ -310,6 +314,7 @@ void RobotBody::planStepStart(DogLeg legId) {
   Serial.print(" step: ");
   Serial.println(gait_x);
 #endif
+  return true;
 }
 
 void RobotBody::moveStepStart(DogLeg legId, float t) {
@@ -378,27 +383,29 @@ void RobotBody::moveWalk(float t) {
   }
 }
 
-void RobotBody::planStepEnd(DogLeg legId) {
+bool RobotBody::planStepEnd(DogLeg legId) {
   float gait_x;
-  gait_x = leg_reference_pos_[legId][0] - legs_[legId].getPosX();
+  gait_x = legs_[legId].getPosX() - leg_reference_pos_[legId][0];
+  if (gait_x == 0) return false;
   prep_trajectory_.setStepParams(prep_step_height_, gait_x, 0);
   prep_step_half_size_ = gait_x / 2;
 #ifdef DEBUG_END
   Serial.print(getLegName(legId));
   Serial.print(" pos X: ");
-  Serial.print(leg_reference_pos_[legId][0]);
+  Serial.print(legs_[legId].getPosX());
   Serial.print(" Z: ");
-  Serial.println(leg_reference_pos_[legId][2]);
+  Serial.println(legs_[legId].getPosZ());
   Serial.print("Prep ");
   Serial.print(getLegName(legId));
   Serial.print(" step: ");
   Serial.println(gait_x);
 #endif
+  return true;
 }
 
 void RobotBody::moveStepEnd(DogLeg legId, float t) {
   float gait_x, gait_z;
-  prep_trajectory_.swingState2D(t, gait_x, gait_z);
+  prep_trajectory_.swingState2D(1.0f-t, gait_x, gait_z);
 #ifdef DEBUG_END
   Serial.print(getLegName(legId));
   Serial.print(" end X: ");
@@ -434,6 +441,7 @@ void RobotBody::finishStepEnd(DogLeg legId) {
 
 void RobotBody::startWalking() {
   if (!isActiveAndIdle()) return;
+  setCreepGaitPlan();
 #if 0
   // Level all 4 legs on the Z axis
   int16_t body_height = 0;
@@ -446,9 +454,11 @@ void RobotBody::startWalking() {
     leg_reference_pos_[idx][2] = body_height;
   }
 #endif
-  planStepStart(FRONT_LEFT);
   state_ = STATE_PREPARE_FRONT_LEFT;
   step_start_ = millis();
+  if (!planStepStart(FRONT_LEFT)) {
+    step_start_ -= prep_step_duration_;
+  }
   taskManager.addBack(
     taskManager.newPeriodicTask(
       RobotBodyStateExecutor, 5, [](TaskNode*, uint32_t now){
@@ -457,9 +467,11 @@ void RobotBody::startWalking() {
 }
 
 void RobotBody::stopWalking() {
-  planStepEnd(FRONT_LEFT);
   state_ = STATE_FINALIZE_FRONT_LEFT;
   step_start_ = millis();
+  if (!planStepEnd(FRONT_LEFT)) {
+    step_start_ -= prep_step_duration_;
+  }
 }
 
 void RobotBody::runState(uint32_t now) {
@@ -474,9 +486,11 @@ void RobotBody::runState(uint32_t now) {
     t = float(elapsed) / prep_step_duration_;
     if (t > 1) {
       finishStepStart(FRONT_LEFT);
-      planStepStart(BACK_RIGHT);
       state_ = STATE_PREPARE_BACK_RIGHT;
       step_start_ = now;
+      if (!planStepStart(BACK_RIGHT)) {
+        step_start_ -= prep_step_duration_;
+      }
     } else {
       moveStepStart(FRONT_LEFT, t);
     }
@@ -486,9 +500,11 @@ void RobotBody::runState(uint32_t now) {
     t = float(elapsed) / prep_step_duration_;
     if (t > 1) {
       finishStepStart(BACK_RIGHT);
-      planStepStart(FRONT_RIGHT);
       state_ = STATE_PREPARE_FRONT_RIGHT;
       step_start_ = now;
+      if (!planStepStart(FRONT_RIGHT)) {
+        step_start_ -= prep_step_duration_;
+      }
     } else {
       moveStepStart(BACK_RIGHT, t);
     }
@@ -498,9 +514,11 @@ void RobotBody::runState(uint32_t now) {
     t = float(elapsed) / prep_step_duration_;
     if (t > 1) {
       finishStepStart(FRONT_RIGHT);
-      planStepStart(BACK_LEFT);
       state_ = STATE_PREPARE_BACK_LEFT;
       step_start_ = now;
+      if (!planStepStart(BACK_LEFT)) {
+        step_start_ -= prep_step_duration_;
+      }
     } else {
       moveStepStart(FRONT_RIGHT, t);
     }
@@ -530,9 +548,11 @@ void RobotBody::runState(uint32_t now) {
     t = float(elapsed) / prep_step_duration_;
     if (t > 1) {
       finishStepEnd(FRONT_LEFT);
-      planStepEnd(BACK_RIGHT);
       state_ = STATE_FINALIZE_BACK_RIGHT;
       step_start_ = now;
+      if (!planStepEnd(BACK_RIGHT)) {
+        step_start_ -= prep_step_duration_;
+      }
     } else {
       moveStepEnd(FRONT_LEFT, t);
     }
@@ -542,9 +562,11 @@ void RobotBody::runState(uint32_t now) {
     t = float(elapsed) / prep_step_duration_;
     if (t > 1) {
       finishStepEnd(BACK_RIGHT);
-      planStepEnd(FRONT_RIGHT);
       state_ = STATE_FINALIZE_FRONT_RIGHT;
       step_start_ = now;
+      if (!planStepEnd(FRONT_RIGHT)) {
+        step_start_ -= prep_step_duration_;
+      }
     } else {
       moveStepEnd(BACK_RIGHT, t);
     }
@@ -554,9 +576,11 @@ void RobotBody::runState(uint32_t now) {
     t = float(elapsed) / prep_step_duration_;
     if (t > 1) {
       finishStepEnd(FRONT_RIGHT);
-      planStepEnd(BACK_LEFT);
       state_ = STATE_FINALIZE_BACK_LEFT;
       step_start_ = now;
+      if (!planStepEnd(BACK_LEFT)) {
+        step_start_ -= prep_step_duration_;
+      }
     } else {
       moveStepEnd(FRONT_RIGHT, t);
     }

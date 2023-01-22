@@ -303,6 +303,9 @@ bool RobotBody::planStepStart(DogLeg legId) {
   if (gait_x == 0) return false;
   prep_trajectory_.setStepParams(prep_step_height_, gait_x, 0);
   prep_step_half_size_ = gait_x / 2;
+  prep_step_duration_ = fabsf(gait_x) * 10;
+  if (prep_step_duration_ < 20)
+    prep_step_duration_ = 20;
 #ifdef DEBUG_PREP
   Serial.print(getLegName(legId));
   Serial.print(" pos X: ");
@@ -389,6 +392,9 @@ bool RobotBody::planStepEnd(DogLeg legId) {
   if (gait_x == 0) return false;
   prep_trajectory_.setStepParams(prep_step_height_, gait_x, 0);
   prep_step_half_size_ = gait_x / 2;
+  prep_step_duration_ = fabsf(gait_x) * 10;
+  if (prep_step_duration_ < 20)
+    prep_step_duration_ = 20;
 #ifdef DEBUG_END
   Serial.print(getLegName(legId));
   Serial.print(" pos X: ");

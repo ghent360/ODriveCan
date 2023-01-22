@@ -12,6 +12,7 @@
 
 #define MOVE_PREP
 #define MOVE_WALK
+#define DEBUG_END
 
 using odrive::AxisState;
 using odrive::CanInterface;
@@ -293,8 +294,6 @@ void RobotBody::init() {
 }
 
 void RobotBody::planStepStart(DogLeg legId) {
-  // Init walk trajectory
-  // ...
   float gait_x, gait_z;
   walk_trajectory_.gaitPos(gait_plan_.leg_offset_[legId], gait_x, gait_z);
   gait_x -= leg_reference_pos_[legId][0];
@@ -335,7 +334,7 @@ void RobotBody::moveStepStart(DogLeg legId, float t) {
 void RobotBody::finishStepStart(DogLeg legId) {
   float gait_x, gait_z;
   walk_trajectory_.gaitPos(gait_plan_.leg_offset_[legId], gait_x, gait_z);
-#ifdef DEBUG_PREP_END
+#ifdef DEBUG_PREP
   Serial.print(getLegName(legId));
   Serial.print(" prep end. Adjusting X: ");
   Serial.print(gait_x);
@@ -379,6 +378,60 @@ void RobotBody::moveWalk(float t) {
   }
 }
 
+void RobotBody::planStepEnd(DogLeg legId) {
+  float gait_x;
+  gait_x = leg_reference_pos_[legId][0] - legs_[legId].getPosX();
+  prep_trajectory_.setStepParams(prep_step_height_, gait_x, 0);
+  prep_step_half_size_ = gait_x / 2;
+#ifdef DEBUG_END
+  Serial.print(getLegName(legId));
+  Serial.print(" pos X: ");
+  Serial.print(leg_reference_pos_[legId][0]);
+  Serial.print(" Z: ");
+  Serial.println(leg_reference_pos_[legId][2]);
+  Serial.print("Prep ");
+  Serial.print(getLegName(legId));
+  Serial.print(" step: ");
+  Serial.println(gait_x);
+#endif
+}
+
+void RobotBody::moveStepEnd(DogLeg legId, float t) {
+  float gait_x, gait_z;
+  prep_trajectory_.swingState2D(t, gait_x, gait_z);
+#ifdef DEBUG_END
+  Serial.print(getLegName(legId));
+  Serial.print(" end X: ");
+  Serial.print(leg_reference_pos_[legId][0] + gait_x + prep_step_half_size_);
+  Serial.print(" Z: ");
+  Serial.println(leg_reference_pos_[legId][2] + gait_z);
+#endif
+#ifdef MOVE_END
+  legs_[legId].setPos(
+    leg_reference_pos_[legId][0] + gait_x + prep_step_half_size_,
+    leg_reference_pos_[legId][1],
+    leg_reference_pos_[legId][2] + gait_z
+  );
+#endif
+}
+
+void RobotBody::finishStepEnd(DogLeg legId) {
+#ifdef DEBUG_END
+  Serial.print(getLegName(legId));
+  Serial.print(" finish end. Adjusting X: ");
+  Serial.print(leg_reference_pos_[legId][0]);
+  Serial.print(" Z: ");
+  Serial.println(leg_reference_pos_[legId][2]);
+#endif
+#ifdef MOVE_END
+  legs_[legId].setPos(
+    leg_reference_pos_[legId][0],
+    leg_reference_pos_[legId][1],
+    leg_reference_pos_[legId][2]
+  );
+#endif
+}
+
 void RobotBody::startWalking() {
   if (!isActiveAndIdle()) return;
 #if 0
@@ -404,8 +457,9 @@ void RobotBody::startWalking() {
 }
 
 void RobotBody::stopWalking() {
-  state_ = STATE_IDLE;
-  taskManager.removeById(RobotBodyStateExecutor);
+  planStepEnd(FRONT_LEFT);
+  state_ = STATE_FINALIZE_FRONT_LEFT;
+  step_start_ = millis();
 }
 
 void RobotBody::runState(uint32_t now) {
@@ -470,6 +524,53 @@ void RobotBody::runState(uint32_t now) {
       step_start_ = now;
     }
     moveWalk(t);
+  }
+  break;
+  case STATE_FINALIZE_FRONT_LEFT: {
+    t = float(elapsed) / prep_step_duration_;
+    if (t > 1) {
+      finishStepEnd(FRONT_LEFT);
+      planStepEnd(BACK_RIGHT);
+      state_ = STATE_FINALIZE_BACK_RIGHT;
+      step_start_ = now;
+    } else {
+      moveStepEnd(FRONT_LEFT, t);
+    }
+  }
+  break;
+  case STATE_FINALIZE_BACK_RIGHT: {
+    t = float(elapsed) / prep_step_duration_;
+    if (t > 1) {
+      finishStepEnd(BACK_RIGHT);
+      planStepEnd(FRONT_RIGHT);
+      state_ = STATE_FINALIZE_FRONT_RIGHT;
+      step_start_ = now;
+    } else {
+      moveStepEnd(BACK_RIGHT, t);
+    }
+  }
+  break;
+  case STATE_FINALIZE_FRONT_RIGHT: {
+    t = float(elapsed) / prep_step_duration_;
+    if (t > 1) {
+      finishStepEnd(FRONT_RIGHT);
+      planStepEnd(BACK_LEFT);
+      state_ = STATE_FINALIZE_BACK_LEFT;
+      step_start_ = now;
+    } else {
+      moveStepEnd(FRONT_RIGHT, t);
+    }
+  }
+  break;
+  case STATE_FINALIZE_BACK_LEFT: {
+    t = float(elapsed) / prep_step_duration_;
+    if (t > 1) {
+      finishStepEnd(BACK_LEFT);
+      state_ = STATE_IDLE;
+      taskManager.removeById(RobotBodyStateExecutor);
+    } else {
+      moveStepEnd(BACK_LEFT, t);
+    }
   }
   break;
   default:

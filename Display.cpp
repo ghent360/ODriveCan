@@ -26,7 +26,7 @@ Display::Display()
     can_status_(
       0, 5 + 4*(BatteryWidget::batteryBarHeight + 1), 8, ST7735_WHITE),
     radio_status_(
-      20 + BatteryWidget::batteryBarWidth, 5, 8, ST7735_WHITE)
+      50 + BatteryWidget::batteryBarWidth, 5, 8, ST7735_WHITE)
 #ifdef AXIS_POS_DISPLAY
     ,joint_pos_{
       PositionWidget(  0, 55, 6, ST7735_WHITE), //FRONT_RIGHT_SHIN
@@ -159,6 +159,20 @@ void BatteryWidget::draw() {
   if (barWidth) {
     tft.fillRect(x + 1, y + 1, barWidth, batteryBarHeight - 2, color);
   }
+  String voltageStr(voltage, 2);
+  tft.drawString(voltageStr, x + batteryBarWidth + 2, y_ + label_y_offset_);
+  int16_t x1, y1;
+  uint16_t voltageW, voltageH;
+  tft.getTextBounds(
+    voltageStr,
+    x + batteryBarWidth + 2,
+    y_ + label_y_offset_,
+    &x1,
+    &y1,
+    &voltageW,
+    &voltageH);
+
+  w_ = bar_x_offset_ + batteryBarWidth + 2 + voltageW;
   dirty_ = false;
 }
 

@@ -17,9 +17,9 @@ constexpr int numAxes = 12;
 constexpr int numLegs = 4;
 
 // LiPO cell voltage levels
-constexpr float cellMaxVoltage = 4.2;
-constexpr float cellWarnVoltage = 3.5;
-constexpr float cellMinVoltage = 3.35;
+constexpr float cellMaxVoltage = 4.2f;
+constexpr float cellWarnVoltage = 3.5f;
+constexpr float cellMinVoltage = 3.3f;
 
 // Static offset for each joint. Because each joint encoder is not
 // at the same position we have static offset in each joint position.

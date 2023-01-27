@@ -52,10 +52,7 @@ ASM_SOURCES = \
   $(ARDUINO_TEENSY_CORE)/memcpy-armv7m.S \
   $(ARDUINO_TEENSY_CORE)/memset.S
 
-C_SOURCES = \
-  $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/glcdfont.c \
-  $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/st7735_t3_font_ComicSansMS.c \
-  $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/st7735_t3_font_Arial.c \
+CORE_C_SOURCES = \
   $(ARDUINO_TEENSY_CORE)/analog.c \
   $(ARDUINO_TEENSY_CORE)/bootdata.c \
   $(ARDUINO_TEENSY_CORE)/libc.c \
@@ -100,25 +97,7 @@ C_SOURCES = \
   $(ARDUINO_TEENSY_CORE)/usb_serial3.c \
   $(ARDUINO_TEENSY_CORE)/usb_touch.c
 
-CXX_SOURCES = \
-  CanInterfaceCommon.cpp \
-  CanInterfaceTeensy4.cpp \
-  JointDriver.cpp \
-  Radio.cpp \
-  SerialInteraction.cpp \
-  VoltageMonitor.cpp \
-  CanInterfaceSAME.cpp \
-  Display.cpp \
-  Kinematics.cpp \
-  RobotDefinition.cpp \
-  StepTrajectory.cpp \
-  $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/ST7789_t3.cpp \
-  $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/ST7735_t3.cpp \
-  $(ARDUINO_TEENSY_LIBRARIES)/SPI/SPI.cpp \
-  $(ARDUINO_LIBRARIES)/RF24/RF24.cpp \
-  $(ARDUINO_TEENSY_LIBRARIES)/ADC/AnalogBufferDMA.cpp \
-  $(ARDUINO_TEENSY_LIBRARIES)/ADC/ADC_Module.cpp \
-  $(ARDUINO_TEENSY_LIBRARIES)/ADC/ADC.cpp \
+CORE_CXX_SOURCES = \
   $(ARDUINO_TEENSY_CORE)/DMAChannel.cpp \
   $(ARDUINO_TEENSY_CORE)/EventResponder.cpp \
   $(ARDUINO_TEENSY_CORE)/AudioStream.cpp \
@@ -157,6 +136,48 @@ CXX_SOURCES = \
   $(ARDUINO_TEENSY_CORE)/usb_flightsim.cpp \
   $(ARDUINO_TEENSY_CORE)/usb_inst.cpp \
   $(ARDUINO_TEENSY_CORE)/yield.cpp
+
+ST7735_t3_C_SOURCES = \
+  $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/glcdfont.c \
+  $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/st7735_t3_font_ComicSansMS.c \
+  $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/st7735_t3_font_Arial.c
+
+ST7735_t3_CXX_SOURCES = \
+  $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/ST7789_t3.cpp \
+  $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/ST7735_t3.cpp
+
+SPI_CXX_SOURCES = \
+  $(ARDUINO_TEENSY_LIBRARIES)/SPI/SPI.cpp
+
+RF24_CXX_SOURCES = \
+  $(ARDUINO_LIBRARIES)/RF24/RF24.cpp
+
+ADC_CXX_SOURCES = \
+  $(ARDUINO_TEENSY_LIBRARIES)/ADC/AnalogBufferDMA.cpp \
+  $(ARDUINO_TEENSY_LIBRARIES)/ADC/ADC_Module.cpp \
+  $(ARDUINO_TEENSY_LIBRARIES)/ADC/ADC.cpp
+
+C_SOURCES = \
+  $(ST7735_t3_C_SOURCES) \
+  $(CORE_C_SOURCES)
+
+CXX_SOURCES = \
+  CanInterfaceCommon.cpp \
+  CanInterfaceTeensy4.cpp \
+  JointDriver.cpp \
+  Radio.cpp \
+  SerialInteraction.cpp \
+  VoltageMonitor.cpp \
+  CanInterfaceSAME.cpp \
+  Display.cpp \
+  Kinematics.cpp \
+  RobotDefinition.cpp \
+  StepTrajectory.cpp \
+  $(ST7735_t3_CXX_SOURCES) \
+  $(SPI_CXX_SOURCES) \
+  $(RF24_CXX_SOURCES) \
+  $(ADC_CXX_SOURCES) \
+  $(CORE_CXX_SOURCES)
 
 SKETCH = \
   ODriveCanTest.ino

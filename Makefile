@@ -8,6 +8,9 @@ OPENDOG_FILES = \
 
 all: $(OPENDOG_FILES)
 
+clean:
+	-rm -fR $(BUILD_DIR) ./tests/test_runner
+
 ARDUINO_TEENSY_PACKAGE = $(HOME)/.arduino15/packages/teensy
 ARDUINO_TEENSY_HOME = $(ARDUINO_TEENSY_PACKAGE)/hardware/avr/1.57.1
 ARDUINO_TEENSY_TOOLS = $(ARDUINO_TEENSY_PACKAGE)/tools/teensy-tools/1.57.1
@@ -273,14 +276,13 @@ $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
 $(BUILD_DIR):
 	mkdir $@		
 
+# Rule how to link the $(OPENDOG_TARGET).elf
 $(BUILD_DIR)/$(OPENDOG_TARGET).elf: $(OPENDOG_OBJECTS) Makefile
 	$(ARM_CXX) $(OPENDOG_OBJECTS) $(ARM_LDFLAGS) -o $@
 	$(ARM_SZ) $@
 	$(ARDUINO_TEENSY_TOOLS)/teensy_size $@
 
-clean:
-	-rm -fR $(BUILD_DIR) ./tests/test_runner
-
+# Rule how to flash the $(OPENDOG_TARGET).hex to the device
 flash_opendog: $(BUILD_DIR)/$(OPENDOG_TARGET).hex
 	teensy_loader_cli --mcu=TEENSY41 -v -s -w $<
 

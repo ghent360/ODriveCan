@@ -232,15 +232,16 @@ ARM_LDFLAGS = \
 # These rules create a list of all .o files we need to cross compile
 # add .c files to objects
 OPENDOG_OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(OPENDOG_C_SOURCES:.c=.o)))
-vpath %.c $(sort $(dir $(OPENDOG_C_SOURCES)))
 # add .cpp files to objects
 OPENDOG_OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(OPENDOG_CXX_SOURCES:.cpp=.o)))
-vpath %.cpp $(sort $(dir $(OPENDOG_CXX_SOURCES)))
 # add .ino files to objects
 OPENDOG_OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(OPENDOG_SKETCH:.ino=.o)))
-vpath %.ino $(sort $(dir $(OPENDOG_SKETCH)))
 # add ASM files to objects
 OPENDOG_OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(OPENDOG_ASM_SOURCES:.S=.o)))
+
+vpath %.c $(sort $(dir $(OPENDOG_C_SOURCES)))
+vpath %.cpp $(sort $(dir $(OPENDOG_CXX_SOURCES)))
+vpath %.ino $(sort $(dir $(OPENDOG_SKETCH)))
 vpath %.S $(sort $(dir $(OPENDOG_ASM_SOURCES)))
 
 # Generic rules how to cross compile each file extension

@@ -1,7 +1,12 @@
 OPENDOG_TARGET = OpenDogV3
 BUILD_DIR = build
 
-all: $(BUILD_DIR)/$(OPENDOG_TARGET).elf $(BUILD_DIR)/$(OPENDOG_TARGET).hex $(BUILD_DIR)/$(OPENDOG_TARGET).bin
+OPENDOG_FILES = \
+  $(BUILD_DIR)/$(OPENDOG_TARGET).elf \
+  $(BUILD_DIR)/$(OPENDOG_TARGET).hex \
+  $(BUILD_DIR)/$(OPENDOG_TARGET).bin
+
+all: $(OPENDOG_FILES)
 
 ARDUINO_TEENSY_PACKAGE = $(HOME)/.arduino15/packages/teensy
 ARDUINO_TEENSY_HOME = $(ARDUINO_TEENSY_PACKAGE)/hardware/avr/1.57.1
@@ -11,12 +16,12 @@ ARDUINO_TEENSY_CORE = $(ARDUINO_TEENSY_HOME)/cores/teensy4
 ARDUINO_LIBRARIES = $(HOME)/Arduino/libraries
 
 PREFIX = arm-none-eabi-
-ifdef GCC_PATH
-ARM_CC = $(GCC_PATH)/$(PREFIX)gcc
-ARM_CXX = $(GCC_PATH)/$(PREFIX)g++
-ARM_AS = $(GCC_PATH)/$(PREFIX)gcc -x assembler-with-cpp
-ARM_CP = $(GCC_PATH)/$(PREFIX)objcopy
-ARM_SZ = $(GCC_PATH)/$(PREFIX)size
+ifdef ARM_GCC_PATH
+ARM_CC = $(ARM_GCC_PATH)/$(PREFIX)gcc
+ARM_CXX = $(ARM_GCC_PATH)/$(PREFIX)g++
+ARM_AS = $(ARM_GCC_PATH)/$(PREFIX)gcc -x assembler-with-cpp
+ARM_CP = $(ARM_GCC_PATH)/$(PREFIX)objcopy
+ARM_SZ = $(ARM_GCC_PATH)/$(PREFIX)size
 else
 ARM_CC = $(PREFIX)gcc
 ARM_CXX = $(PREFIX)g++

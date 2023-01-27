@@ -1,5 +1,7 @@
-TARGET = OpenDogV3
+OPENDOG_TARGET = OpenDogV3
 BUILD_DIR = build
+
+all: $(BUILD_DIR)/$(OPENDOG_TARGET).elf $(BUILD_DIR)/$(OPENDOG_TARGET).hex $(BUILD_DIR)/$(OPENDOG_TARGET).bin
 
 ARDUINO_TEENSY_PACKAGE = $(HOME)/.arduino15/packages/teensy
 ARDUINO_TEENSY_HOME = $(ARDUINO_TEENSY_PACKAGE)/hardware/avr/1.57.1
@@ -49,7 +51,7 @@ ARM_C_INCLUDES =  \
   -I$(ARDUINO_LIBRARIES)/RF24
 
 # Teensy Arduino core ASM source files
-ASM_SOURCES = \
+CORE_ASM_SOURCES = \
   $(ARDUINO_TEENSY_CORE)/memcpy-armv7m.S \
   $(ARDUINO_TEENSY_CORE)/memset.S
 
@@ -165,11 +167,14 @@ ADC_CXX_SOURCES = \
 RF24_CXX_SOURCES = \
   $(ARDUINO_LIBRARIES)/RF24/RF24.cpp
 
-C_SOURCES = \
+OPENDOG_ASM_SOURCES = \
+  $(CORE_ASM_SOURCES)
+
+OPENDOG_C_SOURCES = \
   $(ST7735_t3_C_SOURCES) \
   $(CORE_C_SOURCES)
 
-CXX_SOURCES = \
+OPENDOG_CXX_SOURCES = \
   CanInterfaceCommon.cpp \
   CanInterfaceTeensy4.cpp \
   JointDriver.cpp \
@@ -187,7 +192,7 @@ CXX_SOURCES = \
   $(ADC_CXX_SOURCES) \
   $(CORE_CXX_SOURCES)
 
-SKETCH = \
+OPENDOG_SKETCH = \
   ODriveCanTest.ino
 
 # Teensy Core linker script
@@ -226,35 +231,30 @@ ARM_LDFLAGS = \
 
 # These rules create a list of all .o files we need to cross compile
 # add .c files to objects
-OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(C_SOURCES:.c=.o)))
-vpath %.c $(sort $(dir $(C_SOURCES)))
+OPENDOG_OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(OPENDOG_C_SOURCES:.c=.o)))
+vpath %.c $(sort $(dir $(OPENDOG_C_SOURCES)))
 # add .cpp files to objects
-OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(CXX_SOURCES:.cpp=.o)))
-vpath %.cpp $(sort $(dir $(CXX_SOURCES)))
+OPENDOG_OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(OPENDOG_CXX_SOURCES:.cpp=.o)))
+vpath %.cpp $(sort $(dir $(OPENDOG_CXX_SOURCES)))
 # add .ino files to objects
-OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(SKETCH:.ino=.o)))
-vpath %.ino $(sort $(dir $(SKETCH)))
+OPENDOG_OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(OPENDOG_SKETCH:.ino=.o)))
+vpath %.ino $(sort $(dir $(OPENDOG_SKETCH)))
 # add ASM files to objects
-OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(ASM_SOURCES:.S=.o)))
-vpath %.S $(sort $(dir $(ASM_SOURCES)))
+OPENDOG_OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(OPENDOG_ASM_SOURCES:.S=.o)))
+vpath %.S $(sort $(dir $(OPENDOG_ASM_SOURCES)))
 
 # Generic rules how to cross compile each file extension
 $(BUILD_DIR)/%.o: %.c Makefile | $(BUILD_DIR)
-	$(ARM_CC) -c $(ARM_CFLAGS) -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.c=.lst)) $< -o $@
+	$(ARM_CC) -c $(ARM_CFLAGS) $< -o $@
 
 $(BUILD_DIR)/%.o: %.cpp Makefile | $(BUILD_DIR)
-	$(ARM_CXX) -c $(ARM_CFLAGS) $(ARM_CXXFLAGS) -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.cpp=.lst)) $< -o $@
+	$(ARM_CXX) -c $(ARM_CFLAGS) $(ARM_CXXFLAGS) $< -o $@
 
 $(BUILD_DIR)/%.o: %.ino Makefile | $(BUILD_DIR)
-	$(ARM_CXX) -c -x c++ $(ARM_CFLAGS) $(ARM_CXXFLAGS) -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.cpp=.lst)) $< -o $@
+	$(ARM_CXX) -c -x c++ $(ARM_CFLAGS) $(ARM_CXXFLAGS) $< -o $@
 
 $(BUILD_DIR)/%.o: %.S Makefile | $(BUILD_DIR)
 	$(ARM_AS) -c $(ARM_CFLAGS) $< -o $@
-
-$(BUILD_DIR)/$(TARGET).elf: $(OBJECTS) Makefile
-	$(ARM_CXX) $(OBJECTS) $(ARM_LDFLAGS) -o $@
-	$(ARM_SZ) $@
-	$(ARDUINO_TEENSY_TOOLS)/teensy_size $@
 
 $(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
 	$(ARM_HEX) $< $@
@@ -265,12 +265,15 @@ $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
 $(BUILD_DIR):
 	mkdir $@		
 
+$(BUILD_DIR)/$(OPENDOG_TARGET).elf: $(OPENDOG_OBJECTS) Makefile
+	$(ARM_CXX) $(OPENDOG_OBJECTS) $(ARM_LDFLAGS) -o $@
+	$(ARM_SZ) $@
+	$(ARDUINO_TEENSY_TOOLS)/teensy_size $@
+
 clean:
 	-rm -fR $(BUILD_DIR) ./tests/test_runner
 
-all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
-
-flash: $(BUILD_DIR)/$(TARGET).hex
+flash_opendog: $(BUILD_DIR)/$(OPENDOG_TARGET).hex
 	teensy_loader_cli --mcu=TEENSY41 -v -s -w $<
 
 # Rules for unit tests, these run on the host platform

@@ -48,10 +48,12 @@ ARM_C_INCLUDES =  \
   -I$(ARDUINO_TEENSY_LIBRARIES)/ADC \
   -I$(ARDUINO_LIBRARIES)/RF24
 
+# Teensy Arduino core ASM source files
 ASM_SOURCES = \
   $(ARDUINO_TEENSY_CORE)/memcpy-armv7m.S \
   $(ARDUINO_TEENSY_CORE)/memset.S
 
+# Teensy Arduino core C source files
 CORE_C_SOURCES = \
   $(ARDUINO_TEENSY_CORE)/analog.c \
   $(ARDUINO_TEENSY_CORE)/bootdata.c \
@@ -97,6 +99,7 @@ CORE_C_SOURCES = \
   $(ARDUINO_TEENSY_CORE)/usb_serial3.c \
   $(ARDUINO_TEENSY_CORE)/usb_touch.c
 
+# Teensy Arduino core C++ source files
 CORE_CXX_SOURCES = \
   $(ARDUINO_TEENSY_CORE)/DMAChannel.cpp \
   $(ARDUINO_TEENSY_CORE)/EventResponder.cpp \
@@ -137,25 +140,30 @@ CORE_CXX_SOURCES = \
   $(ARDUINO_TEENSY_CORE)/usb_inst.cpp \
   $(ARDUINO_TEENSY_CORE)/yield.cpp
 
+# Teensy ST7735_t3 library C source files
 ST7735_t3_C_SOURCES = \
   $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/glcdfont.c \
   $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/st7735_t3_font_ComicSansMS.c \
   $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/st7735_t3_font_Arial.c
 
+# Teensy ST7735_t3 library C++ source files
 ST7735_t3_CXX_SOURCES = \
   $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/ST7789_t3.cpp \
   $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/ST7735_t3.cpp
 
+# Teensy SPI library C++ source files
 SPI_CXX_SOURCES = \
   $(ARDUINO_TEENSY_LIBRARIES)/SPI/SPI.cpp
 
-RF24_CXX_SOURCES = \
-  $(ARDUINO_LIBRARIES)/RF24/RF24.cpp
-
+# Teensy ADC library C++ source files
 ADC_CXX_SOURCES = \
   $(ARDUINO_TEENSY_LIBRARIES)/ADC/AnalogBufferDMA.cpp \
   $(ARDUINO_TEENSY_LIBRARIES)/ADC/ADC_Module.cpp \
   $(ARDUINO_TEENSY_LIBRARIES)/ADC/ADC.cpp
+
+# Arduino RF24 library C++ source files
+RF24_CXX_SOURCES = \
+  $(ARDUINO_LIBRARIES)/RF24/RF24.cpp
 
 C_SOURCES = \
   $(ST7735_t3_C_SOURCES) \
@@ -173,28 +181,33 @@ CXX_SOURCES = \
   Kinematics.cpp \
   RobotDefinition.cpp \
   StepTrajectory.cpp \
+  $(RF24_CXX_SOURCES) \
   $(ST7735_t3_CXX_SOURCES) \
   $(SPI_CXX_SOURCES) \
-  $(RF24_CXX_SOURCES) \
   $(ADC_CXX_SOURCES) \
   $(CORE_CXX_SOURCES)
 
 SKETCH = \
   ODriveCanTest.ino
 
+# Teensy Core linker script
 LDSCRIPT = $(ARDUINO_TEENSY_CORE)/imxrt1062_t41.ld
 
+# Flags for the ARM cross compiler
 ARM_FPU = -mfpu=fpv5-d16
 ARM_FLOAT-ABI = -mfloat-abi=hard
 ARM_OPT = -O2
 ARM_CPU = -mcpu=cortex-m7
 ARM_MCU = $(ARM_CPU) -mthumb $(ARM_FPU) $(ARM_FLOAT-ABI)
 
-ARM_ASFLAGS = $(ARM_MCU) $(ARM_AS_DEFS) $(ARM_AS_INCLUDES) $(ARM_OPT) -Wall -fdata-sections -ffunction-sections
+ARM_ASFLAGS = \
+  $(ARM_MCU) $(ARM_AS_DEFS) $(ARM_AS_INCLUDES) $(ARM_OPT) \
+  -Wall -fdata-sections -ffunction-sections
 
-ARM_CFLAGS += $(ARM_MCU) $(ARM_C_DEFS) $(ARM_C_INCLUDES) $(ARM_OPT) -Wall -fdata-sections -ffunction-sections
+ARM_CFLAGS  = \
+  $(ARM_MCU) $(ARM_C_DEFS) $(ARM_C_INCLUDES) $(ARM_OPT) \
+  -Wall -fdata-sections -ffunction-sections -g -nostdlib -MMD
 
-ARM_CFLAGS += -g -nostdlib -MMD
 ARM_CXXFLAGS = -std=gnu++14 -fno-exceptions -fno-rtti \
   -fno-threadsafe-statics -felide-constructors -Wno-error=narrowing
 
@@ -204,9 +217,14 @@ ARM_CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
 ARM_LIBS = -lc -lm -lnosys
 #-larm_cortexM7lfsp_math -lm -lstdc++
 ARM_LIBDIR = 
-ARM_LDFLAGS = $(ARM_OPT) $(ARM_MCU) -specs=nano.specs -T$(LDSCRIPT) $(ARM_LIBDIR) $(ARM_LIBS) \
-  -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections,--relax
+ARM_LDFLAGS = \
+  $(ARM_OPT) $(ARM_MCU) -specs=nano.specs -T$(LDSCRIPT) \
+  $(ARM_LIBDIR) $(ARM_LIBS) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref \
+  -Wl,--gc-sections,--relax
 
+# Rules for cross compilation
+
+# These rules create a list of all .o files we need to cross compile
 # add .c files to objects
 OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(C_SOURCES:.c=.o)))
 vpath %.c $(sort $(dir $(C_SOURCES)))
@@ -220,6 +238,7 @@ vpath %.ino $(sort $(dir $(SKETCH)))
 OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(ASM_SOURCES:.S=.o)))
 vpath %.S $(sort $(dir $(ASM_SOURCES)))
 
+# Generic rules how to cross compile each file extension
 $(BUILD_DIR)/%.o: %.c Makefile | $(BUILD_DIR)
 	$(ARM_CC) -c $(ARM_CFLAGS) -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.c=.lst)) $< -o $@
 
@@ -247,17 +266,18 @@ $(BUILD_DIR):
 	mkdir $@		
 
 clean:
-	-rm -fR $(BUILD_DIR)
-  
-tests/test_runner: tests/*.cpp tests/*.h
-	@g++ -g -Wall -Wextra -std=gnu++17 tests/*.cpp -o tests/test_runner
-
-run_tests: tests/test_runner
-	@./tests/test_runner
+	-rm -fR $(BUILD_DIR) ./tests/test_runner
 
 all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin
 
 flash: $(BUILD_DIR)/$(TARGET).hex
 	teensy_loader_cli --mcu=TEENSY41 -v -s -w $<
+
+# Rules for unit tests, these run on the host platform
+tests/test_runner: tests/*.cpp tests/*.h
+	@g++ -g -Wall -Wextra -std=gnu++17 tests/*.cpp -o tests/test_runner
+
+run_tests: tests/test_runner
+	@./tests/test_runner
 
 -include $(wildcard $(BUILD_DIR)/*.d)

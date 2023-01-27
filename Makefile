@@ -224,8 +224,10 @@ ARM_CXXFLAGS = -std=gnu++14 -fno-exceptions -fno-rtti \
 # Generate dependency information
 ARM_CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
 
-ARM_LIBS = -lc -lm -lnosys
-#-larm_cortexM7lfsp_math -lm -lstdc++
+ARM_LIBS = -lc -lm
+# library list used int he past for posterity if we need something from there
+#-larm_cortexM7lfsp_math -lm -lstdc++ -lnosys
+
 ARM_LIBDIR = 
 ARM_LDFLAGS = \
   $(ARM_OPT) $(ARM_MCU) -specs=nano.specs -T$(LDSCRIPT) \

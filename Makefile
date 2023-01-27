@@ -212,7 +212,7 @@ ARM_MCU = $(ARM_CPU) -mthumb $(ARM_FPU) $(ARM_FLOAT-ABI)
 
 ARM_ASFLAGS = \
   $(ARM_MCU) $(ARM_AS_DEFS) $(ARM_AS_INCLUDES) $(ARM_OPT) \
-  -Wall -fdata-sections -ffunction-sections
+  -Wall -fdata-sections -ffunction-sections -g -MMD
 
 ARM_CFLAGS  = \
   $(ARM_MCU) $(ARM_C_DEFS) $(ARM_C_INCLUDES) $(ARM_OPT) \
@@ -262,7 +262,7 @@ $(BUILD_DIR)/%.o: %.ino Makefile | $(BUILD_DIR)
 	$(ARM_CXX) -c -x c++ $(ARM_CFLAGS) $(ARM_CXXFLAGS) $< -o $@
 
 $(BUILD_DIR)/%.o: %.S Makefile | $(BUILD_DIR)
-	$(ARM_AS) -c $(ARM_CFLAGS) $< -o $@
+	$(ARM_AS) -c $(ARM_ASFLAGS) $< -o $@
 
 $(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
 	$(ARM_HEX) $< $@

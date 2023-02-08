@@ -7,7 +7,7 @@
 #include <ADC_util.h>
 #include "globals.h"
 
-static const int batteryVoltagePin = A17; // ADC0
+static const int batteryVoltagePin = A17;
 
 static ADC adc; // adc object;
 
@@ -264,18 +264,6 @@ static void hal_hibernate ( void ) {
     while( ( IOMUXC_GPR_GPR4 & 0x36f00000 ) != 0x36f00000 );
     while( ( IOMUXC_GPR_GPR7 & 0xffff0000 ) != 0xffff0000 );
 
-    /*IOMUXC_GPR_GPR4 = 0x00000011;
-     while ((IOMUXC_GPR_GPR4 & 0x00110000) != 0x00110000){};
-     digitalWriteFast( LED_BUILTIN, HIGH );
-     IOMUXC_GPR_GPR4 = 0x000036ff;
-     IOMUXC_GPR_GPR7 = 0x0000ffff;
-     IOMUXC_GPR_GPR8 = 0xfffcffff;
-     IOMUXC_GPR_GPR12 = 0x0000000a;
-     while ((IOMUXC_GPR_GPR4 & 0x36f90000) != 0x36f90000){};
-     while ((IOMUXC_GPR_GPR7 & 0xffff0000) != 0xffff0000){};*/
-    //save_context( );
-    //while(1);
-    
     __asm volatile ( "dsb \n" );
     __asm volatile ( "isb \n" );
     __asm volatile ( "wfi \n" );
@@ -289,7 +277,7 @@ void VoltageMonitor::initVoltageMonitor() {
   pinMode(batteryVoltagePin, INPUT);
 
   adc.adc0->setAveraging(4); // set number of averages
-  adc.adc0->setResolution(16); // set bits of resolution
+  adc.adc0->setResolution(12); // set bits of resolution
 
   adc.adc0->setConversionSpeed(ADC_CONVERSION_SPEED::LOW_SPEED); // change the conversion speed
   adc.adc0->setSamplingSpeed(ADC_SAMPLING_SPEED::LOW_SPEED); // change the sampling speed
@@ -298,7 +286,7 @@ void VoltageMonitor::initVoltageMonitor() {
 
 float VoltageMonitor::readBatteryVoltage() {
   // Single reads
-  float vIn = adc.adc0->analogRead(batteryVoltagePin) *cvtMult_;
+  float vIn = adc.adc0->analogRead(batteryVoltagePin) * cvtMult_;
 
   // Print errors, if any.
   if(adc.adc0->fail_flag != ADC_ERROR::CLEAR) {

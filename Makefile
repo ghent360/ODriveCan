@@ -49,7 +49,7 @@ ARM_C_DEFS =  \
 # AS includes
 ARM_AS_INCLUDES = 
 
-# C includes
+# C/C++ includes
 ARM_C_INCLUDES =  \
   -I$(ARDUINO_TEENSY_CORE) \
   -I$(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3 \
@@ -58,13 +58,10 @@ ARM_C_INCLUDES =  \
   -I$(ARDUINO_TEENSY_LIBRARIES)/ADC \
   -I$(ARDUINO_LIBRARIES)/RF24
 
-# Teensy Arduino core ASM source files
-CORE_ASM_SOURCES = \
+# Teensy Arduino core source files
+CORE_SOURCES = \
   $(ARDUINO_TEENSY_CORE)/memcpy-armv7m.S \
-  $(ARDUINO_TEENSY_CORE)/memset.S
-
-# Teensy Arduino core C source files
-CORE_C_SOURCES = \
+  $(ARDUINO_TEENSY_CORE)/memset.S \
   $(ARDUINO_TEENSY_CORE)/analog.c \
   $(ARDUINO_TEENSY_CORE)/bootdata.c \
   $(ARDUINO_TEENSY_CORE)/libc.c \
@@ -107,10 +104,7 @@ CORE_C_SOURCES = \
   $(ARDUINO_TEENSY_CORE)/usb_serial.c \
   $(ARDUINO_TEENSY_CORE)/usb_serial2.c \
   $(ARDUINO_TEENSY_CORE)/usb_serial3.c \
-  $(ARDUINO_TEENSY_CORE)/usb_touch.c
-
-# Teensy Arduino core C++ source files
-CORE_CXX_SOURCES = \
+  $(ARDUINO_TEENSY_CORE)/usb_touch.c \
   $(ARDUINO_TEENSY_CORE)/DMAChannel.cpp \
   $(ARDUINO_TEENSY_CORE)/EventResponder.cpp \
   $(ARDUINO_TEENSY_CORE)/AudioStream.cpp \
@@ -150,39 +144,30 @@ CORE_CXX_SOURCES = \
   $(ARDUINO_TEENSY_CORE)/usb_inst.cpp \
   $(ARDUINO_TEENSY_CORE)/yield.cpp
 
-# Teensy ST7735_t3 library C source files
-ST7735_t3_C_SOURCES = \
+# Teensy ST7735_t3 library source files
+ST7735_t3_SOURCES = \
   $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/glcdfont.c \
   $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/st7735_t3_font_ComicSansMS.c \
-  $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/st7735_t3_font_Arial.c
-
-# Teensy ST7735_t3 library C++ source files
-ST7735_t3_CXX_SOURCES = \
+  $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/st7735_t3_font_Arial.c \
   $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/ST7789_t3.cpp \
   $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/ST7735_t3.cpp
 
-# Teensy SPI library C++ source files
-SPI_CXX_SOURCES = \
+# Teensy SPI library source files
+SPI_SOURCES = \
   $(ARDUINO_TEENSY_LIBRARIES)/SPI/SPI.cpp
 
-# Teensy ADC library C++ source files
-ADC_CXX_SOURCES = \
+# Teensy ADC library source files
+ADC_SOURCES = \
   $(ARDUINO_TEENSY_LIBRARIES)/ADC/AnalogBufferDMA.cpp \
   $(ARDUINO_TEENSY_LIBRARIES)/ADC/ADC_Module.cpp \
   $(ARDUINO_TEENSY_LIBRARIES)/ADC/ADC.cpp
 
-# Arduino RF24 library C++ source files
-RF24_CXX_SOURCES = \
+# Arduino RF24 library source files
+RF24_SOURCES = \
   $(ARDUINO_LIBRARIES)/RF24/RF24.cpp
 
-OPENDOG_ASM_SOURCES = \
-  $(CORE_ASM_SOURCES)
-
-OPENDOG_C_SOURCES = \
-  $(ST7735_t3_C_SOURCES) \
-  $(CORE_C_SOURCES)
-
-OPENDOG_CXX_SOURCES = \
+OPENDOG_SOURCES = \
+  ODriveCanTest.ino \
   CanInterfaceCommon.cpp \
   CanInterfaceTeensy4.cpp \
   JointDriver.cpp \
@@ -194,14 +179,11 @@ OPENDOG_CXX_SOURCES = \
   Kinematics.cpp \
   RobotDefinition.cpp \
   StepTrajectory.cpp \
-  $(RF24_CXX_SOURCES) \
-  $(ST7735_t3_CXX_SOURCES) \
-  $(SPI_CXX_SOURCES) \
-  $(ADC_CXX_SOURCES) \
-  $(CORE_CXX_SOURCES)
-
-OPENDOG_SKETCH = \
-  ODriveCanTest.ino
+  $(RF24_SOURCES) \
+  $(ST7735_t3_SOURCES) \
+  $(SPI_SOURCES) \
+  $(ADC_SOURCES) \
+  $(CORE_SOURCES)
 
 # Teensy Core linker script
 LDSCRIPT = $(ARDUINO_TEENSY_CORE)/imxrt1062_t41.ld
@@ -241,18 +223,18 @@ ARM_LDFLAGS = \
 
 # These rules create a list of all .o files we need to cross compile
 # add .c files to objects
-OPENDOG_OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(OPENDOG_C_SOURCES:.c=.o)))
+OPENDOG_OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(patsubst %.c,%.o,$(filter %.c, $(OPENDOG_SOURCES)))))
 # add .cpp files to objects
-OPENDOG_OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(OPENDOG_CXX_SOURCES:.cpp=.o)))
+OPENDOG_OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(patsubst %.cpp,%.o,$(filter %.cpp, $(OPENDOG_SOURCES)))))
 # add .ino files to objects
-OPENDOG_OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(OPENDOG_SKETCH:.ino=.o)))
+OPENDOG_OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(patsubst %.ino,%.o,$(filter %.ino, $(OPENDOG_SOURCES)))))
 # add ASM files to objects
-OPENDOG_OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(OPENDOG_ASM_SOURCES:.S=.o)))
+OPENDOG_OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(patsubst %.S,%.o,$(filter %.S, $(OPENDOG_SOURCES)))))
 
-vpath %.c $(sort $(dir $(OPENDOG_C_SOURCES)))
-vpath %.cpp $(sort $(dir $(OPENDOG_CXX_SOURCES)))
-vpath %.ino $(sort $(dir $(OPENDOG_SKETCH)))
-vpath %.S $(sort $(dir $(OPENDOG_ASM_SOURCES)))
+vpath %.c $(sort $(dir $(filter %.c, $(OPENDOG_SOURCES))))
+vpath %.cpp $(sort $(dir $(filter %.cpp, $(OPENDOG_SOURCES))))
+vpath %.ino $(sort $(dir $(filter %.ino, $(OPENDOG_SOURCES))))
+vpath %.S $(sort $(dir $(filter %.S, $(OPENDOG_SOURCES))))
 
 # Generic rules how to cross compile each file extension
 $(BUILD_DIR)/%.o: %.c Makefile | $(BUILD_DIR)

@@ -535,7 +535,7 @@ public:
   }
 
   void SetState(AxisState newState) {
-    uint8_t buf[4];
+    uint8_t buf[4] = {0};
     can_setSignal<uint32_t>(buf, newState, 0, 32, true);
     SendCmd(MSG_SET_AXIS_REQUESTED_STATE, 4, buf);
   }
@@ -550,14 +550,14 @@ public:
   }
 
   void SetControlerModes(ControlMode crtlMode, InputMode inputMode) {
-    uint8_t buf[8];
+    uint8_t buf[8] = {0};
     can_setSignal<int32_t>(buf, crtlMode, 0, 32, true);
     can_setSignal<int32_t>(buf, inputMode, 32, 32, true);
     SendCmd(MSG_SET_CONTROLLER_MODES, 8, buf);
   }
 
   void SetInputPos(float inputPos, float velFf = 0, float torqueFf = 0) {
-    uint8_t buf[8];
+    uint8_t buf[8] = {0};
     can_setSignal<float>(buf, inputPos, 0, 32, true);
     can_setSignal<int16_t>(buf, velFf, 32, 16, true, 0.001, 0);
     can_setSignal<int16_t>(buf, torqueFf, 48, 16, true, 0.001, 0);
@@ -565,20 +565,20 @@ public:
   }
 
   void SetInputVel(float velocity, float torqueFf = 0) {
-    uint8_t buf[8];
+    uint8_t buf[8] = {0};
     can_setSignal<float>(buf, velocity, 0, 32, true);
     can_setSignal<float>(buf, torqueFf, 32, 32, true);
     SendCmd(MSG_SET_INPUT_VEL, 8, buf);
   }
 
   void SetInputTorque(float torque) {
-    uint8_t buf[4];
+    uint8_t buf[4] = {0};
     can_setSignal<float>(buf, torque, 0, 32, true);
     SendCmd(MSG_SET_INPUT_TORQUE, 4, buf);
   }
 
   void SetLimits(float velLimit, float currentLimit) {
-    uint8_t buf[8];
+    uint8_t buf[8] = {0};
     can_setSignal<float>(buf, velLimit, 0, 32, true);
     can_setSignal<float>(buf, currentLimit, 32, 32, true);
     SendCmd(MSG_SET_LIMITS, 8, buf);
@@ -589,20 +589,20 @@ public:
   }
 
   void SetTrajVelLimit(float velLimit) {
-    uint8_t buf[4];
+    uint8_t buf[4] = {0};
     can_setSignal<float>(buf, velLimit, 0, 32, true);
     SendCmd(MSG_SET_TRAJ_VEL_LIMIT, 4, buf);
   }
 
   void SetTrajAccelLimit(float accelLimit, float decelLimit) {
-    uint8_t buf[8];
+    uint8_t buf[8] = {0};
     can_setSignal<float>(buf, accelLimit, 0, 32, true);
     can_setSignal<float>(buf, decelLimit, 32, 32, true);
     SendCmd(MSG_SET_TRAJ_ACCEL_LIMITS, 8, buf);
   }
 
   void SetTrajInertia(float inertia) {
-    uint8_t buf[4];
+    uint8_t buf[4] = {0};
     can_setSignal<float>(buf, inertia, 0, 32, true);
     SendCmd(MSG_SET_TRAJ_INERTIA, 4, buf);
   }
@@ -628,19 +628,19 @@ public:
   }
 
   void SetLinearCount(int32_t linearCount) {
-    uint8_t buf[4];
+    uint8_t buf[4] = {0};
     can_setSignal<int32_t>(buf, linearCount, 0, 32, true);
     SendCmd(MSG_SET_LINEAR_COUNT, 4, buf);
   }
 
   void SetPosGain(float posGain) {
-    uint8_t buf[4];
+    uint8_t buf[4] = {0};
     can_setSignal<float>(buf, posGain, 0, 32, true);
     SendCmd(MSG_SET_POS_GAIN, 4, buf);
   }
 
   void SetVelGains(float velGain, float velIntegratorGain) {
-    uint8_t buf[8];
+    uint8_t buf[8] = {0};
     can_setSignal<float>(buf, velGain, 0, 32, true);
     can_setSignal<float>(buf, velIntegratorGain, 32, 32, true);
     SendCmd(MSG_SET_VEL_GAINS, 8, buf);

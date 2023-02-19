@@ -5,7 +5,7 @@
  */
 #include <Arduino.h>
 
-#define PROFILE_LOOP
+//#define PROFILE_LOOP
 
 #include "RemoteInput.h"
 #include "TaskManager.hpp"

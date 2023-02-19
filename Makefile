@@ -1,4 +1,5 @@
 OPENDOG_TARGET = OpenDogV3
+REMOTE_TARGET = RemoteDogV3
 BUILD_DIR = build
 
 OPENDOG_FILES = \
@@ -6,7 +7,12 @@ OPENDOG_FILES = \
   $(BUILD_DIR)/$(OPENDOG_TARGET).hex \
   $(BUILD_DIR)/$(OPENDOG_TARGET).bin
 
-all: $(OPENDOG_FILES)
+REMOTE_FILES = \
+  $(BUILD_DIR)/$(REMOTE_TARGET).elf \
+  $(BUILD_DIR)/$(REMOTE_TARGET).hex \
+  $(BUILD_DIR)/$(REMOTE_TARGET).bin
+
+all: $(OPENDOG_FILES) $(REMOTE_FILES)
 
 clean:
 	-rm -fR $(BUILD_DIR) ./tests/test_runner
@@ -185,6 +191,14 @@ OPENDOG_SOURCES = \
   $(ADC_SOURCES) \
   $(CORE_SOURCES)
 
+REMOTE_SOURCES = \
+  Remote.ino \
+  RemoteInput.cpp \
+  $(RF24_SOURCES) \
+  $(SPI_SOURCES) \
+  $(ADC_SOURCES) \
+  $(CORE_SOURCES)
+
 # Teensy Core linker script
 LDSCRIPT = $(ARDUINO_TEENSY_CORE)/imxrt1062_t41.ld
 
@@ -231,10 +245,19 @@ OPENDOG_OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(patsubst %.ino,%.o,$(fil
 # add ASM files to objects
 OPENDOG_OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(patsubst %.S,%.o,$(filter %.S, $(OPENDOG_SOURCES)))))
 
-vpath %.c $(sort $(dir $(filter %.c, $(OPENDOG_SOURCES))))
-vpath %.cpp $(sort $(dir $(filter %.cpp, $(OPENDOG_SOURCES))))
-vpath %.ino $(sort $(dir $(filter %.ino, $(OPENDOG_SOURCES))))
-vpath %.S $(sort $(dir $(filter %.S, $(OPENDOG_SOURCES))))
+# add .c files to objects
+REMOTE_OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(patsubst %.c,%.o,$(filter %.c, $(REMOTE_SOURCES)))))
+# add .cpp files to objects
+REMOTE_OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(patsubst %.cpp,%.o,$(filter %.cpp, $(REMOTE_SOURCES)))))
+# add .ino files to objects
+REMOTE_OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(patsubst %.ino,%.o,$(filter %.ino, $(REMOTE_SOURCES)))))
+# add ASM files to objects
+REMOTE_OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(patsubst %.S,%.o,$(filter %.S, $(REMOTE_SOURCES)))))
+
+vpath %.c $(sort $(dir $(filter %.c, $(OPENDOG_SOURCES) $(REMOTE_SOURCES))))
+vpath %.cpp $(sort $(dir $(filter %.cpp, $(OPENDOG_SOURCES) $(REMOTE_SOURCES))))
+vpath %.ino $(sort $(dir $(filter %.ino, $(OPENDOG_SOURCES) $(REMOTE_SOURCES))))
+vpath %.S $(sort $(dir $(filter %.S, $(OPENDOG_SOURCES) $(REMOTE_SOURCES))))
 
 # Generic rules how to cross compile each file extension
 $(BUILD_DIR)/%.o: %.c Makefile | $(BUILD_DIR)
@@ -266,6 +289,16 @@ $(BUILD_DIR)/$(OPENDOG_TARGET).elf: $(OPENDOG_OBJECTS) Makefile
 
 # Rule how to flash the $(OPENDOG_TARGET).hex to the device
 flash_opendog: $(BUILD_DIR)/$(OPENDOG_TARGET).hex
+	teensy_loader_cli --mcu=TEENSY41 -v -s -w $<
+
+# Rule how to link the $(REMOTE_TARGET).elf
+$(BUILD_DIR)/$(REMOTE_TARGET).elf: $(REMOTE_OBJECTS) Makefile
+	$(ARM_CXX) $(REMOTE_OBJECTS) $(ARM_LDFLAGS) -o $@
+	$(ARM_SZ) $@
+	$(ARDUINO_TEENSY_TOOLS)/teensy_size $@
+
+# Rule how to flash the $(REMOTE_TARGET).hex to the device
+flash_remote: $(BUILD_DIR)/$(REMOTE_TARGET).hex
 	teensy_loader_cli --mcu=TEENSY41 -v -s -w $<
 
 # Rules for unit tests, these run on the host platform

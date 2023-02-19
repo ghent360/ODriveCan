@@ -279,25 +279,24 @@ void setup() {
   //while(!radio.ok());
 
 #ifdef PROFILE_LOOP
-  tm.addBack(tm.newPeriodicTask(
+  taskManager.addBack(taskManager.newPeriodicTask(
     CheckTaskDuration,
-    5000, // once per second
+    5000, // once per 5 seconds
     [](TaskNode*, uint32_t) {
     Serial.print("CAN processing ");
     Serial.println(canProcessDuration);
     Serial.print("Task loop ");
     Serial.print (taskLoopDuration);
-    uint32_t id = tm.getLongestTaskId();
+    uint32_t id = taskManager.getLongestTaskId();
     if (id != (uint32_t)-1) {
       Serial.print(" longest task ID:");
       Serial.print(id);
       Serial.print(" duration ");
-      Serial.println(tm.getMaxTaskTime());
-      tm.resetProfiler();
+      Serial.println(taskManager.getMaxTaskTime());
+      taskManager.resetProfiler();
     }
     Serial.print("Radio processing ");
     Serial.println(radioProcessDuration);
-    resetProcessProfiler();
     Serial.print("Yield duration ");
     Serial.println(yieldDuration);
     resetProcessProfiler();

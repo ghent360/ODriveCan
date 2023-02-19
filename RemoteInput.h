@@ -51,14 +51,15 @@ public:
 private:
   SW3POS sw3ValueFromAdc(int16_t) const;
 
-  static constexpr uint16_t x1MidPoint = 2026;
-  static constexpr uint16_t y1MidPoint = 1982;
-  static constexpr uint16_t z1MidPoint = 2055;
-  static constexpr uint16_t x2MidPoint = 2013;
-  static constexpr uint16_t y2MidPoint = 2082;
-  static constexpr uint16_t z2MidPoint = 2022;
-  static constexpr uint16_t swOnPoint = 2000;
-  static constexpr uint16_t swOffPoint = 10;
+  static constexpr int16_t x1MidPoint = 2026;
+  static constexpr int16_t y1MidPoint = 1982;
+  static constexpr int16_t z1MidPoint = 2055;
+  static constexpr int16_t x2MidPoint = 2013;
+  static constexpr int16_t y2MidPoint = 2082;
+  static constexpr int16_t z2MidPoint = 2022;
+  static constexpr int16_t swOnLowPoint = 2000;
+  static constexpr int16_t swOnHighPoint = 2100;
+  static constexpr int16_t swOffPoint = 10;
   int16_t x1_;
   int16_t y1_;
   int16_t z1_;

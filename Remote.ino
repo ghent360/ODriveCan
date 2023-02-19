@@ -5,20 +5,39 @@
  */
 #include <Arduino.h>
 
+//#define PROFILE_LOOP
+
 #include "RemoteInput.h"
+#include "TaskManager.hpp"
 
-void setup() {
-  Serial.begin(115200);
-  while (!Serial);
-
-  remoteInputs.begin();
+TaskManager taskManager;
+#ifdef PROFILE_LOOP
+#define PROFILE_CALL(x, v) \
+{\
+  startTime = micros();\
+  x;\
+  duration = micros() - startTime;\
+  if (duration > (v)) {\
+    (v) = duration;\
+  }\
 }
+
+static uint32_t inputReadDuration;
+static uint32_t taskLoopDuration;
+
+void resetProcessProfiler() {
+  inputReadDuration = 0;
+  taskLoopDuration = 0;
+}
+#else
+#define PROFILE_CALL(x, v) x
+#endif
 
 static const char* sw3ToStr(SW3POS value) {
   switch(value) {
   case SW3_ON: return "on ";
-  case SW3_OFF: return "off";
   case SW3_MID: return "mid";
+  case SW3_OFF: return "off";
   }
   return "unk";
 }
@@ -31,9 +50,7 @@ static const char* sw2ToStr(SW2POS value) {
   return "unk";
 }
 
-void loop() {
-  remoteInputs.readValues();
-
+static void printRemoteValues() {
   Serial.print("Input: ");
   Serial.print(remoteInputs.getX1());
   Serial.print("  ");
@@ -70,5 +87,46 @@ void loop() {
   remoteInputs.setB2Led(remoteInputs.getB1() == SW2_ON);
   remoteInputs.setB3Led(remoteInputs.getB2() == SW2_ON);
   remoteInputs.setB4Led(remoteInputs.getB3() == SW2_ON);
-  delay(100);
+}
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial);
+
+  remoteInputs.begin();
+  taskManager.addBack(taskManager.newPeriodicTask(
+    1,
+    50,
+    [](TaskNode*, uint32_t) {
+    printRemoteValues();
+  }));
+
+#ifdef PROFILE_LOOP
+  taskManager.addBack(taskManager.newPeriodicTask(
+    1,
+    5000, // once per 5 seconds
+    [](TaskNode*, uint32_t) {
+    Serial.print("Input processing ");
+    Serial.println(inputReadDuration);
+    Serial.print("Task loop ");
+    Serial.print (taskLoopDuration);
+    uint32_t id = taskManager.getLongestTaskId();
+    if (id != (uint32_t)-1) {
+      Serial.print(" longest task ID:");
+      Serial.print(id);
+      Serial.print(" duration ");
+      Serial.println(taskManager.getMaxTaskTime());
+      taskManager.resetProfiler();
+    }
+    resetProcessProfiler();
+  }));
+#endif
+}
+
+void loop() {
+#ifdef PROFILE_LOOP
+  uint32_t startTime, duration;
+#endif
+  PROFILE_CALL(remoteInputs.readValues(), inputReadDuration);
+  PROFILE_CALL(taskManager.runNext(), taskLoopDuration);
 }

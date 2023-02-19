@@ -63,7 +63,7 @@ void RemoteInputs::begin() {
 
 SW3POS RemoteInputs::sw3ValueFromAdc(int16_t value) const {
   if (value <= swOffPoint) return SW3_OFF;
-  if (value >= swOnPoint) return SW3_ON;
+  if (value >= swOnLowPoint && value <= swOnHighPoint) return SW3_ON;
   return SW3_MID;
 }
 
@@ -81,7 +81,6 @@ void RemoteInputs::readValues() {
   x2_ = valueX2 - x2MidPoint;
   y2_ = valueY2 - y2MidPoint;
   z2_ = valueZ2 - z2MidPoint;
-
 
   int16_t valueSW1 = adc.adc0->analogRead(readPinSW1);
   int16_t valueSW2 = adc.adc0->analogRead(readPinSW2);

@@ -19,7 +19,7 @@ enum SW2POS {
 
 class RemoteInputs {
 public:
-
+  void initPins();
   void begin();
   void readValues();
 

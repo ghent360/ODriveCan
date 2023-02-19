@@ -30,7 +30,7 @@ static constexpr int16_t pinB4 = 30;
 
 static ADC adc;
 
-void RemoteInputs::begin() {
+void RemoteInputs::initPins() {
   pinMode(readPinX1, INPUT_DISABLE);
   pinMode(readPinY1, INPUT_DISABLE);
   pinMode(readPinZ1, INPUT_DISABLE);
@@ -50,7 +50,9 @@ void RemoteInputs::begin() {
   pinMode(pinB2Led, OUTPUT);
   pinMode(pinB3Led, OUTPUT);
   pinMode(pinB4Led, OUTPUT);
+}
 
+void RemoteInputs::begin() {
   adc.adc0->setAveraging(8);
   adc.adc0->setResolution(12);
   adc.adc0->setConversionSpeed(ADC_CONVERSION_SPEED::VERY_HIGH_SPEED);

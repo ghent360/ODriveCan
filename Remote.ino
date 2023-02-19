@@ -5,7 +5,7 @@
  */
 #include <Arduino.h>
 
-//#define PROFILE_LOOP
+#define PROFILE_LOOP
 
 #include "RemoteInput.h"
 #include "TaskManager.hpp"
@@ -22,11 +22,9 @@ TaskManager taskManager;
   }\
 }
 
-static uint32_t inputReadDuration;
 static uint32_t taskLoopDuration;
 
 void resetProcessProfiler() {
-  inputReadDuration = 0;
   taskLoopDuration = 0;
 }
 #else
@@ -93,21 +91,28 @@ void setup() {
   Serial.begin(115200);
   while (!Serial);
 
+  remoteInputs.initPins();
   remoteInputs.begin();
+
   taskManager.addBack(taskManager.newPeriodicTask(
     1,
-    50,
+    1,
+    [](TaskNode*, uint32_t) {
+    remoteInputs.readValues();
+  }));
+
+  taskManager.addBack(taskManager.newPeriodicTask(
+    20,
+    250,
     [](TaskNode*, uint32_t) {
     printRemoteValues();
   }));
 
 #ifdef PROFILE_LOOP
   taskManager.addBack(taskManager.newPeriodicTask(
-    1,
+    100,
     5000, // once per 5 seconds
     [](TaskNode*, uint32_t) {
-    Serial.print("Input processing ");
-    Serial.println(inputReadDuration);
     Serial.print("Task loop ");
     Serial.print (taskLoopDuration);
     uint32_t id = taskManager.getLongestTaskId();
@@ -127,6 +132,5 @@ void loop() {
 #ifdef PROFILE_LOOP
   uint32_t startTime, duration;
 #endif
-  PROFILE_CALL(remoteInputs.readValues(), inputReadDuration);
   PROFILE_CALL(taskManager.runNext(), taskLoopDuration);
 }

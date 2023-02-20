@@ -8,6 +8,8 @@
 //#define PROFILE_LOOP
 
 #include "RemoteInput.h"
+#include "RemoteDisplay.h"
+#include "RemoteRadio.h"
 #include "TaskManager.hpp"
 
 TaskManager taskManager;
@@ -23,9 +25,11 @@ TaskManager taskManager;
 }
 
 static uint32_t taskLoopDuration;
+static uint32_t radioPollDuration;
 
 void resetProcessProfiler() {
   taskLoopDuration = 0;
+  radioPollDuration = 0;
 }
 #else
 #define PROFILE_CALL(x, v) x
@@ -92,29 +96,33 @@ void setup() {
   while (!Serial);
 
   remoteInputs.initPins();
-  remoteInputs.begin();
+  remoteDisplay.initPins();
+  remoteRadio.initPins();
 
+  remoteInputs.begin();
+  remoteDisplay.begin();
+  remoteRadio.begin();
   taskManager.addBack(taskManager.newPeriodicTask(
     1,
     1,
-    [](TaskNode*, uint32_t) {
-    remoteInputs.readValues();
-  }));
+    [](TaskNode*, uint32_t) { remoteInputs.readValues(); }));
 
   taskManager.addBack(taskManager.newPeriodicTask(
     20,
-    250,
-    [](TaskNode*, uint32_t) {
-    printRemoteValues();
-  }));
+    2000,
+    [](TaskNode*, uint32_t) { printRemoteValues(); }));
 
+  taskManager.addBack(taskManager.newPeriodicTask(
+    2,
+    66, // 15 fps should be good enough for now
+    [](TaskNode*, uint32_t) { remoteDisplay.updateScreen(); }));
 #ifdef PROFILE_LOOP
   taskManager.addBack(taskManager.newPeriodicTask(
     100,
     5000, // once per 5 seconds
     [](TaskNode*, uint32_t) {
     Serial.print("Task loop ");
-    Serial.print (taskLoopDuration);
+    Serial.print(taskLoopDuration);
     uint32_t id = taskManager.getLongestTaskId();
     if (id != (uint32_t)-1) {
       Serial.print(" longest task ID:");
@@ -123,9 +131,13 @@ void setup() {
       Serial.println(taskManager.getMaxTaskTime());
       taskManager.resetProfiler();
     }
+    Serial.print("Radio poll ");
+    Serial.println(radioPollDuration);
     resetProcessProfiler();
   }));
 #endif
+
+  remoteRadio.startConnection();
 }
 
 void loop() {
@@ -133,4 +145,5 @@ void loop() {
   uint32_t startTime, duration;
 #endif
   PROFILE_CALL(taskManager.runNext(), taskLoopDuration);
+  PROFILE_CALL(remoteRadio.poll(), radioPollDuration);
 }

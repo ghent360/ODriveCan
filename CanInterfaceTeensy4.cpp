@@ -17,10 +17,10 @@ void CanInterface::canInit() {
   // Enable CAN trasciever chips
   // CAN 1
   pinMode(2, OUTPUT);
-  digitalWrite(2, LOW);
+  digitalWriteFast(2, LOW);
   // CAN 3
   pinMode(3, OUTPUT);
-  digitalWrite(3, LOW);
+  digitalWriteFast(3, LOW);
   // Init can bus
   can1.begin();
   can1.setBaudRate(1000000);
@@ -31,8 +31,8 @@ void CanInterface::canInit() {
 }
 
 void CanInterface::canSleep() {
-  digitalWrite(3, HIGH);
-  digitalWrite(2, HIGH);
+  digitalWriteFast(3, HIGH);
+  digitalWriteFast(2, HIGH);
 }
 
 void CanInterface::sendCmdCh1(uint32_t canId, uint8_t len, uint8_t *buf) {

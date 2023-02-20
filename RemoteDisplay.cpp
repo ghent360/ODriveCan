@@ -2,68 +2,66 @@
  * Copyright (c) 2022-2023 ghent360@iqury.us. See LICENSE file for details.
  */
 
-#include "Display.h"
-#include "globals.h"
+#include "RemoteDisplay.h"
+//#include "globals.h"
 
-#include <st7735_t3_font_Arial.h>
+#include <ili9341_t3n_font_Arial.h>
 
 // Screen pin definitions
-#define TFT_MISO  39
-#define TFT_MOSI  26
-#define TFT_SCK   27
-#define TFT_DC    34
-#define TFT_CS    38
-#define TFT_RST   36
-#define TFT_LED   40
+#define TFT_CS    10
+#define TFT_RESET  9
+#define TFT_DC     8
+#define TFT_LED    7
 
-static ST7735_t3 tft = ST7735_t3(
-  TFT_CS, TFT_DC, TFT_MOSI, TFT_SCK, TFT_RST);
+#define TOUCH_CS   6
 
-Display::Display() 
+static ILI9341_t3n tft = ILI9341_t3n(TFT_CS, TFT_DC, TFT_RESET);
+
+// LiPO cell voltage levels
+constexpr float cellMaxVoltage = 4.2f;
+constexpr float cellWarnVoltage = 3.5f;
+constexpr float cellMinVoltage = 3.3f;
+
+RemoteDisplay::RemoteDisplay() 
   : teensy_battery_("M:", 0, 5, 2),
     bus1_battery_("1: ", 0, 5 + (BatteryWidget::batteryBarHeight + 1), 6),
     bus3_battery_("2: ", 0, 5 + 2*(BatteryWidget::batteryBarHeight + 1), 6),
-    can_status_(
-      0, 5 + 4*(BatteryWidget::batteryBarHeight + 1), 8, ST7735_WHITE),
     radio_status_(
-      50 + BatteryWidget::batteryBarWidth, 5, 8, ST7735_WHITE)
-#ifdef AXIS_POS_DISPLAY
-    ,joint_pos_{
-      PositionWidget(  0, 55, 6, ST7735_WHITE), //FRONT_RIGHT_SHIN
-      PositionWidget( 40, 55, 6, ST7735_WHITE), //FRONT_LEFT_SHIN
-      PositionWidget( 80, 55, 6, ST7735_WHITE), //BACK_RIGHT_SHIN
-      PositionWidget(120, 55, 6, ST7735_WHITE), //BACK_LEFT_SHIN
-      PositionWidget(  0, 65, 6, ST7735_WHITE), //FRONT_RIGHT_TIE
-      PositionWidget( 40, 65, 6, ST7735_WHITE), //FRONT_LEFT_TIE
-      PositionWidget( 80, 65, 6, ST7735_WHITE), //BACK_RIGHT_TIE
-      PositionWidget(120, 65, 6, ST7735_WHITE), //BACK_LEFT_TIE
-      PositionWidget(  0, 75, 6, ST7735_WHITE), //FRONT_RIGHT_HIP
-      PositionWidget( 40, 75, 6, ST7735_WHITE), //FRONT_LEFT_HIP
-      PositionWidget( 80, 75, 6, ST7735_WHITE), //BACK_RIGHT_HIP
-      PositionWidget(120, 75, 6, ST7735_WHITE)  //BACK_LEFT_HIP
-    }
-#endif
+      50 + BatteryWidget::batteryBarWidth, 5, 8, ILI9341_WHITE)
     {}
 
-void Display::initDisplay() {
+void RemoteDisplay::initPins() {
   pinMode(TFT_LED, OUTPUT);
+  pinMode(TFT_RESET, OUTPUT);
+  pinMode(TFT_CS, OUTPUT);
+  pinMode(TOUCH_CS, OUTPUT);
+
+  digitalWriteFast(TFT_CS, 1);
+  digitalWriteFast(TOUCH_CS, 1);
+  digitalWriteFast(TFT_RESET, 0);
+  delayNanoseconds(50);
+  digitalWriteFast(TFT_RESET, 1);
+  delayMicroseconds(400);
   digitalWriteFast(TFT_LED, 1);
-  tft.initR(INITR_BLACKTAB);
-  tft.setRotation(3);
+}
+
+void RemoteDisplay::begin() {
+  tft.begin(100000000);
+  tft.setRotation(1);
   tft.useFrameBuffer(true);
   tft.setFont(Arial_8);
-  tft.fillScreen(ST7735_BLACK);
+  tft.fillScreen(ILI9341_BLACK);
   tft.updateScreen();
   for(auto widget : widgets_) {
     widget->init();
   }
 }
 
-void Display::stopDisplay() {
+void RemoteDisplay::stopDisplay() {
   digitalWriteFast(TFT_LED, 0);
 }
 
-void Display::updateScreen() {
+void RemoteDisplay::updateScreen() {
   if (dirty()) {
     //tft.waitUpdateAsyncComplete();
     drawUi();
@@ -71,31 +69,15 @@ void Display::updateScreen() {
   }
 }
 
-void Display::drawUi() {
+void RemoteDisplay::drawUi() {
   for(auto widget : widgets_) {
     widget->draw();
   }
 }
 
-bool Display::busy() {
+bool RemoteDisplay::busy() {
   return tft.asyncUpdateActive();
 }
-
-#ifdef AXIS_POS_DISPLAY
-void Display::setJoinColor(uint8_t axisId, uint16_t color) {
-  DogLegJoint joint = getJointByAxisId(axisId);
-  if (joint < numAxes) {
-    joint_pos_[joint].setColor(color);
-  }
-}
-
-void Display::setJoinPos(uint8_t axisId, float pos) {
-  DogLegJoint joint = getJointByAxisId(axisId);
-  if (joint < numAxes) {
-    joint_pos_[joint].setPos(pos - jointOffsets[joint]);
-  }
-}
-#endif
 
 BatteryWidget::BatteryWidget(
   const char* label, uint8_t x, uint8_t y, uint8_t numCells)
@@ -124,7 +106,7 @@ void BatteryWidget::draw() {
   if (!dirty_) return;
 
   // Clear the widget area
-  tft.fillRect(x_, y_, w_, h_, ST7735_BLACK);
+  tft.fillRect(x_, y_, w_, h_, ILI9341_BLACK);
 
   const float maxVoltage = cellMaxVoltage * num_cells_;
   const float warnVoltage = ((cellMaxVoltage + cellWarnVoltage) / 2) * num_cells_;
@@ -132,11 +114,11 @@ void BatteryWidget::draw() {
   const float minVoltage = cellMinVoltage * num_cells_;
   uint16_t color;
   if (voltage_ > maxVoltage || voltage_ < lowVoltage) {
-    color = ST7735_RED;
+    color = ILI9341_RED;
   } else if (voltage_ < warnVoltage) {
-    color = ST7735_YELLOW;
+    color = ILI9341_YELLOW;
   } else {
-    color = ST7735_GREEN;
+    color = ILI9341_GREEN;
   }
 
   float voltage = voltage_;
@@ -184,7 +166,7 @@ void BatteryWidget::draw() {
 void StatusWidget::draw() {
   if (!dirty_) return;
   // Clear the old widget area
-  tft.fillRect(x_, y_, old_w_, old_h_, ST7735_BLACK);
+  tft.fillRect(x_, y_, old_w_, old_h_, ILI9341_BLACK);
 
   if (status_.length() > 0) {
     tft.setTextColor(color_);
@@ -208,39 +190,4 @@ void StatusWidget::getSize(uint16_t &w, uint16_t &h) {
   }
 }
 
-void PositionWidget::draw() {
-  if (!dirty_) return;
-  // Clear the old widget area
-  tft.fillRect(x_, y_, old_w_, old_h_, ST7735_BLACK);
-
-  if (posStr_.length() > 0) {
-    tft.setTextColor(color_);
-    tft.setTextSize(font_size_);
-    tft.drawString(posStr_.c_str(), x_, y_);
-  }
-  dirty_ = false;
-}
-
-void PositionWidget::getSize(uint16_t &w, uint16_t &h) {
-  if (posStr_.length() > 0) {
-    int16_t x1, y1;
-    uint16_t width, height;
-    tft.setTextSize(font_size_);
-    tft.getTextBounds(posStr_.c_str(), x_, y_, &x1, &y1, &width, &height);
-    w = width;
-    h = height;
-  } else {
-    w = 0;
-    h = 0;
-  }
-}
-
-void PositionWidget::convert() {
-  if (pos_ != 0) {
-    posStr_ = String(pos_, 3);
-  } else {
-    posStr_ = String();
-  }
-}
-
-Display display;
+RemoteDisplay remoteDisplay;

@@ -59,6 +59,7 @@
         "sstream": "cpp",
         "numeric": "cpp",
         "*.ipp": "cpp",
-        "list": "cpp"
+        "list": "cpp",
+        "*.tpp": "cpp"
     }
 }

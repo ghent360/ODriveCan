@@ -59,11 +59,11 @@ ARM_AS_INCLUDES =
 ARM_C_INCLUDES =  \
   -I$(ARDUINO_TEENSY_CORE) \
   -I$(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3 \
-  -I$(ARDUINO_TEENSY_LIBRARIES)/ILI9341_t3 \
   -I$(ARDUINO_TEENSY_LIBRARIES)/XPT2046_Touchscreen \
   -I$(ARDUINO_TEENSY_LIBRARIES)/SPI \
   -I$(ARDUINO_TEENSY_LIBRARIES)/FlexCAN_T4 \
   -I$(ARDUINO_TEENSY_LIBRARIES)/ADC \
+  -I$(ARDUINO_LIBRARIES)/ILI9341_t3n/src \
   -I$(ARDUINO_LIBRARIES)/RF24
 
 # Teensy Arduino core source files
@@ -160,13 +160,6 @@ ST7735_t3_SOURCES = \
   $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/ST7789_t3.cpp \
   $(ARDUINO_TEENSY_LIBRARIES)/ST7735_t3/ST7735_t3.cpp
 
-# Teensy ILI9341_t3 library source files
-ILI9341_t3_SOURCES = \
-  $(ARDUINO_TEENSY_LIBRARIES)/ILI9341_t3/glcdfont.c \
-  $(ARDUINO_TEENSY_LIBRARIES)/ILI9341_t3/font_Arial.c \
-  $(ARDUINO_TEENSY_LIBRARIES)/ILI9341_t3/font_ArialBold.c \
-  $(ARDUINO_TEENSY_LIBRARIES)/ILI9341_t3/ILI9341_t3.cpp
-
 # Teensy XPT2046_Touchscreen library source files
 XPT2046_Touchscreen_SOURCES = \
   $(ARDUINO_TEENSY_LIBRARIES)/XPT2046_Touchscreen/XPT2046_Touchscreen.cpp
@@ -184,6 +177,15 @@ ADC_SOURCES = \
 # Arduino RF24 library source files
 RF24_SOURCES = \
   $(ARDUINO_LIBRARIES)/RF24/RF24.cpp
+
+# Arduino ILI9341_t3n library source files
+ILI9341_t3n_SOURCES = \
+  $(ARDUINO_LIBRARIES)/ILI9341_t3n/src/glcdfont.c \
+  $(ARDUINO_LIBRARIES)/ILI9341_t3n/src/ili9341_t3n_font_Arial.c \
+  $(ARDUINO_LIBRARIES)/ILI9341_t3n/src/ili9341_t3n_font_ArialBold.c \
+  $(ARDUINO_LIBRARIES)/ILI9341_t3n/src/ili9341_t3n_font_ComicSansMS.c \
+  $(ARDUINO_LIBRARIES)/ILI9341_t3n/src/ili9341_t3n_font_OpenSans.c \
+  $(ARDUINO_LIBRARIES)/ILI9341_t3n/src/ILI9341_t3n.cpp
 
 OPENDOG_SOURCES = \
   ODriveCanTest.ino \
@@ -207,7 +209,9 @@ OPENDOG_SOURCES = \
 REMOTE_SOURCES = \
   Remote.ino \
   RemoteInput.cpp \
-  $(ILI9341_t3_SOURCES) \
+  RemoteDisplay.cpp \
+  RemoteRadio.cpp \
+  $(ILI9341_t3n_SOURCES) \
   $(XPT2046_Touchscreen_SOURCES) \
   $(RF24_SOURCES) \
   $(SPI_SOURCES) \

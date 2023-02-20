@@ -5,7 +5,7 @@
 #include "RemoteDisplay.h"
 //#include "globals.h"
 
-#include <ili9341_t3n_font_Arial.h>
+#include "font_Inconsolata-Regular.h"
 
 // Screen pin definitions
 #define TFT_CS    10
@@ -23,11 +23,11 @@ constexpr float cellWarnVoltage = 3.5f;
 constexpr float cellMinVoltage = 3.3f;
 
 RemoteDisplay::RemoteDisplay() 
-  : teensy_battery_("M:", 0, 5, 2),
-    bus1_battery_("1: ", 0, 5 + (BatteryWidget::batteryBarHeight + 1), 6),
-    bus3_battery_("2: ", 0, 5 + 2*(BatteryWidget::batteryBarHeight + 1), 6),
+  : teensy_battery_("M:", 10, 5, 2),
+    bus1_battery_("1:", 10, 5 + (BatteryWidget::batteryBarHeight + 1), 6),
+    bus3_battery_("2:", 10, 5 + 2*(BatteryWidget::batteryBarHeight + 1), 6),
     radio_status_(
-      50 + BatteryWidget::batteryBarWidth, 5, 8, ILI9341_WHITE)
+      80 + BatteryWidget::batteryBarWidth, 8, Inconsolata_Regular_16, ILI9341_WHITE)
     {}
 
 void RemoteDisplay::initPins() {
@@ -49,7 +49,8 @@ void RemoteDisplay::begin() {
   tft.begin(110000000);
   tft.setRotation(1);
   tft.useFrameBuffer(true);
-  tft.setFont(Arial_8);
+  tft.updateChangedAreasOnly(true);
+  tft.setFont(Inconsolata_Regular_12);
   tft.fillScreen(ILI9341_BLACK);
   tft.updateScreen();
   for(auto widget : widgets_) {
@@ -89,7 +90,7 @@ void BatteryWidget::init() {
   if (label_) {
     int16_t x1, y1;
     uint16_t labelW, labelH;
-    tft.setTextSize(6);
+    tft.setFont(Inconsolata_Regular_12);
     tft.getTextBounds(label_, x_, y_, &x1, &y1, &labelW, &labelH);
     bar_x_offset_ = labelW + 2;
     w_ += bar_x_offset_;
@@ -128,7 +129,7 @@ void BatteryWidget::draw() {
 
   if (label_) {
     tft.setTextColor(color);
-    tft.setTextSize(6);
+    tft.setFont(Inconsolata_Regular_12);
     tft.drawString(label_, x_, y_ + label_y_offset_);
   }
   uint8_t x = x_ + bar_x_offset_;
@@ -170,7 +171,7 @@ void StatusWidget::draw() {
 
   if (status_.length() > 0) {
     tft.setTextColor(color_);
-    tft.setTextSize(font_size_);
+    tft.setFont(font_);
     tft.drawString(status_.c_str(), x_, y_);
   }
   dirty_ = false;
@@ -180,7 +181,7 @@ void StatusWidget::getSize(uint16_t &w, uint16_t &h) {
   if (status_.length() > 0) {
     int16_t x1, y1;
     uint16_t width, height;
-    tft.setTextSize(font_size_);
+    tft.setFont(font_);
     tft.getTextBounds(status_.c_str(), x_, y_, &x1, &y1, &width, &height);
     w = width;
     h = height;

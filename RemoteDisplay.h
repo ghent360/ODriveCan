@@ -25,8 +25,8 @@ protected:
 
 class BatteryWidget: public Widget {
 public:
-  static constexpr uint8_t batteryBarWidth = 30;
-  static constexpr uint8_t batteryBarHeight = 8;
+  static constexpr uint8_t batteryBarWidth = 50;
+  static constexpr uint8_t batteryBarHeight = 16;
 
   BatteryWidget(const char* label, uint8_t x, uint8_t y, uint8_t numCells);
 
@@ -58,8 +58,8 @@ private:
 
 class StatusWidget: public Widget {
 public:
-  StatusWidget(uint8_t x, uint8_t y, uint8_t fontSize, uint16_t color)
-    : Widget(x, y), status_(), font_size_(fontSize), color_(color) {}
+  StatusWidget(uint8_t x, uint8_t y, const ILI9341_t3_font_t& font, uint16_t color)
+    : Widget(x, y), status_(), font_(font), color_(color) {}
 
   void setStatus(const char* status) {
     if (status_ != status) {
@@ -96,7 +96,7 @@ public:
   void getSize(uint16_t &w, uint16_t &h) override;
 private:
   String status_;
-  const uint8_t font_size_;
+  const ILI9341_t3_font_t& font_;
   uint16_t color_;
   uint16_t old_w_;
   uint16_t old_h_;

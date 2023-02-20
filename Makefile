@@ -64,7 +64,8 @@ ARM_C_INCLUDES =  \
   -I$(ARDUINO_TEENSY_LIBRARIES)/FlexCAN_T4 \
   -I$(ARDUINO_TEENSY_LIBRARIES)/ADC \
   -I$(ARDUINO_LIBRARIES)/ILI9341_t3n/src \
-  -I$(ARDUINO_LIBRARIES)/RF24
+  -I$(ARDUINO_LIBRARIES)/RF24 \
+  -IFonts
 
 # Teensy Arduino core source files
 CORE_SOURCES = \
@@ -211,6 +212,8 @@ REMOTE_SOURCES = \
   RemoteInput.cpp \
   RemoteDisplay.cpp \
   RemoteRadio.cpp \
+  Fonts/font_Inconsolata-Regular.c \
+  Fonts/font_JetBrainsMono-Regular.c \
   $(ILI9341_t3n_SOURCES) \
   $(XPT2046_Touchscreen_SOURCES) \
   $(RF24_SOURCES) \

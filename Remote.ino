@@ -141,8 +141,6 @@ void setup() {
     resetProcessProfiler();
   }));
 #endif
-
-  remoteRadio.startConnection();
 }
 
 void loop() {

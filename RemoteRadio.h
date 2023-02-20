@@ -12,7 +12,6 @@ public:
   void initPins();
   void begin();
 
-  void startConnection();
   bool txData(const uint8_t *data, uint8_t len);
   void poll();
 private:
@@ -25,6 +24,7 @@ private:
 
   void testChannelCB(TaskNode*);
   void announceChannelCB(TaskNode*);
+  void startConnection();
   void startAnnounceNewChannel();
 
   uint8_t newChannelNo() {

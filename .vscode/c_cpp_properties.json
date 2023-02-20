@@ -8,7 +8,8 @@
                 "${HOME}/.arduino15/packages/teensy/hardware/avr/1.57.1/libraries/SPI",
                 "${HOME}/.arduino15/packages/teensy/hardware/avr/1.57.1/libraries/FlexCAN_T4",
                 "${HOME}/.arduino15/packages/teensy/hardware/avr/1.57.1/libraries/ADC",
-                "${HOME}/Arduino/libraries/RF24"
+                "${HOME}/Arduino/libraries/RF24",
+                "${workspaceFolder}/Fonts"
             ],
             "defines": [
                 "__IMXRT1062__",

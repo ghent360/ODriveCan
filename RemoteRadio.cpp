@@ -43,6 +43,7 @@ void RemoteRadio::begin() {
 
   channel_ = random(0, 125/2) * 2;
   channelConnected_ = false;
+  startConnection();
 }
 
 void RemoteRadio::testChannelCB(TaskNode* self) {
@@ -83,7 +84,7 @@ void RemoteRadio::startConnection() {
   taskManager.removeById(3);
   taskManager.addBack(taskManager.newPeriodicTask(
     3,
-    1,
+    2,
     [](TaskNode* self, uint32_t) { remoteRadio.testChannelCB(self); }));
 }
 

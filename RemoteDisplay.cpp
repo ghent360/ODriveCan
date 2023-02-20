@@ -6,6 +6,11 @@
 //#include "globals.h"
 
 #include "font_Inconsolata-Regular.h"
+#include "font_JetBrainsMono-Regular.h"
+#include "font_FiraCode-Retina.h"
+#include "font_FiraCode-Regular.h"
+#include "font_Anonymous_Pro.h"
+#include "font_Anonymous_Pro_Minus.h"
 
 // Screen pin definitions
 #define TFT_CS    10
@@ -27,7 +32,7 @@ RemoteDisplay::RemoteDisplay()
     bus1_battery_("1:", 10, 5 + (BatteryWidget::batteryBarHeight + 1), 6),
     bus3_battery_("2:", 10, 5 + 2*(BatteryWidget::batteryBarHeight + 1), 6),
     radio_status_(
-      80 + BatteryWidget::batteryBarWidth, 8, Inconsolata_Regular_16, ILI9341_WHITE)
+      80 + BatteryWidget::batteryBarWidth, 8, FiraCodeRetina_14, ILI9341_WHITE)
     {}
 
 void RemoteDisplay::initPins() {
@@ -167,7 +172,7 @@ void BatteryWidget::draw() {
 void StatusWidget::draw() {
   if (!dirty_) return;
   // Clear the old widget area
-  tft.fillRect(x_, y_, old_w_, old_h_, ILI9341_BLACK);
+  tft.fillRect(x_, y_, old_w_ + 2, old_h_, ILI9341_BLACK);
 
   if (status_.length() > 0) {
     tft.setTextColor(color_);

@@ -214,6 +214,10 @@ REMOTE_SOURCES = \
   RemoteRadio.cpp \
   Fonts/font_Inconsolata-Regular.c \
   Fonts/font_JetBrainsMono-Regular.c \
+  Fonts/font_FiraCode-Retina.c \
+  Fonts/font_FiraCode-Regular.c \
+  Fonts/font_Anonymous_Pro.c \
+  Fonts/font_Anonymous_Pro_Minus.c \
   $(ILI9341_t3n_SOURCES) \
   $(XPT2046_Touchscreen_SOURCES) \
   $(RF24_SOURCES) \

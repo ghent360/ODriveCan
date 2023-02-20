@@ -7,24 +7,24 @@
 extern "C" {
 #endif
 
-extern const ILI9341_t3_font_t JetBrainsMono_8;
-extern const ILI9341_t3_font_t JetBrainsMono_9;
-extern const ILI9341_t3_font_t JetBrainsMono_10;
-extern const ILI9341_t3_font_t JetBrainsMono_11;
-extern const ILI9341_t3_font_t JetBrainsMono_12;
-extern const ILI9341_t3_font_t JetBrainsMono_13;
-extern const ILI9341_t3_font_t JetBrainsMono_14;
-extern const ILI9341_t3_font_t JetBrainsMono_16;
-extern const ILI9341_t3_font_t JetBrainsMono_18;
-extern const ILI9341_t3_font_t JetBrainsMono_20;
-extern const ILI9341_t3_font_t JetBrainsMono_24;
-extern const ILI9341_t3_font_t JetBrainsMono_28;
-extern const ILI9341_t3_font_t JetBrainsMono_32;
-extern const ILI9341_t3_font_t JetBrainsMono_40;
-extern const ILI9341_t3_font_t JetBrainsMono_48;
-extern const ILI9341_t3_font_t JetBrainsMono_60;
-extern const ILI9341_t3_font_t JetBrainsMono_72;
-extern const ILI9341_t3_font_t JetBrainsMono_96;
+extern const ILI9341_t3_font_t JetBrainsMono_Regular_8;
+extern const ILI9341_t3_font_t JetBrainsMono_Regular_9;
+extern const ILI9341_t3_font_t JetBrainsMono_Regular_10;
+extern const ILI9341_t3_font_t JetBrainsMono_Regular_11;
+extern const ILI9341_t3_font_t JetBrainsMono_Regular_12;
+extern const ILI9341_t3_font_t JetBrainsMono_Regular_13;
+extern const ILI9341_t3_font_t JetBrainsMono_Regular_14;
+extern const ILI9341_t3_font_t JetBrainsMono_Regular_16;
+extern const ILI9341_t3_font_t JetBrainsMono_Regular_18;
+extern const ILI9341_t3_font_t JetBrainsMono_Regular_20;
+extern const ILI9341_t3_font_t JetBrainsMono_Regular_24;
+extern const ILI9341_t3_font_t JetBrainsMono_Regular_28;
+extern const ILI9341_t3_font_t JetBrainsMono_Regular_32;
+extern const ILI9341_t3_font_t JetBrainsMono_Regular_40;
+extern const ILI9341_t3_font_t JetBrainsMono_Regular_48;
+extern const ILI9341_t3_font_t JetBrainsMono_Regular_60;
+extern const ILI9341_t3_font_t JetBrainsMono_Regular_72;
+extern const ILI9341_t3_font_t JetBrainsMono_Regular_96;
 
 #ifdef __cplusplus
 } // extern "C"

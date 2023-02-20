@@ -172,7 +172,7 @@ void BatteryWidget::draw() {
 void StatusWidget::draw() {
   if (!dirty_) return;
   // Clear the old widget area
-  tft.fillRect(x_, y_, old_w_ + 2, old_h_, ILI9341_BLACK);
+  tft.fillRect(x_ - 1, y_ - 1, old_w_ + 2, old_h_ + 2, ILI9341_BLACK);
 
   if (status_.length() > 0) {
     tft.setTextColor(color_);

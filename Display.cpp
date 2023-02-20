@@ -53,7 +53,7 @@ void Display::initDisplay() {
   tft.useFrameBuffer(true);
   tft.setFont(Arial_8);
   tft.fillScreen(ST7735_BLACK);
-  tft.updateScreen();
+  tft.updateScreenAsync();
   for(auto widget : widgets_) {
     widget->init();
   }
@@ -65,9 +65,9 @@ void Display::stopDisplay() {
 
 void Display::updateScreen() {
   if (dirty()) {
-    //tft.waitUpdateAsyncComplete();
+    tft.waitUpdateAsyncComplete();
     drawUi();
-    tft.updateScreen();
+    tft.updateScreenAsync();
   }
 }
 

@@ -5,7 +5,7 @@
  */
 #include <Arduino.h>
 
-//#define PROFILE_LOOP
+#define PROFILE_LOOP
 
 #include "RemoteInput.h"
 #include "RemoteDisplay.h"
@@ -109,13 +109,18 @@ void setup() {
 
   taskManager.addBack(taskManager.newPeriodicTask(
     20,
-    2000,
+    500,
     [](TaskNode*, uint32_t) { printRemoteValues(); }));
 
   taskManager.addBack(taskManager.newPeriodicTask(
     2,
     66, // 15 fps should be good enough for now
     [](TaskNode*, uint32_t) { remoteDisplay.updateScreen(); }));
+
+  taskManager.addBack(taskManager.newPeriodicTask(
+    21,
+    100,
+    [](TaskNode*, uint32_t) { remoteRadio.txData((const uint8_t*)"Hello", 6); }));
 #ifdef PROFILE_LOOP
   taskManager.addBack(taskManager.newPeriodicTask(
     100,

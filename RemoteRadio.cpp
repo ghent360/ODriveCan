@@ -3,6 +3,7 @@
  */
 
 #include "RemoteRadio.h"
+#include "RemoteDisplay.h"
 #include <RF24.h>
 
 #define NRF_CE_PIN 2
@@ -47,9 +48,9 @@ void RemoteRadio::begin() {
 void RemoteRadio::testChannelCB(TaskNode* self) {
   if (!testChannelTriesRemaining_) {
     channel_ = newChannelNo();
-    Serial.print("Switching to channel ");
-    Serial.println(channel_);
     radio.setChannel(channel_);
+    remoteDisplay.setRadioStatus(String("ch ") + String(channel_));
+    remoteDisplay.setRadioStatusColor(ILI9341_ORANGE);
     testChannelTriesRemaining_ = testRetries;
     return;
   }
@@ -64,8 +65,7 @@ void RemoteRadio::testChannelCB(TaskNode* self) {
     radio.setRetries(1, dataPktRetries);
     radio.openWritingPipe(addressData);
     channelConnected_ = true;
-    Serial.print("Radio connected on channel ");
-    Serial.println(channel_);
+    remoteDisplay.setRadioStatusColor(ILI9341_GREEN);
     taskManager.remove(self, true);
     return;
   }
@@ -76,8 +76,8 @@ void RemoteRadio::startConnection() {
   channelConnected_ = false;
   radio.setRetries(0, testPktRetries);
   radio.openWritingPipe(addressCtl);
-  Serial.print("Switching to channel ");
-  Serial.println(channel_);
+  remoteDisplay.setRadioStatus(String("ch ") + String(channel_));
+  remoteDisplay.setRadioStatusColor(ILI9341_ORANGE);
   radio.setChannel(channel_);
   testChannelTriesRemaining_ = testRetries;
   taskManager.removeById(3);
@@ -109,6 +109,7 @@ bool RemoteRadio::txData(const uint8_t *data, uint8_t len) {
     Serial.print("Signal quality low ");
     Serial.print(quality);
     Serial.println(" selecting new channel.");
+    remoteDisplay.setRadioStatusColor(ILI9341_RED);
     channelConnected_ = false;
     startAnnounceNewChannel();
   }
@@ -154,7 +155,6 @@ void RemoteRadio::announceChannelCB(TaskNode* self) {
 }
 
 void RemoteRadio::poll() {
-#if 0    
   if (channelConnected_ && (digitalReadFast(NRF_IRQ_PIN) == 0)) {
     if (radio.available()) {
       int len = radio.getDynamicPayloadSize();
@@ -165,7 +165,6 @@ void RemoteRadio::poll() {
       //Serial.println((const char*)ackData_);
     }
   }
-#endif
 }
 
 RemoteRadio remoteRadio;

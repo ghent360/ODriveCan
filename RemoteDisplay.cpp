@@ -46,7 +46,7 @@ void RemoteDisplay::initPins() {
 }
 
 void RemoteDisplay::begin() {
-  tft.begin(100000000);
+  tft.begin(110000000);
   tft.setRotation(1);
   tft.useFrameBuffer(true);
   tft.setFont(Arial_8);

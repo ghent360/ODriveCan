@@ -69,7 +69,7 @@ SW3POS RemoteInputs::sw3ValueFromAdc(int16_t value) const {
   return SW3_MID;
 }
 
-void RemoteInputs::readValues() {
+void RemoteInputs::readStickValues() {
   int16_t valueX1 = adc.adc0->analogRead(readPinX1);
   int16_t valueY1 = adc.adc0->analogRead(readPinY1);
   int16_t valueZ1 = adc.adc0->analogRead(readPinZ1);
@@ -83,7 +83,9 @@ void RemoteInputs::readValues() {
   x2_ = valueX2 - x2MidPoint;
   y2_ = valueY2 - y2MidPoint;
   z2_ = valueZ2 - z2MidPoint;
+}
 
+void RemoteInputs::readSwitchValues() {
   int16_t valueSW1 = adc.adc0->analogRead(readPinSW1);
   int16_t valueSW2 = adc.adc0->analogRead(readPinSW2);
   int16_t valueSW3 = adc.adc0->analogRead(readPinSW3);

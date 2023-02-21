@@ -33,8 +33,8 @@ static const ButtonStyle stdButton = {
   .bg_active_color_ = ILI9341_YELLOW,
   .text_normal_color_ = ILI9341_YELLOW,
   .text_active_color_ = ILI9341_DARKGREY,
-  .border_normal_color_ = ILI9341_DARKGREEN,
-  .border_active_color_ = ILI9341_GREEN,
+  .border_normal_color_ = ILI9341_WHITE,
+  .border_active_color_ = ILI9341_RED,
 };
 
 RemoteDisplay::RemoteDisplay() 
@@ -149,10 +149,7 @@ void BatteryWidget::draw() {
   }
   uint8_t x = x_ + bar_x_offset_;
   uint8_t y = y_ + bar_y_offset_;
-  tft.drawFastHLine(x, y, batteryBarWidth, batteryBarColor);
-  tft.drawFastHLine(x, y + batteryBarHeight - 1, batteryBarWidth, batteryBarColor);
-  tft.drawFastVLine(x, y, batteryBarHeight, batteryBarColor);
-  tft.drawFastVLine(x + batteryBarWidth - 1, y, batteryBarHeight, batteryBarColor);
+  tft.drawRect(x, y, batteryBarWidth, batteryBarHeight, batteryBarColor);
   uint16_t barWidth = 
     (uint16_t)(
         (float)(batteryBarWidth - 2) * (voltage - minVoltage) / 

@@ -91,6 +91,7 @@ static void updateRemoteValues() {
   remoteDisplay.setSW3Label(sw3ToStr(remoteInputs.getSW3()));
   remoteDisplay.setSW4Label(sw3ToStr(remoteInputs.getSW4()));
   remoteDisplay.setSW5Label(sw2ToStr(remoteInputs.getSW5()));
+  remoteDisplay.setSW1Active(remoteInputs.getB1() == SW2_ON);
   remoteInputs.setB1Led(remoteInputs.getB4() == SW2_ON);
   remoteInputs.setB2Led(remoteInputs.getB1() == SW2_ON);
   remoteInputs.setB3Led(remoteInputs.getB2() == SW2_ON);
@@ -108,10 +109,16 @@ void setup() {
   remoteInputs.begin();
   remoteDisplay.begin();
   remoteRadio.begin();
+
   taskManager.addBack(taskManager.newPeriodicTask(
-    1,
-    1,
-    [](TaskNode*, uint32_t) { remoteInputs.readValues(); }));
+    100,
+    5,
+    [](TaskNode*, uint32_t) { remoteInputs.readStickValues(); }));
+
+  taskManager.addBack(taskManager.newPeriodicTask(
+    101,
+    100,
+    [](TaskNode*, uint32_t) { remoteInputs.readSwitchValues(); }));
 
   taskManager.addBack(taskManager.newPeriodicTask(
     20,

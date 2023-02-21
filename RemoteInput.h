@@ -21,7 +21,8 @@ class RemoteInputs {
 public:
   void initPins();
   void begin();
-  void readValues();
+  void readStickValues();
+  void readSwitchValues();
 
   // Joysticks
   int16_t getX1() const { return x1_; }

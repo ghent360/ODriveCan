@@ -233,6 +233,21 @@ public:
   void setSW5Label(const char* v) {
     sw5_.setLabel(v);
   }
+  void setSW1Active(bool v) {
+    sw1_.activate(v);
+  }
+  void setSW2Active(bool v) {
+    sw2_.activate(v);
+  }
+  void setSW3Active(bool v) {
+    sw3_.activate(v);
+  }
+  void setSW4Active(bool v) {
+    sw4_.activate(v);
+  }
+  void setSW5Active(bool v) {
+    sw5_.activate(v);
+  }
 private:
   void drawUi();
   bool dirty() const {

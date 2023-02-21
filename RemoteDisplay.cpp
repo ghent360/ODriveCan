@@ -28,13 +28,13 @@ static constexpr float cellWarnVoltage = 3.5f;
 static constexpr float cellMinVoltage = 3.3f;
 
 static const ButtonStyle stdButton = {
-  .font_ = &FiraCodeRetina_14,
+  .font_ = &Inconsolata_Regular_10,
   .bg_normal_color_ = ILI9341_BLACK,
   .bg_active_color_ = ILI9341_YELLOW,
   .text_normal_color_ = ILI9341_YELLOW,
-  .text_active_color_ = ILI9341_DARKGREY,
+  .text_active_color_ = ILI9341_BLACK,
   .border_normal_color_ = ILI9341_WHITE,
-  .border_active_color_ = ILI9341_RED,
+  .border_active_color_ = ILI9341_YELLOW,
 };
 
 RemoteDisplay::RemoteDisplay() 

@@ -10,6 +10,7 @@
 #include "RemoteInput.h"
 #include "RemoteDisplay.h"
 #include "RemoteRadio.h"
+#include "RemoteTouch.h"
 #include "TaskManager.hpp"
 
 TaskManager taskManager;
@@ -105,10 +106,12 @@ void setup() {
   remoteInputs.initPins();
   remoteDisplay.initPins();
   remoteRadio.initPins();
+  remoteTouch.initPins();
 
   remoteInputs.begin();
   remoteDisplay.begin();
   remoteRadio.begin();
+  remoteTouch.begin();
 
   taskManager.addBack(taskManager.newPeriodicTask(
     100,

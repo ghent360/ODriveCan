@@ -156,8 +156,10 @@ public:
   }
 
   void activate(bool value) {
-    active_ = value;
-    dirty_ = true;
+    if (active_ != value) {
+      active_ = value;
+      dirty_ = true;
+    }
   }
 
   void init() override {

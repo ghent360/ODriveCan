@@ -212,6 +212,7 @@ REMOTE_SOURCES = \
   RemoteInput.cpp \
   RemoteDisplay.cpp \
   RemoteRadio.cpp \
+  RemoteTouch.cpp \
   Fonts/font_Inconsolata-Regular.c \
   Fonts/font_JetBrainsMono-Regular.c \
   Fonts/font_FiraCode-Retina.c \

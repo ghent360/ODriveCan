@@ -18,8 +18,6 @@
 #define TFT_DC     8
 #define TFT_LED    7
 
-#define TOUCH_CS   6
-
 static ILI9341_t3n tft = ILI9341_t3n(TFT_CS, TFT_DC, TFT_RESET);
 
 // LiPO cell voltage levels
@@ -54,10 +52,8 @@ void RemoteDisplay::initPins() {
   pinMode(TFT_LED, OUTPUT);
   pinMode(TFT_RESET, OUTPUT);
   pinMode(TFT_CS, OUTPUT);
-  pinMode(TOUCH_CS, OUTPUT);
 
   digitalWriteFast(TFT_CS, 1);
-  digitalWriteFast(TOUCH_CS, 1);
   digitalWriteFast(TFT_RESET, 0);
   delayNanoseconds(50);
   digitalWriteFast(TFT_RESET, 1);

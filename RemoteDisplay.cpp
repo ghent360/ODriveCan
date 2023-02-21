@@ -23,16 +23,31 @@
 static ILI9341_t3n tft = ILI9341_t3n(TFT_CS, TFT_DC, TFT_RESET);
 
 // LiPO cell voltage levels
-constexpr float cellMaxVoltage = 4.2f;
-constexpr float cellWarnVoltage = 3.5f;
-constexpr float cellMinVoltage = 3.3f;
+static constexpr float cellMaxVoltage = 4.2f;
+static constexpr float cellWarnVoltage = 3.5f;
+static constexpr float cellMinVoltage = 3.3f;
+
+static const ButtonStyle stdButton = {
+  .font_ = &FiraCodeRetina_14,
+  .bg_normal_color_ = ILI9341_BLACK,
+  .bg_active_color_ = ILI9341_YELLOW,
+  .text_normal_color_ = ILI9341_YELLOW,
+  .text_active_color_ = ILI9341_DARKGREY,
+  .border_normal_color_ = ILI9341_DARKGREEN,
+  .border_active_color_ = ILI9341_GREEN,
+};
 
 RemoteDisplay::RemoteDisplay() 
   : teensy_battery_("M:", 10, 5, 2),
     bus1_battery_("1:", 10, 5 + (BatteryWidget::batteryBarHeight + 1), 6),
-    bus3_battery_("2:", 10, 5 + 2*(BatteryWidget::batteryBarHeight + 1), 6),
+    bus3_battery_("2:", 10, 5 + 2 * (BatteryWidget::batteryBarHeight + 1), 6),
     radio_status_(
-      80 + BatteryWidget::batteryBarWidth, 8, FiraCodeRetina_14, ILI9341_WHITE)
+      80 + BatteryWidget::batteryBarWidth, 8, FiraCodeRetina_14, ILI9341_WHITE),
+    sw1_(5, 210, 60, 22, "", stdButton),
+    sw2_(67, 210, 60, 22, "", stdButton),
+    sw3_(129, 210, 60, 22, "", stdButton),
+    sw4_(191, 210, 60, 22, "", stdButton),
+    sw5_(253, 210, 60, 22, "", stdButton)
     {}
 
 void RemoteDisplay::initPins() {
@@ -83,11 +98,6 @@ void RemoteDisplay::drawUi() {
 
 bool RemoteDisplay::busy() {
   return tft.asyncUpdateActive();
-}
-
-BatteryWidget::BatteryWidget(
-  const char* label, uint8_t x, uint8_t y, uint8_t numCells)
-  : Widget(x, y), label_(label), num_cells_(numCells) {
 }
 
 void BatteryWidget::init() {
@@ -194,6 +204,41 @@ void StatusWidget::getSize(uint16_t &w, uint16_t &h) {
     w = 0;
     h = 0;
   }
+}
+
+void ButtonWidget::draw() {
+  if (!dirty_) return;
+  tft.drawRect(
+    x_, y_, w_, h_,
+    active_ ? style_.border_active_color_ : style_.border_normal_color_);
+  tft.fillRect(
+    x_ + 1, y_ + 1, w_ - 2, h_ - 2,
+    active_ ? style_.bg_active_color_ : style_.bg_normal_color_);
+  if (label_.length() > 0) {
+    tft.setFont(*style_.font_);
+    tft.setTextColor(
+      active_ ? style_.text_active_color_ : style_.text_normal_color_);
+    tft.drawString(label_.c_str(), x_ + label_x_offset_ + 1, y_ + label_y_offset_ + 1);
+  }
+  dirty_ = false;
+}
+
+void ButtonWidget::centerLabel() {
+  if (label_.length() > 0) {
+    int16_t x1, y1;
+    uint16_t width, height;
+    tft.setFont(*style_.font_);
+    tft.getTextBounds(label_.c_str(), x_, y_, &x1, &y1, &width, &height);
+    label_x_offset_ = (w_ - width) / 2;
+    label_y_offset_ = (h_ - height) / 2;
+  } else {
+    label_x_offset_ = 0;
+    label_y_offset_ = 0;
+  }
+}
+
+bool ButtonWidget::isHit(uint16_t x, uint16_t y) {
+  return (x >= x_ && x <= (x_ + w_)) && (y >= y_ && y <= (y_ + h_));
 }
 
 RemoteDisplay remoteDisplay;

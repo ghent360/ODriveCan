@@ -37,22 +37,23 @@ void resetProcessProfiler() {
 
 static const char* sw3ToStr(SW3POS value) {
   switch(value) {
-  case SW3_ON: return "on ";
-  case SW3_MID: return "mid";
-  case SW3_OFF: return "off";
+  case SW3_ON: return "ON";
+  case SW3_MID: return "MID";
+  case SW3_OFF: return "OFF";
   }
   return "unk";
 }
 
 static const char* sw2ToStr(SW2POS value) {
   switch(value) {
-  case SW2_ON: return "on ";
-  case SW2_OFF: return "off";
+  case SW2_ON: return "ON";
+  case SW2_OFF: return "OFF";
   }
   return "unk";
 }
 
-static void printRemoteValues() {
+static void updateRemoteValues() {
+#if 0
   Serial.print("Input: ");
   Serial.print(remoteInputs.getX1());
   Serial.print("  ");
@@ -84,7 +85,12 @@ static void printRemoteValues() {
   Serial.print("  ");
   Serial.print(sw2ToStr(remoteInputs.getB4()));
   Serial.println();
-
+#endif
+  remoteDisplay.setSW1Label(sw3ToStr(remoteInputs.getSW1()));
+  remoteDisplay.setSW2Label(sw3ToStr(remoteInputs.getSW2()));
+  remoteDisplay.setSW3Label(sw3ToStr(remoteInputs.getSW3()));
+  remoteDisplay.setSW4Label(sw3ToStr(remoteInputs.getSW4()));
+  remoteDisplay.setSW5Label(sw2ToStr(remoteInputs.getSW5()));
   remoteInputs.setB1Led(remoteInputs.getB4() == SW2_ON);
   remoteInputs.setB2Led(remoteInputs.getB1() == SW2_ON);
   remoteInputs.setB3Led(remoteInputs.getB2() == SW2_ON);
@@ -109,8 +115,8 @@ void setup() {
 
   taskManager.addBack(taskManager.newPeriodicTask(
     20,
-    500,
-    [](TaskNode*, uint32_t) { printRemoteValues(); }));
+    66,
+    [](TaskNode*, uint32_t) { updateRemoteValues(); }));
 
   taskManager.addBack(taskManager.newPeriodicTask(
     2,

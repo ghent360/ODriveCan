@@ -9,8 +9,8 @@
 
 class Widget {
 public:
-  Widget(uint8_t x, uint8_t y)
-    : x_(x), y_(y), dirty_(false) {}
+  Widget(uint16_t x, uint16_t y)
+    : x_(x), y_(y), dirty_(true) {}
   virtual ~Widget() {}
 
   virtual void init() = 0;
@@ -18,8 +18,8 @@ public:
   virtual void draw() = 0;
   virtual void getSize(uint16_t &w, uint16_t &h) = 0;
 protected:
-  const uint8_t x_;
-  const uint8_t y_;
+  const uint16_t x_;
+  const uint16_t y_;
   bool dirty_;
 };
 
@@ -28,7 +28,10 @@ public:
   static constexpr uint8_t batteryBarWidth = 50;
   static constexpr uint8_t batteryBarHeight = 16;
 
-  BatteryWidget(const char* label, uint8_t x, uint8_t y, uint8_t numCells);
+  BatteryWidget(
+    const char* label, uint16_t x, uint16_t y, uint8_t numCells)
+    : Widget(x, y), label_(label), num_cells_(numCells) {
+  }
 
   void setVoltage(float v) {
     if (fabsf(v - voltage_) > 0.01f) {
@@ -58,7 +61,8 @@ private:
 
 class StatusWidget: public Widget {
 public:
-  StatusWidget(uint8_t x, uint8_t y, const ILI9341_t3_font_t& font, uint16_t color)
+  StatusWidget(
+    uint16_t x, uint16_t y, const ILI9341_t3_font_t& font, uint16_t color)
     : Widget(x, y), status_(), font_(font), color_(color) {}
 
   void setStatus(const char* status) {
@@ -102,6 +106,84 @@ private:
   uint16_t old_h_;
 };
 
+class ButtonStyle {
+public:
+  const ILI9341_t3_font_t* font_;
+  uint16_t bg_normal_color_;
+  uint16_t bg_active_color_;
+  uint16_t text_normal_color_;
+  uint16_t text_active_color_;
+  uint16_t border_normal_color_;
+  uint16_t border_active_color_;
+};
+
+class ButtonWidget: public Widget {
+public:
+  ButtonWidget(
+    uint16_t x,
+    uint16_t y,
+    uint16_t w,
+    uint16_t h,
+    const char* label,
+    const ButtonStyle& style)
+    : Widget(x, y),
+      active_(false),
+      label_(label),
+      style_(style),
+      w_(w),
+      h_(h) {
+  }
+
+  void setLabel(const char* value) {
+    if (label_ != value) {
+      label_ = value;
+      centerLabel();
+      dirty_ = true;
+    }
+  }
+  
+  void setLabel(const String& value) {
+    if (label_ != value) {
+      label_ = value;
+      centerLabel();
+      dirty_ = true;
+    }
+  }
+
+  void setStyle(const ButtonStyle& style) {
+    style_ = style;
+    dirty_ = true;
+  }
+
+  void activate(bool value) {
+    active_ = value;
+    dirty_ = true;
+  }
+
+  void init() override {
+    centerLabel();
+  };
+
+  void draw() override;
+
+  void getSize(uint16_t &w, uint16_t &h) override {
+    w = w_;
+    h = h_;
+  }
+
+  bool isHit(uint16_t x, uint16_t y);
+private:
+  void centerLabel();
+
+  bool active_;
+  String label_;
+  ButtonStyle style_;
+  const uint16_t w_;
+  const uint16_t h_;
+  uint16_t label_x_offset_;
+  uint16_t label_y_offset_;
+};
+
 class RemoteDisplay {
 public:
   RemoteDisplay();
@@ -136,6 +218,21 @@ public:
     radio_status_.setColor(color);
   }
 
+  void setSW1Label(const char* v) {
+    sw1_.setLabel(v);
+  }
+  void setSW2Label(const char* v) {
+    sw2_.setLabel(v);
+  }
+  void setSW3Label(const char* v) {
+    sw3_.setLabel(v);
+  }
+  void setSW4Label(const char* v) {
+    sw4_.setLabel(v);
+  }
+  void setSW5Label(const char* v) {
+    sw5_.setLabel(v);
+  }
 private:
   void drawUi();
   bool dirty() const {
@@ -149,11 +246,21 @@ private:
   BatteryWidget bus1_battery_;
   BatteryWidget bus3_battery_;
   StatusWidget radio_status_;
-  Widget* widgets_[4] = {
+  ButtonWidget sw1_;
+  ButtonWidget sw2_;
+  ButtonWidget sw3_;
+  ButtonWidget sw4_;
+  ButtonWidget sw5_;
+  Widget* widgets_[9] = {
     &teensy_battery_,
     &bus1_battery_,
     &bus3_battery_,
     &radio_status_,
+    &sw1_,
+    &sw2_,
+    &sw3_,
+    &sw4_,
+    &sw5_,
   };
 };
 

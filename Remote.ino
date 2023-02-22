@@ -14,6 +14,7 @@
 #include "TaskManager.hpp"
 
 TaskManager taskManager;
+
 #ifdef PROFILE_LOOP
 #define PROFILE_CALL(x, v) \
 {\
@@ -93,6 +94,8 @@ static void updateRemoteValues() {
   remoteDisplay.setSW4Label(sw3ToStr(remoteInputs.getSW4()));
   remoteDisplay.setSW5Label(sw2ToStr(remoteInputs.getSW5()));
   remoteDisplay.setSW1Active(remoteInputs.getB1() == SW2_ON);
+  remoteDisplay.setX1(-float(remoteInputs.getX1()) / 2000);
+  remoteDisplay.setY1(-float(remoteInputs.getY1()) / 2000);
   remoteInputs.setB1Led(remoteInputs.getB4() == SW2_ON);
   remoteInputs.setB2Led(remoteInputs.getB1() == SW2_ON);
   remoteInputs.setB3Led(remoteInputs.getB2() == SW2_ON);

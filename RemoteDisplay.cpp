@@ -3,7 +3,7 @@
  */
 
 #include "RemoteDisplay.h"
-//#include "globals.h"
+#include <cmath>
 
 #include "font_Inconsolata-Regular.h"
 #include "font_JetBrainsMono-Regular.h"
@@ -45,8 +45,9 @@ RemoteDisplay::RemoteDisplay()
     sw2_(67, 210, 60, 22, "", stdButton),
     sw3_(129, 210, 60, 22, "", stdButton),
     sw4_(191, 210, 60, 22, "", stdButton),
-    sw5_(253, 210, 60, 22, "", stdButton)
-    {}
+    sw5_(253, 210, 60, 22, "", stdButton),
+    x1_(10, 100, 50, 10, true),
+    y1_(30, 80, 10, 50, true) {}
 
 void RemoteDisplay::initPins() {
   pinMode(TFT_LED, OUTPUT);
@@ -232,6 +233,86 @@ void ButtonWidget::centerLabel() {
 
 bool ButtonWidget::isHit(uint16_t x, uint16_t y) {
   return (x >= x_ && x <= (x_ + w_)) && (y >= y_ && y <= (y_ + h_));
+}
+
+void HBarWidget::draw() {
+  if (!dirty_) return;
+
+  tft.fillRect(x_, y_, w_, h_, ILI9341_BLACK);
+  tft.drawRoundRect(x_, y_, w_, h_, h_ / 2, ILI9341_WHITE);
+  if (sgn_) {
+    if (value_ > 0) {
+      uint16_t w = (uint16_t)std::roundf((w_ / 2 - 1) * value_);
+      tft.fillRoundRect(
+        x_ + w_ / 2,
+        y_ + 1,
+        w,
+        h_ - 2,
+        (h_ - 2) / 2,
+        ILI9341_GREEN);
+    } else if (value_ < 0) {
+      int16_t w = -(int16_t)std::roundf((w_ / 2 - 1) * value_);
+      tft.fillRoundRect(
+        x_ + 1 + (w_ / 2 - w),
+        y_ + 1,
+        w,
+        h_ - 2,
+        (h_ - 2) / 2,
+        ILI9341_GREEN);
+    }
+  } else {
+    if (value_ > 0) {
+      uint16_t w = (uint16_t)std::roundf((w_ - 2) * value_);
+      tft.fillRoundRect(
+        x_ + 1,
+        y_ + 1,
+        w,
+        h_ - 2,
+        (h_ - 2) / 2,
+        ILI9341_GREEN);
+    }
+  }
+  dirty_ = false;
+}
+
+void VBarWidget::draw() {
+  if (!dirty_) return;
+
+  tft.fillRect(x_, y_, w_, h_, ILI9341_BLACK);
+  tft.drawRoundRect(x_, y_, w_, h_, w_ / 2, ILI9341_WHITE);
+  if (sgn_) {
+    if (value_ > 0) {
+      uint16_t h = (uint16_t)std::roundf((h_ / 2 - 1) * value_);
+      tft.fillRoundRect(
+        x_ + 1,
+        y_ + h_ / 2,
+        w_ - 2,
+        h,
+        (w_ - 2) / 2,
+        ILI9341_GREEN);
+    } else if (value_ < 0) {
+      int16_t h = -(int16_t)std::roundf((h_ / 2 - 1) * value_);
+      tft.fillRoundRect(
+        x_ + 1,
+        y_ + 1 + (h_ / 2 - h),
+        w_ - 2,
+        h,
+        (w_ - 2) / 2,
+        ILI9341_GREEN);
+    }
+  } else {
+    if (value_ > 0) {
+      uint16_t h = (uint16_t)std::roundf((h_ - 2) * value_);
+      tft.fillRoundRect(
+        x_ + 1,
+        y_ + 1,
+        w_ - 2,
+        h,
+        (w_ - 2) / 2,
+        ILI9341_GREEN);
+    }
+  }
+  dirty_ = false;
 }
 
 RemoteDisplay remoteDisplay;

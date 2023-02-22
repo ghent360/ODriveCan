@@ -186,6 +186,82 @@ private:
   uint16_t label_y_offset_;
 };
 
+class HBarWidget: public Widget {
+public:
+  HBarWidget(uint16_t x, uint16_t y, uint16_t w, uint16_t h, bool sgn = false)
+    : Widget(x, y), w_(w), h_(h), sgn_(sgn) {
+  }
+
+  void setValue(float v) {
+    if (v > 1.0f) {
+      v = 1.0f;
+    }
+    if (sgn_) {
+      if (v < -1.0f) {
+        v = -1.0f;
+      }
+    } else {
+      if (v < 0) {
+        v = 0;
+      }
+    }
+    if (fabsf(value_ - v) > 0.01) {
+      value_ = v;
+      dirty_ = true;
+    }
+  }
+
+  void init() override {}
+  void draw() override;
+  void getSize(uint16_t &w, uint16_t &h) override {
+    w = w_;
+    h = h_;
+  }
+private:
+  uint16_t w_;
+  uint16_t h_;
+  bool sgn_;
+  float value_;
+};
+
+class VBarWidget: public Widget {
+public:
+  VBarWidget(uint16_t x, uint16_t y, uint16_t w, uint16_t h, bool sgn = false)
+    : Widget(x, y), w_(w), h_(h), sgn_(sgn) {
+  }
+
+  void setValue(float v) {
+    if (v > 1.0f) {
+      v = 1.0f;
+    }
+    if (sgn_) {
+      if (v < -1.0f) {
+        v = -1.0f;
+      }
+    } else {
+      if (v < 0) {
+        v = 0;
+      }
+    }
+    if (fabsf(value_ - v) > 0.01) {
+      value_ = v;
+      dirty_ = true;
+    }
+  }
+
+  void init() override {}
+  void draw() override;
+  void getSize(uint16_t &w, uint16_t &h) override {
+    w = w_;
+    h = h_;
+  }
+private:
+  uint16_t w_;
+  uint16_t h_;
+  bool sgn_;
+  float value_;
+};
+
 class RemoteDisplay {
 public:
   RemoteDisplay();
@@ -250,6 +326,12 @@ public:
   void setSW5Active(bool v) {
     sw5_.activate(v);
   }
+  void setX1(float v) {
+    x1_.setValue(v);
+  }
+  void setY1(float v) {
+    y1_.setValue(v);
+  }
 private:
   void drawUi();
   bool dirty() const {
@@ -268,7 +350,9 @@ private:
   ButtonWidget sw3_;
   ButtonWidget sw4_;
   ButtonWidget sw5_;
-  Widget* widgets_[9] = {
+  HBarWidget x1_;
+  VBarWidget y1_;
+  Widget* widgets_[11] = {
     &teensy_battery_,
     &bus1_battery_,
     &bus3_battery_,
@@ -278,6 +362,8 @@ private:
     &sw3_,
     &sw4_,
     &sw5_,
+    &x1_,
+    &y1_,
   };
 };
 

@@ -11,16 +11,14 @@ class MenuItem: public Widget {
 public:
   MenuItem(uint16_t x = 0, uint16_t y = 0, uint16_t w = 0, uint16_t h = 0)
     : Widget(x, y), w_(w), h_(h) {};
+
   virtual void select() = 0;
+
   virtual void setMenuPos(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
     x_ = x;
     y_ = y;
     w_ = w;
     h_ = h;
-  }
-
-  void clear() {
-    dirty_ = false;
   }
 
   void setSelectState(bool v) {

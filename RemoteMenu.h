@@ -105,6 +105,9 @@ public:
 
   void init() override;
   void draw() override;
+  void redraw() {
+    dirty_ = true;
+  }
 private:
   const char* title_;
   const uint8_t len_;
@@ -115,9 +118,7 @@ private:
 
 class MenuController: public Widget {
 public:
-  MenuController(): Widget(0,0) {
-    menu_idx_ = -1;
-  }
+  MenuController(): Widget(0,0), menu_idx_(-1) {}
 
   void pushMenu(Menu* m);
   void popMenu();
@@ -137,27 +138,13 @@ public:
   }
 
   void select();
+  void back();
 
-  void back() {
-    if (menu_idx_ >= 0) {
-      menu_stack_[menu_idx_]->back();
-      dirty_ = true;
-    }
-  }
-
-  void init() override {}
-  void draw() override {
-    if (!dirty_) return;
-    if (menu_idx_ >= 0) {
-      menu_stack_[menu_idx_]->draw();
-    }
-    dirty_ = false;
-  }
+  void init() override;
+  void draw() override;
 private:
   static constexpr uint8_t maxNestedMenus = 5;
 
   Menu* menu_stack_[maxNestedMenus];
   int8_t menu_idx_;
 };
-
-extern MenuController menuController;

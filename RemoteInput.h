@@ -40,11 +40,38 @@ public:
   SW3POS getSW4() const { return sw4_; }
   SW2POS getSW5() const { return sw5_; }
 
+  bool getSW1changed() const { return sw1_.changed(); }
+  bool getSW2changed() const { return sw1_.changed(); }
+  bool getSW3changed() const { return sw1_.changed(); }
+  bool getSW4changed() const { return sw1_.changed(); }
+  bool getSW5changed() const { return sw1_.changed(); }
+
+  void SW1reset() { sw1_.changeReset(); }
+  void SW2reset() { sw1_.changeReset(); }
+  void SW3reset() { sw1_.changeReset(); }
+  void SW4reset() { sw1_.changeReset(); }
+  void SW5reset() { sw1_.changeReset(); }
+
   // Buttons
   SW2POS getB1() const { return b1_; }
   SW2POS getB2() const { return b2_; }
   SW2POS getB3() const { return b3_; }
   SW2POS getB4() const { return b4_; }
+
+  bool getB1changed() const { return b1_.changed(); }
+  bool getB2changed() const { return b1_.changed(); }
+  bool getB3changed() const { return b1_.changed(); }
+  bool getB4changed() const { return b1_.changed(); }
+
+  bool B1clicked() const { return b1_ == SW2_OFF && b1_.changed(); }
+  bool B2clicked() const { return b2_ == SW2_OFF && b2_.changed(); }
+  bool B3clicked() const { return b3_ == SW2_OFF && b3_.changed(); }
+  bool B4clicked() const { return b4_ == SW2_OFF && b4_.changed(); }
+
+  void B1reset() { b1_.changeReset(); }
+  void B2reset() { b2_.changeReset(); }
+  void B3reset() { b3_.changeReset(); }
+  void B4reset() { b4_.changeReset(); }
 
   void setB1Led(bool value) const;
   void setB2Led(bool value) const;
@@ -62,12 +89,12 @@ private:
   static constexpr int16_t swOnLowPoint = 2000;
   static constexpr int16_t swOnHighPoint = 2100;
   static constexpr int16_t swOffPoint = 10;
-  ValueWithChangeDetection<int16_t> x1_;
-  ValueWithChangeDetection<int16_t> y1_;
-  ValueWithChangeDetection<int16_t> z1_;
-  ValueWithChangeDetection<int16_t> x2_;
-  ValueWithChangeDetection<int16_t> y2_;
-  ValueWithChangeDetection<int16_t> z2_;
+  int16_t x1_;
+  int16_t y1_;
+  int16_t z1_;
+  int16_t x2_;
+  int16_t y2_;
+  int16_t z2_;
   ValueWithChangeDetection<SW3POS> sw1_;
   ValueWithChangeDetection<SW3POS> sw2_;
   ValueWithChangeDetection<SW3POS> sw3_;

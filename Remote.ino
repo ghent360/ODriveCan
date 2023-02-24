@@ -93,13 +93,29 @@ static void updateRemoteValues() {
   remoteDisplay.setSW3Label(sw3ToStr(remoteInputs.getSW3()));
   remoteDisplay.setSW4Label(sw3ToStr(remoteInputs.getSW4()));
   remoteDisplay.setSW5Label(sw2ToStr(remoteInputs.getSW5()));
-  remoteDisplay.setSW1Active(remoteInputs.getB1() == SW2_ON);
   remoteDisplay.setX1(-float(remoteInputs.getX1()) / 2000);
   remoteDisplay.setY1(-float(remoteInputs.getY1()) / 2000);
-  remoteInputs.setB1Led(remoteInputs.getB4() == SW2_ON);
-  remoteInputs.setB2Led(remoteInputs.getB1() == SW2_ON);
-  remoteInputs.setB3Led(remoteInputs.getB2() == SW2_ON);
-  remoteInputs.setB4Led(remoteInputs.getB3() == SW2_ON);
+  // B1 clicked
+  if (remoteInputs.B1clicked()) {
+    remoteDisplay.controller().back();
+    remoteInputs.B1reset();
+  }
+  if (remoteInputs.B2clicked()) {
+    remoteDisplay.controller().prev();
+    remoteInputs.B2reset();
+  }
+  if (remoteInputs.B3clicked()) {
+    remoteDisplay.controller().next();
+    remoteInputs.B3reset();
+  }
+  if (remoteInputs.B4clicked()) {
+    remoteDisplay.controller().select();
+    remoteInputs.B4reset();
+  }
+  //remoteInputs.setB1Led(remoteInputs.getB4() == SW2_ON);
+  //remoteInputs.setB2Led(remoteInputs.getB1() == SW2_ON);
+  //remoteInputs.setB3Led(remoteInputs.getB2() == SW2_ON);
+  //remoteInputs.setB4Led(remoteInputs.getB3() == SW2_ON);
 }
 
 void setup() {

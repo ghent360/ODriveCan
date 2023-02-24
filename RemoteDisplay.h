@@ -81,6 +81,10 @@ public:
   void setY1(float v) {
     y1_.setValue(v);
   }
+
+  MenuController& controller() {
+    return menuController_;
+  }
 private:
   void drawUi();
   bool dirty() const {

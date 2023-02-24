@@ -40,4 +40,24 @@ TEST_SUITE("ValueWithChangeDetection template tests")
         CHECK(v1 == 1.0f);
         CHECK(v1.changed() == false);
     }
+    TEST_CASE("basic enum test")
+    {
+        enum ET {
+            E1,
+            E2,
+            E3
+        };
+        ValueWithChangeDetection<ET> v1;
+        CHECK(v1 == E1);
+        CHECK(v1.changed() == false);
+        v1 = E1;
+        CHECK(v1 == E1);
+        CHECK(v1.changed() == false);
+        v1 = E2;
+        CHECK(v1 == E2);
+        CHECK(v1.changed() == true);
+        v1.changeReset();
+        CHECK(v1 == E2);
+        CHECK(v1.changed() == false);
+    }
 }

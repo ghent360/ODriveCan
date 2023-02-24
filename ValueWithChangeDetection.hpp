@@ -6,6 +6,7 @@
 
 #include <cmath>
 #include <limits>
+#include <type_traits>
 
 template<typename T>
 class ValueWithChangeDetection {
@@ -35,15 +36,11 @@ public:
 
   ValueWithChangeDetection& operator = (const T& other) {
     is_changed_ =
-      !isEqual(other, Discrim<std::numeric_limits<T>::is_integer>());
+      !isEqual(other, Discrim<std::numeric_limits<T>::is_integer || std::is_enum<T>::value>());
     if (is_changed_) {
       v_ = other;
     }
     return *this;
-  }
-
-  constexpr operator T() const {
-    return v_;
   }
 
   bool changed() const {

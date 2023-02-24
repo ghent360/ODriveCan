@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "ValueWithChangeDetection.hpp"
 #include <stdint.h>
 
 enum SW3POS {
@@ -61,21 +62,21 @@ private:
   static constexpr int16_t swOnLowPoint = 2000;
   static constexpr int16_t swOnHighPoint = 2100;
   static constexpr int16_t swOffPoint = 10;
-  int16_t x1_;
-  int16_t y1_;
-  int16_t z1_;
-  int16_t x2_;
-  int16_t y2_;
-  int16_t z2_;
-  SW3POS sw1_;
-  SW3POS sw2_;
-  SW3POS sw3_;
-  SW3POS sw4_;
-  SW2POS sw5_;
-  SW2POS b1_;
-  SW2POS b2_;
-  SW2POS b3_;
-  SW2POS b4_;
+  ValueWithChangeDetection<int16_t> x1_;
+  ValueWithChangeDetection<int16_t> y1_;
+  ValueWithChangeDetection<int16_t> z1_;
+  ValueWithChangeDetection<int16_t> x2_;
+  ValueWithChangeDetection<int16_t> y2_;
+  ValueWithChangeDetection<int16_t> z2_;
+  ValueWithChangeDetection<SW3POS> sw1_;
+  ValueWithChangeDetection<SW3POS> sw2_;
+  ValueWithChangeDetection<SW3POS> sw3_;
+  ValueWithChangeDetection<SW3POS> sw4_;
+  ValueWithChangeDetection<SW2POS> sw5_;
+  ValueWithChangeDetection<SW2POS> b1_;
+  ValueWithChangeDetection<SW2POS> b2_;
+  ValueWithChangeDetection<SW2POS> b3_;
+  ValueWithChangeDetection<SW2POS> b4_;
 };
 
 extern RemoteInputs remoteInputs;

@@ -112,10 +112,6 @@ static void updateRemoteValues() {
     remoteDisplay.controller().select();
     remoteInputs.B4reset();
   }
-  //remoteInputs.setB1Led(remoteInputs.getB4() == SW2_ON);
-  //remoteInputs.setB2Led(remoteInputs.getB1() == SW2_ON);
-  //remoteInputs.setB3Led(remoteInputs.getB2() == SW2_ON);
-  //remoteInputs.setB4Led(remoteInputs.getB3() == SW2_ON);
 }
 
 void setup() {

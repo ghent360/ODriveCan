@@ -211,6 +211,8 @@ REMOTE_SOURCES = \
   Remote.ino \
   RemoteInput.cpp \
   RemoteDisplay.cpp \
+  RemoteDisplayWidgets.cpp \
+  RemoteMenu.cpp \
   RemoteRadio.cpp \
   RemoteTouch.cpp \
   Fonts/font_Inconsolata-Regular.c \

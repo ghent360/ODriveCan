@@ -11,8 +11,11 @@ public:
   virtual ~Widget() {}
 
   virtual void init() = 0;
-  bool dirty() const { return dirty_; }
+  virtual bool dirty() const { return dirty_; }
   virtual void draw() = 0;
+  virtual void redraw() {
+    dirty_ = true;
+  }
 protected:
   uint16_t x_;
   uint16_t y_;

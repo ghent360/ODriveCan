@@ -10,6 +10,8 @@ using F8_4_b50 = Fixed<uint8_t, 8, 4, 50> ;
 using S8_4 = Fixed<int8_t, 8, 4> ;
 using S8_4_b50 = Fixed<int8_t, 8, 4, 50> ;
 using F5_2 = Fixed<uint8_t, 5, 2> ;
+using BatteryVoltage6S = Fixed<uint8_t, 8, 5, 18>;
+using BatteryVoltage2S = Fixed<uint8_t, 8, 6, 6>;
 
 TEST_SUITE("Fixed template tests")
 {
@@ -99,5 +101,33 @@ TEST_SUITE("Fixed template tests")
         CHECK(S8_4_b50::bitSize() == 8);
         CHECK(F5_2::size() == 1);
         CHECK(F5_2::bitSize() == 5);
+    }
+
+    TEST_CASE("BatteryVoltage6S tests")
+    {
+        BatteryVoltage6S v;
+        CHECK(BatteryVoltage6S::size() == 1);
+        CHECK(BatteryVoltage6S::bitSize() == 8);
+        v = 18.0f;
+        CHECK(float(v) == 18.0f);
+        v = (6*3.3f); // min voltage
+        CHECK(float(v) == 19.8125f);
+        v = (6*4.3f); // over max voltage
+        CHECK(float(v) == 25.8125);
+    }
+
+    TEST_CASE("BatteryVoltage2S tests")
+    {
+        BatteryVoltage2S v;
+        CHECK(BatteryVoltage2S::size() == 1);
+        CHECK(BatteryVoltage2S::bitSize() == 8);
+        v = 6.0f;
+        CHECK(float(v) == 6.0f);
+        v = (2*3.3f); // min voltage
+        CHECK(float(v) == 6.59375f);
+        v = (2*4.3f); // over max voltage
+        CHECK(float(v) == 8.59375f);
+        v = (2*4.7f); // way over max voltage
+        CHECK(float(v) == 9.40625f);
     }
 }

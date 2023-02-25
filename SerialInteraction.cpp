@@ -6,7 +6,6 @@
 #include "globals.h"
 
 static int8_t activeLeg = -1;
-//static uint32_t last = 0;
 
 static void activateLeg(DogLeg leg) {
   Serial.print("Active leg ");
@@ -34,20 +33,6 @@ static void printHelp() {
     Serial.println(getLegName(DogLeg(activeLeg)));
   }
 }
-
-#if 0
-void walk(float t) {
-  float x, z;
-  traj.gaitPos(t, x, z);
-  x += activeLegX;
-  z += activeLegZ;
-  //Serial.print("Walk x=");
-  //Serial.print(x, 3);
-  //Serial.print(" z=");
-  //Serial.println(z, 3);
-  computeAnglesAndMove(x, activeLegY, z);
-}
-#endif
 
 void checkSerialInput(TaskNode*, uint32_t now) {
   if (Serial.available()) {
@@ -92,20 +77,6 @@ void checkSerialInput(TaskNode*, uint32_t now) {
       case 'p':
           robotBody.printPositions();
           break;
-#if 0
-      case 'r':
-          computeAnglesAndMove(activeLegX, activeLegY, activeLegZ + 50);
-          break;
-      case 'R':
-          walk(0);
-          break;
-      case 'w':
-          last = now;
-          break;
-      case 's':
-          last = 0;
-          break;
-#endif
       case '7':
           activateLeg(FRONT_LEFT);
           break;
@@ -157,21 +128,9 @@ void checkSerialInput(TaskNode*, uint32_t now) {
     Serial.print("Leg position error ");
     Serial.println(robotBody.getPosError(DogLeg(activeLeg)), 3);
   }
-#if 0  
-  if (last != 0) {
-    float t = float(now - last) / 3000;
-    if (t > 1) {
-      t = 0;
-      last = now;
-    }
-    if (t < 0) t = 0;
-    walk(t);
-  }
-#endif
 }
 
 void initSerialInteraction() {
-//  last = 0;
   activeLeg = -1;
   printHelp();
 }

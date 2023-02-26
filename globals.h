@@ -63,7 +63,3 @@ extern TaskManager taskManager;
 
 // The RobotBody instance.
 extern RobotBody robotBody;
-
-// Call this function from a 'long running' operation.
-// Should be used sparingly.
-void robotYield();

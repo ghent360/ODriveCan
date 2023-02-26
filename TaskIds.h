@@ -4,7 +4,7 @@
 #pragma once
 
 enum PeriodicTaskId {
-  CheckTaskDuration,
+  ReportTaskDuration,
   DisplayUpdate,
   RadioUpdate,
   StateOneCheck,
@@ -12,7 +12,7 @@ enum PeriodicTaskId {
   StateTwo,
   StateThreeConnection,
   StateThreeODriveVoltage,
-  StateThreeBatteryVoltage,
+  RxBatteryVoltage,
   StateThreeSerial,
   RobotBodyRecalcLegPos,
   RobotBodyStateExecutor,

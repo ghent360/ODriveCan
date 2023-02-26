@@ -91,7 +91,6 @@ static void axisVbusValueCheck(
   }
 
   if (newV.val < (6*cellMinVoltage)) {
-    Serial.println("ODrive battery voltage too low (estop)");
     panic();
   }
 }
@@ -113,7 +112,6 @@ static void checkBatteryVoltage(TaskNode*, uint32_t) {
   float batVoltage = voltageMonitor.readBatteryVoltage();
   display.setTeensyBatteryVoltage(batVoltage);
   if (batVoltage < (2*cellMinVoltage)) {
-    Serial.println("Battery voltage too low (estop)");
     panic();
     delay(250);
     voltageMonitor.lowPowerMode();
@@ -125,8 +123,6 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
   for(auto& axis: axes) {
     axis.hb.PeriodicCheck(axis);
     if (!axis.hb.alive) {
-      Serial.print("Lost connection to axis ");
-      Serial.println(axis.node_id);
       allAlive = false;
     }
     if (axis.hb.error != 0) {
@@ -151,8 +147,6 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
     }
     // Remove the checkAxisVbusVoltage task.
     taskManager.removeById(StateThreeODriveVoltage);
-    // Remove the checkBatteryVoltage task.
-    taskManager.removeById(StateThreeBatteryVoltage);
     // Remove the checkAxisConnection task.
     startStateOne();
     taskManager.remove(self, true);
@@ -160,7 +154,6 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
 }
 
 static void startStateThree() {
-  Serial.println("All odrives active...");
   display.setCanStatus("Ready");
   display.setCanStatusColor(ST7735_GREEN);
   initSerialInteraction();
@@ -175,9 +168,6 @@ static void startStateThree() {
     taskManager.newPeriodicTask(
       StateThreeODriveVoltage, 1000, checkAxisVbusVoltage));
   taskManager.addBack(
-    taskManager.newPeriodicTask(
-      StateThreeBatteryVoltage, 1000, checkBatteryVoltage));
-  taskManager.addBack(
     taskManager.newPeriodicTask(StateThreeSerial, 20, checkSerialInput));
 }
 
@@ -190,18 +180,12 @@ static void clearErrorsAndSwitchToStateThree(TaskNode* self, uint32_t) {
   for(auto& axis: axes) {
     axis.hb.PeriodicCheck(axis);
     if (!axis.hb.alive) {
-      Serial.print("Lost connection to axis ");
-      Serial.println(axis.node_id);
       // Lost axis connection, back to square one:
       startStateOne();
       taskManager.remove(self, true);
       return;
     }
     if (axis.hb.error != 0) {
-      Serial.print("Axis ");
-      Serial.print(axis.node_id);
-      Serial.print(" error: 0x");
-      Serial.println(axis.hb.error, HEX);
       axis.ClearErrors();
       allClear = false;
     }
@@ -248,9 +232,6 @@ static void reportAxesNotPresent(TaskNode* self, uint32_t) {
   String status("Axis:");
   for(auto& axis: axes) {
     if (!axis.hb.alive) {
-      Serial.print("Axis ");
-      Serial.print(axis.node_id);
-      Serial.println(" not responding");
       status += " ";
       status += String(axis.node_id);
     }
@@ -259,7 +240,6 @@ static void reportAxesNotPresent(TaskNode* self, uint32_t) {
 }
 
 static void startStateOne() {
-  Serial.println("Waiting for odrives to connect...");
   display.setCanStatus("Waiting to connect");
   display.setCanStatusColor(ST7735_RED);
   taskManager.addBack(
@@ -280,7 +260,7 @@ void setup() {
 
 #ifdef PROFILE_LOOP
   taskManager.addBack(taskManager.newPeriodicTask(
-    CheckTaskDuration,
+    ReportTaskDuration,
     5000, // once per 5 seconds
     [](TaskNode*, uint32_t) {
     Serial.print("CAN processing ");
@@ -313,26 +293,18 @@ void setup() {
     10,
     [](TaskNode*, uint32_t now) { radio.poll10ms(now); }));
 
+  taskManager.addBack(taskManager.newPeriodicTask(
+    RxBatteryVoltage, 1000, checkBatteryVoltage));
+
   startStateOne();
-}
-
-void runRobotControlCycle() {
-#ifdef PROFILE_LOOP
-  uint32_t startTime, duration;
-#endif
-  PROFILE_CALL(canInterface.readAndProcessCan(), canProcessDuration);
-  PROFILE_CALL(taskManager.runNext(), taskLoopDuration);
-  PROFILE_CALL(radio.poll(), radioProcessDuration);
-}
-
-void robotYield() {
-  runRobotControlCycle();
 }
 
 void loop() {
 #ifdef PROFILE_LOOP
   uint32_t startTime, duration;
 #endif
-  runRobotControlCycle();
+  PROFILE_CALL(canInterface.readAndProcessCan(), canProcessDuration);
+  PROFILE_CALL(taskManager.runNext(), taskLoopDuration);
+  PROFILE_CALL(radio.poll(), radioProcessDuration);
   PROFILE_CALL(yield(), yieldDuration);
 }

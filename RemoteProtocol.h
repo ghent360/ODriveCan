@@ -18,14 +18,14 @@ struct TxDataPacket {
       uint8_t sw4:2;
       uint8_t sw3:2;
       uint8_t sw2:2;
-      uint8_t sw1:2;
+      uint8_t sw1:2; // msb
     };
     uint8_t data;
   } state1;
   union {
     struct {
       uint8_t reserved:7;
-      bool sw5:1;
+      bool sw5:1; // msb
     };
     uint8_t data;
   } state2;
@@ -42,7 +42,7 @@ struct RxPacketHdr {
     struct {
       uint8_t reserved:6;
       bool walk:1;
-      bool control:1;
+      bool control:1; // msb
     };
     uint8_t data;
   } state;
@@ -60,7 +60,7 @@ struct RxPacketHdr {
       bool a4error:1;
       bool a3error:1;
       bool a2error:1;
-      bool a1error:1;
+      bool a1error:1; // msb
     };
     uint16_t data;
   } errors;

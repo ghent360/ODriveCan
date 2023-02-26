@@ -52,7 +52,6 @@ void RemoteRadio::testChannelCB(TaskNode* self) {
     remoteDisplay.setRadioStatus(String("ch ") + String(channel_));
     remoteDisplay.setRadioStatusColor(ILI9341_ORANGE);
     testChannelTriesRemaining_ = testRetries;
-    return;
   }
   radio.startWrite(testChannelData, sizeof(testChannelData), false);
   while(digitalReadFast(NRF_IRQ_PIN) == 1);
@@ -97,7 +96,6 @@ bool RemoteRadio::txData(const uint8_t *data, uint8_t len) {
     len = 32;
   }
   radio.startWrite(data, len, false);
-
   while(digitalReadFast(NRF_IRQ_PIN) == 1);
   radio.whatHappened(tx_ds, tx_df, rx_dr); // resets the IRQ pin to HIGH
   if (tx_df)           // if TX payload failed
@@ -116,7 +114,7 @@ bool RemoteRadio::txData(const uint8_t *data, uint8_t len) {
 
 void RemoteRadio::startAnnounceNewChannel() {
   channel_ = random(0, 125/2) * 2;
-  radio.setRetries(0, announcePktRetries);
+  radio.setRetries(1, announcePktRetries);
   radio.openWritingPipe(addressCtl);
   announceChannelTriesRemaining_ = announceRetries;
   //delay(10);
@@ -149,7 +147,7 @@ void RemoteRadio::announceChannelCB(TaskNode* self) {
 }
 
 void RemoteRadio::poll() {
-  if (channelConnected_ && (digitalReadFast(NRF_IRQ_PIN) == 0)) {
+  if (channelConnected_) {
     if (radio.available()) {
       int len = radio.getDynamicPayloadSize();
       radio.read(ackData_, min(len, (int)sizeof(ackData_)));

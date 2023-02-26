@@ -62,6 +62,7 @@ static void sendRemotePacket() {
   data.x2 = remoteInputs.getX2();
   data.y2 = remoteInputs.getY2();
   data.z2 = remoteInputs.getZ2();
+  data.cmd = CMD_NOOP;
 
   remoteRadio.txData((const uint8_t*)&data, sizeof(data));
 }

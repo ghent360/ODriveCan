@@ -142,8 +142,10 @@ static void startStateThree() {
       [](ODriveAxis& axis, VbusVoltage&, VbusVoltage& newV) {
         if ((axis.node_id % 2) != 0) {
           display.setBus1BatteryVoltage(newV.val);
+          radioController.setB1Voltage(newV.val);
         } else {
           display.setBus3BatteryVoltage(newV.val);
+          radioController.setB2Voltage(newV.val);
         }
 
         if (newV.val < (6*cellMinVoltage)) {
@@ -305,6 +307,7 @@ void setup() {
     [](TaskNode*, uint32_t) {
       float batVoltage = voltageMonitor.readBatteryVoltage();
       display.setTeensyBatteryVoltage(batVoltage);
+      radioController.setRXVoltage(batVoltage);
       if (batVoltage < (2*cellMinVoltage)) {
         panic();
         delay(250);

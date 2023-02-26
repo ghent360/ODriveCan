@@ -9,6 +9,7 @@
 |08|2|x2 value int16_t|
 |0A|2|y2 value int16_t|
 |0C|2|z2 value int16_t|
+|0E|1|command code - 0 noop|
 
 SW5 - control motor idle/closed loop mode (ON - closed loop, OFF - idle); SW1,2 have no effect in idle mode;
 SW1 - control walk (OFF - walk, MID - stop, ON - reset); SW1 only active of SW2 is in MID position

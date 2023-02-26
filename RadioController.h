@@ -6,6 +6,8 @@
 #include <Arduino.h>
 #include <stdint.h>
 
+#include "Fixed.hpp"
+#include "ValueWithChangeDetection.hpp"
 #include "globals.h"
 
 // The Radio.* code implements generic radio receiver class. This class contains
@@ -17,14 +19,45 @@ public:
   void processRxData(const uint8_t *rxData, uint8_t len);
 
   void setReady(bool);
+
+  void setMotorState(bool v) {
+    motors_engaged_ = v;
+  }
+
+  void setWalkState(bool v) {
+    walk_engaged_ = v;
+  }
+
+  void setB1Voltage(float v) {
+    b1_voltage_ = v;
+  }
+
+  void setB2Voltage(float v) {
+    b2_voltage_ = v;
+  }
+
+  void setRXVoltage(float v) {
+    rx_voltage_ = v;
+  }
+
   void reportAxisError(uint16_t axisCanId, uint32_t error);
   void reportMotorError(uint16_t axisCanId, uint64_t error);
   void reportEncoderError(uint16_t axisCanId, uint32_t error);
 private:
+  void setNextTxPacket();
+
+  using BatteryVoltage6S = Fixed<uint8_t, 8, 5, 18>;
+  using BatteryVoltage2S = Fixed<uint8_t, 8, 6, 6>;
+
   bool ready_;
-  uint32_t axis_errors_[numAxes];
-  uint64_t axis_motor_errors_[numAxes];
-  uint32_t axis_encoder_errors_[numAxes];
+  bool motors_engaged_;
+  bool walk_engaged_;
+  ValueWithChangeDetection<uint32_t> axis_errors_[numAxes];
+  ValueWithChangeDetection<uint64_t> axis_motor_errors_[numAxes];
+  ValueWithChangeDetection<uint32_t> axis_encoder_errors_[numAxes];
+  BatteryVoltage6S b1_voltage_;
+  BatteryVoltage6S b2_voltage_;
+  BatteryVoltage2S rx_voltage_;
 };
 
 extern RadioController radioController;

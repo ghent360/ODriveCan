@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "ODriveCan.hpp"
 #include "CanInterface.h"
+#include "RadioController.h"
 #include "RobotDefinition.h"
 #include "globals.h"
 #include "Kinematics.h"
@@ -261,6 +262,7 @@ void RobotBody::setAllAxesActive() {
     axis.SetLimits(6.0f, 10.0f); // Should be 6000.0f, 20.0f
     axis.SetState(AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL);
   }
+  radioController.setMotorState(true);
   axes_active_ = true;
   scheduleRecalculateLogPosition(100);
 }
@@ -269,6 +271,7 @@ void RobotBody::setAllAxesIdle() {
   for(auto& axis: axes) {
     axis.SetState(AxisState::AXIS_STATE_IDLE);
   }
+  radioController.setMotorState(false);
   axes_active_ = false;
 }
 
@@ -291,6 +294,7 @@ void RobotBody::init() {
     legs_[FRONT_RIGHT].allAxesActive() &&
     legs_[BACK_LEFT].allAxesActive() &&
     legs_[BACK_RIGHT].allAxesActive();
+  radioController.setMotorState(axes_active_);
   if (axes_active_) {
     scheduleRecalculateLogPosition(250);
   }
@@ -465,6 +469,7 @@ void RobotBody::startWalking() {
   if (!planStepStart(FRONT_LEFT)) {
     step_start_ -= prep_step_duration_;
   }
+  radioController.setWalkState(true);
   taskManager.addBack(
     taskManager.newPeriodicTask(
       RobotBodyStateExecutor, 5, [](TaskNode*, uint32_t now){
@@ -482,6 +487,7 @@ void RobotBody::stopWalking() {
 
 void RobotBody::runState(uint32_t now) {
   if (state_ == STATE_IDLE) {
+    radioController.setWalkState(false);
     taskManager.removeById(RobotBodyStateExecutor);
     return;
   }
@@ -597,6 +603,7 @@ void RobotBody::runState(uint32_t now) {
     if (t > 1) {
       finishStepEnd(BACK_LEFT);
       state_ = STATE_IDLE;
+      radioController.setWalkState(false);
       taskManager.removeById(RobotBodyStateExecutor);
     } else {
       moveStepEnd(BACK_LEFT, t);
@@ -605,6 +612,7 @@ void RobotBody::runState(uint32_t now) {
   break;
   default:
     state_ = STATE_IDLE;
+    radioController.setWalkState(false);
     taskManager.removeById(RobotBodyStateExecutor);
     break;
   }

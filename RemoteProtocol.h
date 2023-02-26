@@ -12,6 +12,17 @@
 // use different MCUs for Rx and Tx, you should verify the data is
 // transmitted/received in the correct byte order.
 
+enum CommandCodes {
+  CMD_NOOP = 0,
+  CMD_CLEAR_ERRORS = 1,
+  CMD_SET_GAINS = 2,
+};
+
+enum ExtensionTypes {
+  EXT_TYPE_NONE = 0,
+  EXT_AXIS_ERROR = 1,
+};
+
 struct TxDataPacket {
   union {
     struct {
@@ -35,6 +46,7 @@ struct TxDataPacket {
   int16_t x2;
   int16_t y2;
   int16_t z2;
+  uint8_t cmd;
 } __attribute__((packed));
 
 struct RxPacketHdr {
@@ -84,4 +96,11 @@ struct RxAxisError {
     uint32_t error:16;
     uint8_t data[2];
   } encoder_error;
+} __attribute__((packed));
+
+struct RxPacket {
+  struct RxPacketHdr hdr;
+  union {
+    struct RxAxisError axis_err;
+  } ext;
 } __attribute__((packed));

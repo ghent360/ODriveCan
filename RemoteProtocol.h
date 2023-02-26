@@ -5,6 +5,13 @@
 
 #include <stdint.h>
 
+// Note: these structures are sensitive to architecture endianness.
+//
+// Since both the Rx and Tx MCUs are the same (Teensy 4.1) in my case,
+// this is not an issue for my implementation. However if you plan to
+// use different MCUs for Rx and Tx, you should verify the data is
+// transmitted/received in the correct byte order.
+
 struct TxDataPacket {
   union {
     struct {

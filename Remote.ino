@@ -7,6 +7,7 @@
 
 //#define PROFILE_LOOP
 
+#include "Fixed.hpp"
 #include "RemoteInput.h"
 #include "RemoteDisplay.h"
 #include "RemoteProtocol.h"
@@ -16,6 +17,9 @@
 #include "TaskManager.hpp"
 
 TaskManager taskManager;
+
+using BatteryVoltage6S = Fixed<uint8_t, 8, 5, 18>;
+using BatteryVoltage2S = Fixed<uint8_t, 8, 6, 6>;
 
 #ifdef PROFILE_LOOP
 #define PROFILE_CALL(x, v) \
@@ -65,6 +69,24 @@ static void sendRemotePacket() {
   data.cmd = CMD_NOOP;
 
   remoteRadio.txData((const uint8_t*)&data, sizeof(data));
+}
+
+static void receiveRemotePacket(const uint8_t* data, uint8_t len) {
+  const struct RxPacket* rxPacket =
+    reinterpret_cast<const struct RxPacket*>(data);
+
+  if (len >= sizeof(RxPacketHdr)) {
+    BatteryVoltage6S s6voltage;
+    BatteryVoltage2S s2voltage;
+    s6voltage = BatteryVoltage6S::fromBytes(&rxPacket->hdr.b1_voltage, 1);
+    remoteDisplay.setBus1BatteryVoltage(s6voltage);
+    s6voltage = BatteryVoltage6S::fromBytes(&rxPacket->hdr.b2_voltage, 1);
+    remoteDisplay.setBus3BatteryVoltage(s6voltage);
+    s2voltage = BatteryVoltage2S::fromBytes(&rxPacket->hdr.rx_voltage, 1);
+    remoteDisplay.setTeensyBatteryVoltage(s2voltage);
+    remoteDisplay.setSW1Active(rxPacket->hdr.state.walk);
+    remoteDisplay.setSW5Active(rxPacket->hdr.state.control);
+  }
 }
 
 static void updateRemoteValues() {
@@ -148,6 +170,8 @@ void setup() {
   remoteDisplay.begin();
   remoteRadio.begin();
   remoteTouch.begin();
+
+  remoteRadio.setRxDataCallback(receiveRemotePacket);
 
   taskManager.addBack(taskManager.newPeriodicTask(
     ReadStickValues,

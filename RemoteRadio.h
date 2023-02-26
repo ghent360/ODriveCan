@@ -9,11 +9,17 @@
 
 class RemoteRadio {
 public:
+  typedef void (*Callback)(const uint8_t* data, uint8_t len);
+
   void initPins();
   void begin();
 
   bool txData(const uint8_t *data, uint8_t len);
   void poll();
+
+  void setRxDataCallback(const Callback cb) {
+    cb_ = cb;
+  }
 private:
   static constexpr uint8_t testRetries = 5;
   static constexpr uint8_t testPktRetries = 2;
@@ -38,6 +44,7 @@ private:
   uint8_t testChannelTriesRemaining_;
   uint8_t announceChannelTriesRemaining_;
   uint8_t ackData_[32];
+  Callback cb_;
 };
 
 extern RemoteRadio remoteRadio;

@@ -151,10 +151,9 @@ void RemoteRadio::poll() {
     if (radio.available()) {
       int len = radio.getDynamicPayloadSize();
       radio.read(ackData_, min(len, (int)sizeof(ackData_)));
-      Serial.print("ACK: len = ");
-      Serial.println(len);
-      //Serial.print(" data:");
-      //Serial.println((const char*)ackData_);
+      if (cb_) {
+        cb_(ackData_, len);
+      }
     }
   }
 }

@@ -40,8 +40,10 @@ RemoteDisplay::RemoteDisplay()
     sw3_(129, 210, 60, 22, "", stdButton),
     sw4_(191, 210, 60, 22, "", stdButton),
     sw5_(253, 210, 60, 22, "", stdButton),
+#if 0
     x1_(10, 100, 50, 10, true),
     y1_(30, 80, 10, 50, true),
+#endif
     menu_(265, 5, 50, 20, "Menu", stdButton),
     menuController_() {}
 

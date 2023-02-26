@@ -4,6 +4,7 @@
 
 #include "RemoteRadio.h"
 #include "RemoteDisplay.h"
+#include "RemoteTaskIds.h"
 #include <RF24.h>
 
 #define NRF_CE_PIN 2
@@ -30,8 +31,6 @@ void RemoteRadio::begin() {
   radio.begin();
   if (radio.failureDetected || !radio.isChipConnected()) {
     Serial.println("Radio begin failed");
-  } else {
-    Serial.println("Radio begin success");
   }
   radio.setPALevel(RF24_PA_MAX);
   radio.setDataRate(RF24_2MBPS);
@@ -81,9 +80,9 @@ void RemoteRadio::startConnection() {
   remoteDisplay.setRadioStatusColor(ILI9341_ORANGE);
   radio.setChannel(channel_);
   testChannelTriesRemaining_ = testRetries;
-  taskManager.removeById(3);
+  taskManager.removeById(RadioTestChannel);
   taskManager.addBack(taskManager.newPeriodicTask(
-    3,
+    RadioTestChannel,
     2,
     [](TaskNode* self, uint32_t) { remoteRadio.testChannelCB(self); }));
 }
@@ -106,10 +105,8 @@ bool RemoteRadio::txData(const uint8_t *data, uint8_t len) {
 
   uint8_t quality = radio.getARC();
   bool success = (quality <= dataPktMinArc);
+  //remoteDisplay.setRadioSignalStrength(quality);
   if (!success) {
-    Serial.print("Signal quality low ");
-    Serial.print(quality);
-    Serial.println(" selecting new channel.");
     remoteDisplay.setRadioStatusColor(ILI9341_RED);
     channelConnected_ = false;
     startAnnounceNewChannel();
@@ -119,22 +116,19 @@ bool RemoteRadio::txData(const uint8_t *data, uint8_t len) {
 
 void RemoteRadio::startAnnounceNewChannel() {
   channel_ = random(0, 125/2) * 2;
-  Serial.print("Announcing new channel ");
-  Serial.print(channel_);
   radio.setRetries(0, announcePktRetries);
   radio.openWritingPipe(addressCtl);
   announceChannelTriesRemaining_ = announceRetries;
   //delay(10);
-  taskManager.removeById(4);
+  taskManager.removeById(RadioAnnounceChannel);
   taskManager.addBack(taskManager.newPeriodicTask(
-    4,
+    RadioAnnounceChannel,
     5,
     [](TaskNode* self, uint32_t) { remoteRadio.announceChannelCB(self); }));
 }
 
 void RemoteRadio::announceChannelCB(TaskNode* self) {
   if (!announceChannelTriesRemaining_) {
-    Serial.println(" timeout");
     startConnection();
     taskManager.remove(self, true);
     return;
@@ -147,7 +141,6 @@ void RemoteRadio::announceChannelCB(TaskNode* self) {
   if (tx_df)
     radio.flush_tx();// clear all payloads from the TX FIFO
   if (tx_ds) {
-    Serial.println(" success");
     startConnection();
     taskManager.remove(self, true);
     return;

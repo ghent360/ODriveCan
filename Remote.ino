@@ -9,7 +9,9 @@
 
 #include "RemoteInput.h"
 #include "RemoteDisplay.h"
+#include "RemoteProtocol.h"
 #include "RemoteRadio.h"
+#include "RemoteTaskIds.h"
 #include "RemoteTouch.h"
 #include "TaskManager.hpp"
 
@@ -46,12 +48,22 @@ static const char* sw3ToStr(SW3POS value) {
   return "unk";
 }
 
-static const char* sw2ToStr(SW2POS value) {
-  switch(value) {
-  case SW2_ON: return "ON";
-  case SW2_OFF: return "OFF";
-  }
-  return "unk";
+static void sendRemotePacket() {
+  struct TxDataPacket data;
+  data.state1.sw1 = (uint8_t)remoteInputs.getSW1();
+  data.state1.sw2 = (uint8_t)remoteInputs.getSW2();
+  data.state1.sw3 = (uint8_t)remoteInputs.getSW3();
+  data.state1.sw4 = (uint8_t)remoteInputs.getSW4();
+  data.state2.sw5 = (remoteInputs.getSW5() == SW2_ON);
+  data.state2.reserved = 0;
+  data.x1 = remoteInputs.getX1();
+  data.y1 = remoteInputs.getY1();
+  data.z1 = remoteInputs.getZ1();
+  data.x2 = remoteInputs.getX2();
+  data.y2 = remoteInputs.getY2();
+  data.z2 = remoteInputs.getZ2();
+
+  remoteRadio.txData((const uint8_t*)&data, sizeof(data));
 }
 
 static void updateRemoteValues() {
@@ -88,13 +100,21 @@ static void updateRemoteValues() {
   Serial.print(sw2ToStr(remoteInputs.getB4()));
   Serial.println();
 #endif
-  remoteDisplay.setSW1Label(sw3ToStr(remoteInputs.getSW1()));
-  remoteDisplay.setSW2Label(sw3ToStr(remoteInputs.getSW2()));
+  switch(remoteInputs.getSW1()) {
+    case SW3_OFF: remoteDisplay.setSW1Label("WALK"); break;
+    case SW3_MID: remoteDisplay.setSW1Label("STOP"); break;
+    case SW3_ON: remoteDisplay.setSW1Label("RESET"); break;
+  }
+  switch(remoteInputs.getSW2()) {
+    case SW3_OFF: remoteDisplay.setSW2Label("STATIC"); break;
+    case SW3_MID: remoteDisplay.setSW2Label("WALK"); break;
+    case SW3_ON: remoteDisplay.setSW2Label("PARK"); break;
+  }
   remoteDisplay.setSW3Label(sw3ToStr(remoteInputs.getSW3()));
   remoteDisplay.setSW4Label(sw3ToStr(remoteInputs.getSW4()));
-  remoteDisplay.setSW5Label(sw2ToStr(remoteInputs.getSW5()));
-  remoteDisplay.setX1(-float(remoteInputs.getX1()) / 2000);
-  remoteDisplay.setY1(-float(remoteInputs.getY1()) / 2000);
+  remoteDisplay.setSW5Label(remoteInputs.getSW5() ? "ENGAGED" : "IDLE");
+//  remoteDisplay.setX1(-float(remoteInputs.getX1()) / 2000);
+//  remoteDisplay.setY1(-float(remoteInputs.getY1()) / 2000);
   // B1 clicked
   if (remoteInputs.B1clicked()) {
     remoteDisplay.controller().back();
@@ -112,6 +132,7 @@ static void updateRemoteValues() {
     remoteDisplay.controller().select();
     remoteInputs.B4reset();
   }
+  sendRemotePacket();
 }
 
 void setup() {
@@ -128,32 +149,27 @@ void setup() {
   remoteTouch.begin();
 
   taskManager.addBack(taskManager.newPeriodicTask(
-    100,
+    ReadStickValues,
     5,
     [](TaskNode*, uint32_t) { remoteInputs.readStickValues(); }));
 
   taskManager.addBack(taskManager.newPeriodicTask(
-    101,
+    ReadSwitchValues,
     100,
     [](TaskNode*, uint32_t) { remoteInputs.readSwitchValues(); }));
 
   taskManager.addBack(taskManager.newPeriodicTask(
-    20,
+    SendRemoteValues,
     66,
     [](TaskNode*, uint32_t) { updateRemoteValues(); }));
 
   taskManager.addBack(taskManager.newPeriodicTask(
-    2,
+    DisplayUpdate,
     66, // 15 fps should be good enough for now
     [](TaskNode*, uint32_t) { remoteDisplay.updateScreen(); }));
-
-  taskManager.addBack(taskManager.newPeriodicTask(
-    21,
-    100,
-    [](TaskNode*, uint32_t) { remoteRadio.txData((const uint8_t*)"Hello", 6); }));
 #ifdef PROFILE_LOOP
   taskManager.addBack(taskManager.newPeriodicTask(
-    100,
+    ReportProfileStats,
     5000, // once per 5 seconds
     [](TaskNode*, uint32_t) {
     Serial.print("Task loop ");

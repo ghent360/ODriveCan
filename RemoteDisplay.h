@@ -75,13 +75,14 @@ public:
   void setMenuActive(bool v) {
     menu_.activate(v);
   }
+#if 0
   void setX1(float v) {
     x1_.setValue(v);
   }
   void setY1(float v) {
     y1_.setValue(v);
   }
-
+#endif
   MenuController& controller() {
     return menuController_;
   }
@@ -103,11 +104,13 @@ private:
   ButtonWidget sw3_;
   ButtonWidget sw4_;
   ButtonWidget sw5_;
+#if 0
   HBarWidget x1_;
   VBarWidget y1_;
+#endif
   ButtonWidget menu_;
   MenuController menuController_;
-  Widget* widgets_[13] = {
+  Widget* widgets_[11] = {
     &teensy_battery_,
     &bus1_battery_,
     &bus3_battery_,
@@ -117,8 +120,10 @@ private:
     &sw3_,
     &sw4_,
     &sw5_,
+#if 0
     &x1_,
     &y1_,
+#endif
     &menu_,
     &menuController_
   };

@@ -70,8 +70,6 @@ void resetProcessProfiler() {
  *                          if the voltage is too low it calls EStop on all axes.
  *   checkSerialInput     - read serial input and perform actions. (defined in SerialInteraction.cpp)
  */
-static void checkAllAxesArePresent(TaskNode*, uint32_t);
-static void reportAxesNotPresent(TaskNode* self, uint32_t);
 static void startStateOne();
 static void startStateTwo();
 static void startStateThree();
@@ -111,8 +109,8 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
     }
     // Remove the checkAxisVbusVoltage task.
     taskManager.removeById(StateThreeODriveVoltage);
-    // Remove the checkAxisConnection task.
     startStateOne();
+    // Remove the checkAxisConnection task.
     taskManager.remove(self, true);
   }
 }
@@ -187,8 +185,8 @@ static void clearErrorsAndSwitchToStateThree(TaskNode* self, uint32_t) {
     return;
   }
   // All is good switch to state three.
-  // Remove the clearErrorsAndSwitchToStateThree task.
   startStateThree();
+  // Remove the clearErrorsAndSwitchToStateThree task.
   taskManager.remove(self, true);
 }
 
@@ -214,8 +212,8 @@ static void checkAllAxesArePresent(TaskNode* self, uint32_t) {
     // Switch to state two.
     // Remove the reportAxesNotPresent task.
     taskManager.removeById(StateOneReport);
-    // Remove the checkAllAxesArePresent task.
     startStateTwo();
+    // Remove the checkAllAxesArePresent task.
     taskManager.remove(self, true);
   }
 }

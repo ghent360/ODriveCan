@@ -200,6 +200,7 @@ OPENDOG_SOURCES = \
   Display.cpp \
   Kinematics.cpp \
   RobotDefinition.cpp \
+  RadioController.cpp \
   StepTrajectory.cpp \
   $(RF24_SOURCES) \
   $(ST7735_t3_SOURCES) \

@@ -17,8 +17,12 @@
 #include "globals.h"
 #include "Display.h"
 #include "Radio.h"
+#include "RadioController.h"
 
+using odrive::EncoderError;
 using odrive::EncoderEstimate;
+using odrive::Heartbeat;
+using odrive::MotorError;
 using odrive::ODriveAxis;
 using odrive::VbusVoltage;
 
@@ -92,11 +96,11 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
       status += String(axis.node_id);
       status += " error: 0x";
       status += String(axis.hb.error, HEX);
-      Serial.println(status);
       display.setCanStatus(status);
     }
   }
   if (!allAlive) {
+    radioController.setReady(false);
     // Clean state three and switch back to first state:
     taskManager.removeById(RobotBodyStateExecutor);
     taskManager.removeById(RobotBodyRecalcLegPos);
@@ -105,7 +109,9 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
     // Remove the voltage checking callbacks.
     for(auto& axis: axes) {
       axis.vbus.SetCallback(nullptr);
-      axis.enc_est.SetCallback(nullptr);
+      axis.hb.SetCallback(nullptr);
+      axis.mot_err.SetCallback(nullptr);
+      axis.enc_err.SetCallback(nullptr);
     }
     // Remove the checkAxisVbusVoltage task.
     taskManager.removeById(StateThreeODriveVoltage);
@@ -118,17 +124,20 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
 static void startStateThree() {
   display.setCanStatus("Ready");
   display.setCanStatusColor(ST7735_GREEN);
+  //TODO: remove the serial interaction stuff
   initSerialInteraction();
   robotBody.init();
 
+  // Check if we lost CAN connection to any axis.
   taskManager.addBack(
     taskManager.newPeriodicTask(
       StateThreeConnection, 750, checkAxisConnection));
 
-  // When we receive battery voltage report from an axis
-  // check the value, report it to the display and turn off
-  // power if battery is too low.
+  // Configure various can message callbacks
   for(auto& axis: axes) {
+    // When we receive battery voltage report from an axis
+    // check the value, report it to the display and turn off
+    // power if battery is too low.
     axis.vbus.SetCallback(
       [](ODriveAxis& axis, VbusVoltage&, VbusVoltage& newV) {
         if ((axis.node_id % 2) != 0) {
@@ -140,6 +149,34 @@ static void startStateThree() {
         if (newV.val < (6*cellMinVoltage)) {
           panic();
         }
+      });
+
+    // When we get heartbeat message, check for errors and report.
+    axis.hb.SetCallback(
+      [](ODriveAxis& axis, Heartbeat &old, Heartbeat &newVal) {
+        // If the error value changed
+        if (old.error != newVal.error) {
+          radioController.reportAxisError(axis.node_id, newVal.error);
+          // Request more error info if needed.
+          if (newVal.error & Heartbeat::ERROR_MOTOR_FAILED) {
+            axis.RequestMotorError();
+          }
+          if (newVal.error & Heartbeat::ERROR_ENCODER_FAILED) {
+            axis.RequestEncoderError();
+          }
+        }
+      });
+
+    // When we get motor error message send it to the controller.
+    axis.mot_err.SetCallback(
+      [](ODriveAxis& axis, MotorError&, MotorError &newVal) {
+        radioController.reportMotorError(axis.node_id, newVal.err);
+      });
+
+    // When we get encoder error message send it to the controller.
+    axis.enc_err.SetCallback(
+      [](ODriveAxis& axis, EncoderError&, EncoderError &newVal) {
+        radioController.reportEncoderError(axis.node_id, newVal.err);
       });
   }
 
@@ -157,6 +194,8 @@ static void startStateThree() {
       }
     }));
 
+  radioController.setReady(true);
+  //TODO: remove the serial interaction stuff
   taskManager.addBack(
     taskManager.newPeriodicTask(StateThreeSerial, 20, checkSerialInput));
 }
@@ -246,32 +285,6 @@ void setup() {
   canInterface.canInit();
   voltageMonitor.initVoltageMonitor();
   radio.initRadio();
-  //while(!radio.ok());
-
-#ifdef PROFILE_LOOP
-  taskManager.addBack(taskManager.newPeriodicTask(
-    ReportTaskDuration,
-    5000, // once per 5 seconds
-    [](TaskNode*, uint32_t) {
-    Serial.print("CAN processing ");
-    Serial.println(canProcessDuration);
-    Serial.print("Task loop ");
-    Serial.print (taskLoopDuration);
-    uint32_t id = taskManager.getLongestTaskId();
-    if (id != (uint32_t)-1) {
-      Serial.print(" longest task ID:");
-      Serial.print(id);
-      Serial.print(" duration ");
-      Serial.println(taskManager.getMaxTaskTime());
-      taskManager.resetProfiler();
-    }
-    Serial.print("Radio processing ");
-    Serial.println(radioProcessDuration);
-    Serial.print("Yield duration ");
-    Serial.println(yieldDuration);
-    resetProcessProfiler();
-  }));
-#endif
 
   // Refresh the display screen periodically
   taskManager.addBack(taskManager.newPeriodicTask(
@@ -298,6 +311,38 @@ void setup() {
         voltageMonitor.lowPowerMode();
       }
   }));
+
+  // Send the radio data to the RadioController class
+  radio.setRxDataCallback(
+    [](const uint8_t* data, uint8_t len) {
+      radioController.processRxData(data, len);
+    });
+
+#ifdef PROFILE_LOOP
+  // Report performance stats periodically
+  taskManager.addBack(taskManager.newPeriodicTask(
+    ReportTaskDuration,
+    5000, // once per 5 seconds
+    [](TaskNode*, uint32_t) {
+    Serial.print("CAN processing ");
+    Serial.println(canProcessDuration);
+    Serial.print("Task loop ");
+    Serial.print (taskLoopDuration);
+    uint32_t id = taskManager.getLongestTaskId();
+    if (id != (uint32_t)-1) {
+      Serial.print(" longest task ID:");
+      Serial.print(id);
+      Serial.print(" duration ");
+      Serial.println(taskManager.getMaxTaskTime());
+      taskManager.resetProfiler();
+    }
+    Serial.print("Radio processing ");
+    Serial.println(radioProcessDuration);
+    Serial.print("Yield duration ");
+    Serial.println(yieldDuration);
+    resetProcessProfiler();
+  }));
+#endif
 
   // Start the ODrive connection state machine.
   startStateOne();

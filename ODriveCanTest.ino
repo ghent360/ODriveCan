@@ -82,42 +82,6 @@ static void panic() {
   }
 }
 
-static void axisVbusValueCheck(
-  ODriveAxis& axis, VbusVoltage&, VbusVoltage& newV) {
-  if ((axis.node_id % 2) != 0) {
-    display.setBus1BatteryVoltage(newV.val);
-  } else {
-    display.setBus3BatteryVoltage(newV.val);
-  }
-
-  if (newV.val < (6*cellMinVoltage)) {
-    panic();
-  }
-}
-
-static void checkAxisVbusVoltage(TaskNode*, uint32_t) {
-  static uint8_t axisIdx = FRONT_RIGHT_HIP;
-  axes[axisIdx].RequestVbusVoltage();
-  axisIdx++;
-  // Check battery voltage only the axes with node ID 1 and 2.
-  // Axes are connected to battery bus bars and the first two
-  // would represent the voltage on both bus bars. That is sufficient
-  // for monitoring.
-  if (axisIdx > FRONT_LEFT_HIP) {
-    axisIdx = FRONT_RIGHT_HIP;
-  }
-}
-
-static void checkBatteryVoltage(TaskNode*, uint32_t) {
-  float batVoltage = voltageMonitor.readBatteryVoltage();
-  display.setTeensyBatteryVoltage(batVoltage);
-  if (batVoltage < (2*cellMinVoltage)) {
-    panic();
-    delay(250);
-    voltageMonitor.lowPowerMode();
-  }
-}
-
 static void checkAxisConnection(TaskNode* self, uint32_t) {
   bool allAlive = true;
   for(auto& axis: axes) {
@@ -158,15 +122,43 @@ static void startStateThree() {
   display.setCanStatusColor(ST7735_GREEN);
   initSerialInteraction();
   robotBody.init();
+
   taskManager.addBack(
     taskManager.newPeriodicTask(
       StateThreeConnection, 750, checkAxisConnection));
+
+  // When we receive battery voltage report from an axis
+  // check the value, report it to the display and turn off
+  // power if battery is too low.
   for(auto& axis: axes) {
-    axis.vbus.SetCallback(axisVbusValueCheck);
+    axis.vbus.SetCallback(
+      [](ODriveAxis& axis, VbusVoltage&, VbusVoltage& newV) {
+        if ((axis.node_id % 2) != 0) {
+          display.setBus1BatteryVoltage(newV.val);
+        } else {
+          display.setBus3BatteryVoltage(newV.val);
+        }
+
+        if (newV.val < (6*cellMinVoltage)) {
+          panic();
+        }
+      });
   }
-  taskManager.addBack(
-    taskManager.newPeriodicTask(
-      StateThreeODriveVoltage, 1000, checkAxisVbusVoltage));
+
+  // Request battery voltage report periodically.
+  // checkAxisVbusVoltage task
+  taskManager.addBack(taskManager.newPeriodicTask(
+    StateThreeODriveVoltage,
+    1000,
+    [](TaskNode*, uint32_t) {
+      static uint8_t axisIdx = FRONT_RIGHT_HIP;
+      axes[axisIdx].RequestVbusVoltage();
+      axisIdx++;
+      if (axisIdx > FRONT_LEFT_HIP) {
+        axisIdx = FRONT_RIGHT_HIP;
+      }
+    }));
+
   taskManager.addBack(
     taskManager.newPeriodicTask(StateThreeSerial, 20, checkSerialInput));
 }
@@ -283,19 +275,33 @@ void setup() {
   }));
 #endif
 
+  // Refresh the display screen periodically
   taskManager.addBack(taskManager.newPeriodicTask(
     DisplayUpdate,
     66, // 15 fps should be good enough for now
     [](TaskNode*, uint32_t) { display.updateScreen(); }));
 
+  // Do radio work periodically
   taskManager.addBack(taskManager.newPeriodicTask(
     RadioUpdate,
     10,
     [](TaskNode*, uint32_t now) { radio.poll10ms(now); }));
 
+  // Periodically check the teensy battery and report.
   taskManager.addBack(taskManager.newPeriodicTask(
-    RxBatteryVoltage, 1000, checkBatteryVoltage));
+    RxBatteryVoltage,
+    1000,
+    [](TaskNode*, uint32_t) {
+      float batVoltage = voltageMonitor.readBatteryVoltage();
+      display.setTeensyBatteryVoltage(batVoltage);
+      if (batVoltage < (2*cellMinVoltage)) {
+        panic();
+        delay(250);
+        voltageMonitor.lowPowerMode();
+      }
+  }));
 
+  // Start the ODrive connection state machine.
   startStateOne();
 }
 

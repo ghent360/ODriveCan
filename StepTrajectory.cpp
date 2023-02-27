@@ -17,9 +17,9 @@ StepTrajectory::StepTrajectory() {
 }
 
 void StepTrajectory::reset() {
-  step_height_ = 50;
-  step_length_ = 150;
-  stance_depth_ = 10;
+  step_height_ = 20;
+  step_length_ = 50;
+  stance_depth_ = 5;
   step_offset_ = 0.75f;
 #if 0
   velocity_ = 1;

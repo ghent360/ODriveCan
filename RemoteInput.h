@@ -4,19 +4,9 @@
 
 #pragma once
 
+#include "Swithes.h"
 #include "ValueWithChangeDetection.hpp"
 #include <stdint.h>
-
-enum SW3POS {
-    SW3_OFF,
-    SW3_MID,
-    SW3_ON
-};
-
-enum SW2POS {
-    SW2_OFF,
-    SW2_ON
-};
 
 class RemoteInputs {
 public:

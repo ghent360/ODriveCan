@@ -207,9 +207,9 @@ float RobotLeg::getPosError() const {
 RobotBody::RobotBody()
   : axes_active_(false),
     state_(STATE_IDLE),
-    prep_step_height_(25),
-    prep_step_duration_(1500),
-    walk_step_duration_(3000),
+    prep_step_height_(15),
+    prep_step_duration_(500),
+    walk_step_duration_(1500),
     legs_ {
       [FRONT_LEFT] = RobotLeg(FRONT_LEFT),
       [FRONT_RIGHT] = RobotLeg(FRONT_RIGHT),
@@ -234,12 +234,12 @@ void RobotBody::parkLegs() {
 }
 
 void RobotBody::modifyAxesGains() {
-  constexpr float posGainShin = 20.0f;
-  constexpr float posGainHips = 60.0f;
-  constexpr float posGainTie = 20.0f;
+  constexpr float posGainShin = 30.0f;
+  constexpr float posGainHips = 40.0f;
+  constexpr float posGainTie = 30.0f;
   constexpr float velGain = 0.1f;
   constexpr float integrator = 0.2f;
-  float posGain = 20.0f;
+  float posGain = 30.0f;
   for (int idx=0; idx<numAxes; idx++) {
     switch(jointClass[idx]) {
       case CLASS_HIP:
@@ -259,7 +259,7 @@ void RobotBody::modifyAxesGains() {
 
 void RobotBody::setAllAxesActive() {
   for(auto& axis: axes) {
-    axis.SetLimits(6.0f, 10.0f); // Should be 6000.0f, 20.0f
+    axis.SetLimits(8.0f, 15.0f); // Should be 6000.0f, 20.0f
     axis.SetState(AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL);
   }
   radioController.setMotorState(true);

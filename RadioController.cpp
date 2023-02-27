@@ -5,6 +5,7 @@
 
 #include "RadioController.h"
 #include "RemoteProtocol.h"
+#include "RobotDefinition.h"
 #include <string.h>
 
 RadioController::RadioController()
@@ -49,8 +50,70 @@ void RadioController::reportEncoderError(uint16_t axisCanId, uint32_t error) {
 void RadioController::processRxData(const uint8_t *rxData, uint8_t len) {
   const struct TxDataPacket *tx_packet =
     reinterpret_cast<const struct TxDataPacket*>(rxData);
-  if (len >= sizeof(TxDataPacket)) {
-    // TODO: parse the packet and perform actions
+  if (len >= sizeof(TxDataPacket) && ready_) {
+    SW3POS sw1, sw2;
+    SW2POS sw5;
+    sw1 = SW3POS(tx_packet->state1.sw1);
+    sw2 = SW3POS(tx_packet->state1.sw2);
+    sw5 = SW2POS(tx_packet->state2.sw5);
+    if (sw5 != sw5_) {
+      if (sw5 == SW2_ON) {
+        robotBody.setAllAxesActive();
+      } else {
+        robotBody.setAllAxesIdle();
+      }
+      sw5_ = sw5;
+    }
+    if (sw2 != sw2_) {
+      if (!walk_engaged_) {
+        switch(sw2) {
+          case SW3_OFF: break; // not implemented
+          case SW3_MID: break;
+          case SW3_ON:
+            if (motors_engaged_) {
+              robotBody.parkLegs();
+            }
+            break;
+        }
+      }
+      sw2_ = sw2;
+    }
+    if (sw1 != sw1_) {
+      if (motors_engaged_) {
+        switch (sw1) {
+          case SW3_OFF:
+            if (sw2_ == SW3_MID && !walk_engaged_) {
+              robotBody.startWalking();
+            }
+            break;
+          case SW3_MID:
+            if (sw2_ == SW3_MID && walk_engaged_) {
+              robotBody.stopWalking();
+            }
+            break;
+          case SW3_ON:
+            if (sw2_ == SW3_MID && !walk_engaged_) {
+              robotBody.resetAll();
+            }
+            break;
+        }
+      }
+      sw1_ = sw1;
+    }
+    if (tx_packet->cmd != CMD_NOOP) {
+      switch(tx_packet->cmd) {
+        case CMD_CLEAR_ERRORS:
+          for(auto& axis: axes) {
+            axis.ClearErrors();
+          }
+          break;
+        case CMD_SET_GAINS:
+          robotBody.modifyAxesGains();
+          break;
+        default:
+          break;
+      }
+    }
   }
   setNextTxPacket();
 }

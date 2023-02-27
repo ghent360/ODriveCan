@@ -52,6 +52,8 @@ static const char* sw3ToStr(SW3POS value) {
   return "unk";
 }
 
+CommandCodes command = CMD_NOOP;
+
 static void sendRemotePacket() {
   struct TxDataPacket data;
   data.state1.sw1 = (uint8_t)remoteInputs.getSW1();
@@ -66,7 +68,8 @@ static void sendRemotePacket() {
   data.x2 = remoteInputs.getX2();
   data.y2 = remoteInputs.getY2();
   data.z2 = remoteInputs.getZ2();
-  data.cmd = CMD_NOOP;
+  data.cmd = command;
+  command = CMD_NOOP;
 
   remoteRadio.txData((const uint8_t*)&data, sizeof(data));
 }

@@ -7,8 +7,9 @@
 #include <stdint.h>
 
 #include "Fixed.hpp"
-#include "ValueWithChangeDetection.hpp"
 #include "globals.h"
+#include "Swithes.h"
+#include "ValueWithChangeDetection.hpp"
 
 // The Radio.* code implements generic radio receiver class. This class contains
 // the OpenDog specific protocol handling and logic.
@@ -58,6 +59,9 @@ private:
   BatteryVoltage6S b1_voltage_;
   BatteryVoltage6S b2_voltage_;
   BatteryVoltage2S rx_voltage_;
+  SW3POS sw1_;
+  SW3POS sw2_;
+  SW2POS sw5_;
 };
 
 extern RadioController radioController;

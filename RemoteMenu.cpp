@@ -4,44 +4,31 @@
 
 #include "RemoteMenu.h"
 #include "RemoteDisplay.h"
+#include "RemoteProtocol.h"
 #include "util.h"
 #include <ILI9341_t3n.h> // Hardware-specific library
 
 #include "font_Inconsolata-Regular.h"
 
 extern ILI9341_t3n tft;
+extern CommandCodes command;
 
 static constexpr uint8_t menuItemHeight = 14;
-static SimpleMenuItem subMenu1("Sub Item 1", nullptr);
-static ToggleMenuItem subMenu2("Sub Item 2", nullptr);
-static ToggleMenuItem subMenu3("Sub Item 3", nullptr);
-static SimpleMenuItem subMenu4("Sub Item 4", nullptr);
-static MenuItem *subMenuItems[4] = {
-  &subMenu1,
-  &subMenu2,
-  &subMenu3,
-  &subMenu4,
-};
 
-static Menu subMenu(
-  "Sub Menu 1", subMenuItems, __count_of(subMenuItems), 140, 30, 175, 178);
+static SimpleMenuItem rootMenu1(
+  "Clear Errors",
+  [](SimpleMenuItem*) {
+    command = CMD_CLEAR_ERRORS;
+  });
+static SimpleMenuItem rootMenu2(
+  "Modify Gains",
+  [](SimpleMenuItem*) {
+    command = CMD_SET_GAINS;
+  });
 
-static SimpleMenuItem rootMenu1("Item 1", nullptr);
-static ToggleMenuItem rootMenu2("Item 2", nullptr);
-static ToggleMenuItem rootMenu3("Item 3", nullptr);
-static ToggleMenuItem rootMenu4("Item 4", nullptr);
-static SimpleMenuItem rootMenu5("Item 5", nullptr);
-static SimpleMenuItem rootMenu6("Item 6", nullptr);
-static SimpleMenuItem rootMenu7("Item 7", nullptr);
-static MenuItem *rootMenuItems[8] = {
+static MenuItem *rootMenuItems[2] = {
   &rootMenu1,
   &rootMenu2,
-  &rootMenu3,
-  &rootMenu4,
-  &rootMenu5,
-  &subMenu,
-  &rootMenu6,
-  &rootMenu7,
 };
 
 static Menu rootMenu(

@@ -488,7 +488,7 @@ public:
   EncoderEstimate     enc_est;
   //EncoderCount        enc_count;
   EncoderError        enc_err;
-  //IqValues            iq;
+  IqValues            iq;
   //SensorlessEstimates sens_est;
   //SensorlessError     sens_err;
   MotorError          mot_err;
@@ -505,7 +505,7 @@ public:
     if (enc_est.Parse(*this, cmdId, dataLen, msg)) return true;
     //if (enc_count.Parse(*this, cmdId, dataLen, msg)) return true;
     if (enc_err.Parse(*this, cmdId, dataLen, msg)) return true;
-    //if (iq.Parse(*this, cmdId, dataLen, msg)) return true;
+    if (iq.Parse(*this, cmdId, dataLen, msg)) return true;
     //if (sens_est.Parse(*this, cmdId, dataLen, msg)) return true;
     //if (sens_err.Parse(*this, cmdId, dataLen, msg)) return true;
     if (mot_err.Parse(*this, cmdId, dataLen, msg)) return true;

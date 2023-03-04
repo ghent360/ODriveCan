@@ -189,7 +189,7 @@ ILI9341_t3n_SOURCES = \
   $(ARDUINO_LIBRARIES)/ILI9341_t3n/src/ILI9341_t3n.cpp
 
 OPENDOG_SOURCES = \
-  ODriveCanTest.ino \
+  OpenDogV3.ino \
   CanInterfaceCommon.cpp \
   CanInterfaceTeensy4.cpp \
   JointDriver.cpp \

@@ -110,6 +110,8 @@ private:
 
 class Menu: public MenuItem {
 public:
+  typedef void (*CloseCallback)(Menu* self);
+
   Menu(
     const char* title,
     MenuItem* (&items)[],
@@ -117,12 +119,14 @@ public:
     uint16_t x,
     uint16_t y,
     uint16_t w,
-    uint16_t h)
+    uint16_t h,
+    CloseCallback closeCb = nullptr)
     : MenuItem(x, y, w, h),
       title_(title),
       len_(len),
       is_open_(false),
-      items_(items) {}
+      items_(items),
+      closeCb_(closeCb) {}
 
   void select() override;
 
@@ -174,6 +178,7 @@ private:
   uint16_t closed_y_;
   uint16_t closed_w_;
   uint16_t closed_h_;
+  CloseCallback closeCb_;
 };
 
 class MenuController: public Widget {

@@ -135,7 +135,7 @@ const float parkPosition[numAxes] = {
   [BACK_LEFT_TIE] = -0.98,
   [FRONT_RIGHT_HIP] = 0,
   [FRONT_LEFT_HIP] = 0,
-  [BACK_RIGHT_HIP] = -0,
+  [BACK_RIGHT_HIP] = 0,
   [BACK_LEFT_HIP] = 0
 };
 
@@ -234,12 +234,12 @@ void RobotBody::parkLegs() {
 }
 
 void RobotBody::modifyAxesGains() {
-  constexpr float posGainShin = 30.0f;
+  constexpr float posGainShin = 35.0f;
   constexpr float posGainHips = 40.0f;
-  constexpr float posGainTie = 30.0f;
+  constexpr float posGainTie = 35.0f;
   constexpr float velGain = 0.1f;
   constexpr float integrator = 0.2f;
-  float posGain = 30.0f;
+  float posGain = 35.0f;
   for (int idx=0; idx<numAxes; idx++) {
     switch(jointClass[idx]) {
       case CLASS_HIP:

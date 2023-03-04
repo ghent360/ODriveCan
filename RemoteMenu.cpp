@@ -15,20 +15,98 @@ extern CommandCodes command;
 
 static constexpr uint8_t menuItemHeight = 14;
 
-static SimpleMenuItem rootMenu1(
+static SimpleMenuItem footMenuFL(
+  "Front Left",
+  [](SimpleMenuItem*) {
+    command = CMD_MOVE_FL_FOOT;
+  });
+
+static SimpleMenuItem footMenuFR(
+  "Front Right",
+  [](SimpleMenuItem*) {
+    command = CMD_MOVE_FR_FOOT;
+  });
+
+static SimpleMenuItem footMenuBL(
+  "Back Left",
+  [](SimpleMenuItem*) {
+    command = CMD_MOVE_BL_FOOT;
+  });
+
+static SimpleMenuItem footMenuBR(
+  "Back Right",
+  [](SimpleMenuItem*) {
+    command = CMD_MOVE_BR_FOOT;
+  });
+
+static MenuItem *footMenuItems[4] = {
+  &footMenuFL,
+  &footMenuFR,
+  &footMenuBL,
+  &footMenuBR,
+};
+
+static Menu footMenu(
+  "Move foot",
+  footMenuItems,
+  __count_of(footMenuItems),
+  150,
+  30,
+  185,
+  178,
+  [] (Menu*) { command = CMD_MOVE_FOOT_DONE; });
+
+static SimpleMenuItem gainMenuHip(
+  "Hip gain",
+  [](SimpleMenuItem*) {
+    command = CMD_EDIT_HIP_GAIN;
+  });
+
+static SimpleMenuItem gainMenuTie(
+  "Tie gain",
+  [](SimpleMenuItem*) {
+    command = CMD_EDIT_TIE_GAIN;
+  });
+
+static SimpleMenuItem gainMenuShin(
+  "Shin gain",
+  [](SimpleMenuItem*) {
+    command = CMD_EDIT_SHIN_GAIN;
+  });
+
+static MenuItem *gainMenuItems[3] = {
+  &gainMenuHip,
+  &gainMenuTie,
+  &gainMenuShin,
+};
+
+static Menu gainMenu(
+  "Edit gains",
+  gainMenuItems,
+  __count_of(gainMenuItems),
+  150,
+  30,
+  185,
+  178,
+  [] (Menu*) { command = CMD_EDIT_GAIN_DONE; });
+
+static SimpleMenuItem rootMenuClearErrors(
   "Clear Errors",
   [](SimpleMenuItem*) {
     command = CMD_CLEAR_ERRORS;
   });
-static SimpleMenuItem rootMenu2(
+
+static SimpleMenuItem rootMenuSetGains(
   "Modify Gains",
   [](SimpleMenuItem*) {
     command = CMD_SET_GAINS;
   });
 
-static MenuItem *rootMenuItems[2] = {
-  &rootMenu1,
-  &rootMenu2,
+static MenuItem *rootMenuItems[4] = {
+  &rootMenuClearErrors,
+  &rootMenuSetGains,
+  &footMenu,
+  &gainMenu,
 };
 
 static Menu rootMenu(
@@ -114,6 +192,9 @@ void Menu::back() {
   dirty_ = true;
   tft.fillRect(x_, y_, w_, h_, ILI9341_BLACK);
   remoteDisplay.controller().popMenu();
+  if (closeCb_) {
+    closeCb_(this);
+  }
 }
 
 void MenuController::init() {

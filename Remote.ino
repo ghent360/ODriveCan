@@ -183,12 +183,12 @@ void setup() {
 
   taskManager.addBack(taskManager.newPeriodicTask(
     ReadSwitchValues,
-    100,
+    150,
     [](TaskNode*, uint32_t) { remoteInputs.readSwitchValues(); }));
 
   taskManager.addBack(taskManager.newPeriodicTask(
     SendRemoteValues,
-    66,
+    20,
     [](TaskNode*, uint32_t) { updateRemoteValues(); }));
 
   taskManager.addBack(taskManager.newPeriodicTask(

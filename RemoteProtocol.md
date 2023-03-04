@@ -27,7 +27,7 @@ SW4 - reserved for future use
 |04|1|Battery 2 voltage - Fixed<uint8_t, 8, 5, 18>|
 |05|1|Receiver battery voltage Fixed<uint8_t, 8, 6, 6>|
 |06|1|Extended data type, 0 - no extension|
-|07|?|extended data up to 24 bytes|
+|07|?|extended data up to 25 bytes|
 
 ### Extended data type 1 sub-packed format - axis error info
 

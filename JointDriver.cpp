@@ -47,7 +47,7 @@ void driveJoints(DogLegJoint joint, float pos) {
     }
 }
 
-float getJoinPos(DogLegJoint joint) {
+float getJointPos(DogLegJoint joint) {
     float pos = axes[joint].enc_est.pos - jointOffsets[joint];
     switch (joint) {
     case BACK_RIGHT_SHIN:
@@ -62,4 +62,38 @@ float getJoinPos(DogLegJoint joint) {
         break;
     }
     return pos;
+}
+
+float getJointVel(DogLegJoint joint) {
+    float vel = axes[joint].enc_est.vel;
+    switch (joint) {
+    case BACK_RIGHT_SHIN:
+    case FRONT_RIGHT_SHIN:
+    case FRONT_RIGHT_HIP:
+    case FRONT_LEFT_SHIN:
+    case BACK_LEFT_SHIN:
+    case BACK_LEFT_HIP:
+        vel = -vel;
+        break;
+    default:
+        break;
+    }
+    return vel;
+}
+
+float getJointTorque(DogLegJoint joint) {
+    float torque = axes[joint].iq.iqMeasured;
+    switch (joint) {
+    case BACK_RIGHT_SHIN:
+    case FRONT_RIGHT_SHIN:
+    case FRONT_RIGHT_HIP:
+    case FRONT_LEFT_SHIN:
+    case BACK_LEFT_SHIN:
+    case BACK_LEFT_HIP:
+        torque = -torque;
+        break;
+    default:
+        break;
+    }
+    return torque;
 }

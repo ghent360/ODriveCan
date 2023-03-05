@@ -186,9 +186,9 @@ bool RobotLeg::allAxesActive() const {
 
 void RobotLeg::calcPosFromAxis(float &x, float &y, float &z) const {
   float ha, ta, sa;
-  ha = -(getJoinPos(hip_axis_) * posToRad);
-  ta = getJoinPos(tie_axis_) * posToRad;
-  sa = getJoinPos(shin_axis_) * posToRad;
+  ha = -(getJointPos(hip_axis_) * posToRad);
+  ta = getJointPos(tie_axis_) * posToRad;
+  sa = getJointPos(shin_axis_) * posToRad;
   forwardKinematics(ha, ta, sa, x, y, z);
   if (reverse_x_) {
     x = -x;

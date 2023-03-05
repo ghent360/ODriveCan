@@ -23,3 +23,19 @@ void inverseKinematics_new(
 
 void forwardKinematics(
     float h, float t, float s, float &x, float &y, float &z);
+
+void forwardVelocities(
+    float h, float t, float s,
+    float wh, float wt, float ws,
+    float &vx, float &vy, float &vz);
+
+void forwardAcceleration(
+    float h, float t, float s,
+    float wh, float wt, float ws,
+    float ah, float at, float as,
+    float &ax, float &ay, float &az);
+
+void forwardStandingAcceleration(
+    float h, float t, float s,
+    float ah, float at, float as,
+    float &ax, float &ay, float &az);

@@ -5,7 +5,9 @@
 #include "RobotDefinition.h"
 
 void driveJoints(DogLegJoint joint, float pos);
-float getJoinPos(DogLegJoint joint);
+float getJointPos(DogLegJoint joint);
+float getJointVel(DogLegJoint joint);
+float getJointTorque(DogLegJoint joint);
 
 #ifndef ARDUINO
 #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))

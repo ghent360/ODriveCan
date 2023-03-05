@@ -77,15 +77,20 @@ void forwardKinematics(
     float st = sinf(t);
     float cs = cosf(s);
     float ss = sinf(s);
+    //Oroginal equation for reference
     //y = -(tieLength * ct * sh - hipLength * ch +
     //      tieLength * ct * cs * sh - shinLength * sh * st * ss);
     y = hipLength * ch + shinLength * sh * st * ss - tieLength * ct * sh * (1 + cs);
+    //Oroginal equation for reference
     //z = shinLength * ch * st * ss - tieLength * ch * ct -
     //    shinLength * ch * ct * cs - hipLength * sh;
     z = shinLength * ch * (st * ss - ct * cs) - tieLength * ch * ct - hipLength * sh;
+    //Even simpler equation, but not sure if it is more performant.
     //z = -shinLength * ch * cosf(t + s) - tieLength * ch * ct - hipLength * sh;
+    //Oroginal equation for reference
     //x = tieLength * st + shinLength * ct * ss + shinLength * cs * st;
     x = tieLength * st + shinLength * (ct * ss + cs * st);
+    //Even simpler equation, but not sure if it is more performant.
     //x = tieLength * st + shinLength * sinf(t + s);
 }
 
@@ -179,45 +184,94 @@ Simplify for stationary position where wh, wt and ws are 0
  T * at * cos(t)
 */
 
-#if 0
-// A more forgiving asin and acos functions when the argument is slightly larger 
-// than 1 or smaller than -1
-static float clamp(float v) {
-    if (v > 1.0f && v < (1 + epsilon)) {
-        v = 1.0f;
-    } else if (v < -1.0f && v > (-1 - epsilon)) {
-        v = -1.0f;
-    }
-    return v;
+void forwardVelocities(
+    float h, float t, float s,
+    float wh, float wt, float ws,
+    float &vx, float &vy, float &vz) {
+  float ch = cosf(h);
+  float sh = sinf(h);
+  float ct = cosf(t);
+  float st = sinf(t);
+  float cs = cosf(s);
+  float ss = sinf(s);
+  float cts = cosf(t + s);
+  vz = shinLength * (wt + ws) * ch * sinf(t + s) +
+    shinLength * wh * sh * cts +
+    tieLength * (wt * ch * st + wh * sh * ct) -
+    hipLength * wh * ch;
+  vy =
+    (shinLength * wh * ch * ss +
+     (tieLength * wt + shinLength * ws) * sh * cs +
+     tieLength * wt * sh) * st +
+    ((shinLength * wt + tieLength * ws) * sh * ss -
+     tieLength * wh * ch * (cs + 1)) * ct -
+    hipLength * wh * sh;
+  vx = shinLength * (wt + ws) * cts + tieLength * wt * ct;
 }
 
-static float asinR(float v) {
-    return asinf(clamp(v));
+void forwardAcceleration(
+    float h, float t, float s,
+    float wh, float wt, float ws,
+    float ah, float at, float as,
+    float &ax, float &ay, float &az) {
+  float ch = cosf(h);
+  float sh = sinf(h);
+  float ct = cosf(t);
+  float st = sinf(t);
+  float cs = cosf(s);
+  float ss = sinf(s);
+  float cts = cosf(t + s);
+  float sts = sinf(t + s);
+
+  az = shinLength * (
+      ((at + as) * ch - 2 * wh * (wt + ws) * sh) * sts +
+      (ah * sh + 2 * (wt + ws * wt + ws + wh) * ch) * cts) +
+    tieLength * (
+        (at * ch - 2 * wh * wt * sh) * st +
+        (ah * sh + 2 * (wt + wh) * ch) * ct) +
+    hipLength * (2 * wh * sh - ah * ch);
+
+  ay =  (
+   (shinLength * ah * ch - 2 * (shinLength * (wt + ws + wh) + tieLength * ws * wt) * sh) * ss +
+   ((tieLength * at + shinLength * as) * sh +
+    2 * (tieLength * wh * wt + shinLength * wh * ws) * ch) * cs +
+    tieLength * (at * sh + 2 * wh * wt * ch)) * st +
+   (
+    ((shinLength * at + tieLength * as) * sh +
+    2 * (shinLength * wh * wt + tieLength * wh * ws) * ch) * ss +
+    (2 * (tieLength * (wt + ws + wh) + shinLength * ws * wt) * sh -
+    tieLength * ah * ch) * cs +
+    (2 * tieLength * (wt + wh) * sh - tieLength * ah * ch)) * ct -
+   hipLength * (ah * sh - 2 * wh * ch);
+
+  ax =  shinLength * ((at + as) * cts - 2 * (wt + ws) * sts) -
+    tieLength * (2 * wt * st + at * ct);
 }
 
-static float acosR(float v) {
-    return acosf(clamp(v));
-}
+void forwardStandingAcceleration(
+    float h, float t, float s,
+    float ah, float at, float as,
+    float &ax, float &ay, float &az) {
+  float ch = cosf(h);
+  float sh = sinf(h);
+  float ct = cosf(t);
+  float st = sinf(t);
+  float cs = cosf(s);
+  float ss = sinf(s);
+  float cts = cosf(t + s);
+  float sts = sinf(t + s);
 
-void inverseKinematics3(
-    float x, float y, float z, bool sol, float &hipAngle, float &tieAngle, float &shinAngle) {
-    float z2 = z * z;
-    float y2 = y * y;
-    float z2y2 = z2 + y2;
-    float d = 2 * sqrtf(z2 - z2y2 * (hipLength2 - y2) / hipLength2);
-    float a = (2 * z2y2) / hipLength2;
-    float z1a;
-    float z1b;
-    z1a = (-2 * z + d) / a;
-    z1b = (-2 * z - d) / a;
-    float th1a = asinR(z1a / hipLength);
-    float th1b = asinR(z1b / hipLength);
-    if (fabsf(z1a) < fabsf(z1b)) {
-        hipAngle = th1a;
-    } else {
-        hipAngle = th1b;
-    }
-    float yprime = -sqrtf(y*y + z*z - hipLength2);
-    inverseKinematics(x, yprime, sol, tieAngle, shinAngle);
+  az = shinLength * ((at + as) * ch * sts + ah * sh * cts) +
+    tieLength * (at * ch * st + ah * sh * ct) -
+    hipLength * ah * ch;
+
+  ay =  (
+   shinLength * ah * ch * ss +
+   (tieLength * at + shinLength * as) * sh * cs +
+   tieLength * at * sh) * st +
+   ((shinLength * at + tieLength * as) * sh * ss -
+    tieLength * (ah * ch * cs + ah * ch)) * ct -
+   hipLength * (ah * sh);
+
+  ax =  shinLength * (at + as) * cts - tieLength * at * ct;
 }
-#endif

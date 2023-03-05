@@ -101,33 +101,36 @@ calculator input:
 - S * cos(func_h(t)) * cos(func_t(t) + func_s(t)) - T * cos(func_h(t)) * cos(func_t(t)) - H * sin(func_h(t))
 
 First derivative:
-S⋅(t′(t)+s′(t))cos(h(t))sin(t(t)+s(t))+Sh′(t)sin(h(t))cos(t(t)+s(t))+Tt′(t)cos(h(t))sin(t(t))+Th′(t)sin(h(t))cos(t(t))−Hh′(t)cos(h(t))
+cos(h(t))(S⋅(t′(t)+s′(t))sin(t(t)+s(t))+Tt′(t)sin(t(t)))+h′(t)sin(h(t))(Scos(t(t)+s(t))+Tcos(t(t)))−Hh′(t)cos(h(t))
 
-S*(wt+ws)*cos(h)*sin(t + s) +
-S*wh*sin(h)*cos(t + s) +
-T*wt*cos(h)*sin(t) + 
-T*wh*sin(h)*cos(t) - 
-H*wh*cos(h)
 
 Second derivative
-((−2Sh′(t)t′(t)−2Sh′(t)s′(t))sin(h(t))+(St′′(t)+Ss′′(t))cos(h(t)))sin(t(t)+s)+(Sh′′(t)sin(h(t))+(S⋅(t′(t))2+2Ss′(t)t′(t)+S⋅(s′(t))2+S⋅(h′(t))2)cos(h(t)))cos(t(t)+s(t))+(Tt′′(t)cos(h(t))−2Th′(t)t′(t)sin(h(t)))sin(t(t))+(Th′′(t)sin(h(t))+(T⋅(t′(t))2+T⋅(h′(t))2)cos(h(t)))cos(t(t))+H⋅(h′(t))2sin(h(t))−Hh′′(t)cos(h(t))
+((−2Sh′(t)t′(t)−2Sh′(t)s′(t))sin(h(t))+(St′′(t)+Ss′′(t))cos(h(t)))sin(t(t)+s(t))+(Sh′′(t)sin(h(t))+(S⋅(t′(t))2+2Ss′(t)t′(t)+S⋅(s′(t))2+S⋅(h′(t))2)cos(h(t)))cos(t(t)+s(t))+(Tt′′(t)cos(h(t))−2Th′(t)t′(t)sin(h(t)))sin(t(t))+(Th′′(t)sin(h(t))+(T⋅(t′(t))2+T⋅(h′(t))2)cos(h(t)))cos(t(t))+H⋅(h′(t))2sin(h(t))−Hh′′(t)cos(h(t))
 
-S * ((at + as) * cos(h) - 2 * wh * (wt + ws) * sin(h)) * sin(t + s) +
-S * (ah * sin(h) + 2 * (wt + ws * wt + ws + wh) * cos(h)) * cos(t + s) + 
-T * (at * cos(h) - 2 * wh * wt * sin(h)) * sin(t) +
-T * (ah * sin(h) + 2 * (wt + wh) * cos(h)) * cos(t) +
-2 * H * wh * sin(h) -
-H * ah * cos(h)
+((-2*S*wh*wt-2*S*wh*ws)sin(h)+(S*at+S*as)*cos(h))*sin(t+s) +
+(S*ah*sin(h)+(S*(wt)*2+2*S*ws*wt+S*(ws)*2+S*(wh)*2)*cos(h))*cos(t+s) +
+(T*at*cos(h)-2*T*wh*wt*sin(h))*sin(t) +
+(T*ah*sin(h)+(T*(wt)*2 + T*(wh)*2)*cos(h))*cos(t) +
+H*(wh)*2*sin(h)-
+H*ah*cos(h)
+
+S * (((at + as) * cos(h) - 2 * wh * (wt + ws) * sin(h)) * sin(t + s) +
+     (ah * sin(h) + 2 * (wt + ws * wt + ws + wh) * cos(h)) * cos(t + s)) +
+T * ((at * cos(h) - 2 * wh * wt * sin(h)) * sin(t) +
+     (ah * sin(h) + 2 * (wt + wh) * cos(h)) * cos(t)) +
+H * (2 * wh * sin(h)- ah * cos(h))
+
+shinLength * (((at + as) * ch - 2 * wh * (wt + ws) * sh) * sinf(t + s) +
+     (ah * sh + 2 * (wt + ws * wt + ws + wh) * ch) * cosf(t + s)) +
+tieLength * ((at * ch - 2 * wh * wt * sh) * st +
+     (ah * sh + 2 * (wt + wh) * ch) * ct) +
+hipLength * (2 * wh * sh- ah * ch)
 
 Simplify for stationary position where wh, wt and ws are 0
 
-kT * (
-    S * (it + is) * cos(h) * sin(t + s) +
-    S * ih * sin(h) * cos(t + s) + 
-    T * it * cos(h) * sin(t) +
-    T * ih * sin(h) * cos(t) +
-    H * ih * cos(h)
-)
+shinLength * ((at + as) * ch * sinf(t + s) + ah * sh * cosf(t + s)) +
+tieLength * (at * ch * st + ah * sh * ct) -
+hipLength * ah * ch
 -------------------------------------
 y = hipLength * ch + shinLength * sh * st * ss - tieLength * ct * sh * (1 + cs)
 
@@ -195,10 +198,10 @@ void forwardVelocities(
   float cs = cosf(s);
   float ss = sinf(s);
   float cts = cosf(t + s);
-  vz = shinLength * (wt + ws) * ch * sinf(t + s) +
-    shinLength * wh * sh * cts +
-    tieLength * (wt * ch * st + wh * sh * ct) -
+  vz = ch * (shinLength * (wt + ws) * sinf(t + s) + tieLength * wt * st) +
+    wh * sh * (shinLength * cts + tieLength * ct) -
     hipLength * wh * ch;
+
   vy =
     (shinLength * wh * ch * ss +
      (tieLength * wt + shinLength * ws) * sh * cs +
@@ -206,6 +209,7 @@ void forwardVelocities(
     ((shinLength * wt + tieLength * ws) * sh * ss -
      tieLength * wh * ch * (cs + 1)) * ct -
     hipLength * wh * sh;
+
   vx = shinLength * (wt + ws) * cts + tieLength * wt * ct;
 }
 
@@ -231,17 +235,14 @@ void forwardAcceleration(
         (ah * sh + 2 * (wt + wh) * ch) * ct) +
     hipLength * (2 * wh * sh - ah * ch);
 
-  ay =  (
-   (shinLength * ah * ch - 2 * (shinLength * (wt + ws + wh) + tieLength * ws * wt) * sh) * ss +
-   ((tieLength * at + shinLength * as) * sh +
-    2 * (tieLength * wh * wt + shinLength * wh * ws) * ch) * cs +
+  ay =
+   ((shinLength * ah * ch - 2 * (shinLength * (wt + ws + wh) + tieLength * ws * wt) * sh) * ss +
+    ((tieLength * at + shinLength * as) * sh + 2 * wh * (tieLength * wt + shinLength * ws) * ch) * cs +
     tieLength * (at * sh + 2 * wh * wt * ch)) * st +
    (
-    ((shinLength * at + tieLength * as) * sh +
-    2 * (shinLength * wh * wt + tieLength * wh * ws) * ch) * ss +
-    (2 * (tieLength * (wt + ws + wh) + shinLength * ws * wt) * sh -
-    tieLength * ah * ch) * cs +
-    (2 * tieLength * (wt + wh) * sh - tieLength * ah * ch)) * ct -
+    ((shinLength * at + tieLength * as) * sh + 2 * wh * (shinLength * wt + tieLength * ws) * ch) * ss +
+    (2 * (tieLength * (wt + ws + wh) + shinLength * ws * wt) * sh - tieLength * ah * ch) * cs +
+    tieLength * (2 * (wt + wh) * sh - ah * ch)) * ct -
    hipLength * (ah * sh - 2 * wh * ch);
 
   ax =  shinLength * ((at + as) * cts - 2 * (wt + ws) * sts) -
@@ -267,11 +268,14 @@ void forwardStandingAcceleration(
 
   ay =  (
    shinLength * ah * ch * ss +
-   (tieLength * at + shinLength * as) * sh * cs +
-   tieLength * at * sh) * st +
-   ((shinLength * at + tieLength * as) * sh * ss -
-    tieLength * (ah * ch * cs + ah * ch)) * ct -
+   (tieLength * at + shinLength * as) * sh * cs + tieLength * at * sh) * st +
+   ((shinLength * at + tieLength * as) * sh * ss - tieLength * ah * ch * (1 + cs)) * ct -
    hipLength * (ah * sh);
+
+  ay = 
+   (shinLength * ah * ch * ss + (tieLength * at + shinLength * as) * sh * cs + tieLength * at * sh) * st +
+   ((shinLength * at + tieLength * as) * sh * ss - tieLength * ah * ch * cs - tieLength * ah * ch) * ct -
+   hipLength * ah * sh;
 
   ax =  shinLength * (at + as) * cts - tieLength * at * ct;
 }

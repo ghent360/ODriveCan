@@ -13,6 +13,7 @@ enum PeriodicTaskId {
   StateThreeConnection,
   StateThreeODriveVoltage,
   StateThreeAxisIq,
+  StateThreeReportStandingAccl,
   RxBatteryVoltage,
   StateThreeSerial,
   RobotBodyRecalcLegPos,

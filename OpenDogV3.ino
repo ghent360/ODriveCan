@@ -118,6 +118,7 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
     // Remove the checkAxisVbusVoltage task.
     taskManager.removeById(StateThreeODriveVoltage);
     taskManager.removeById(StateThreeAxisIq);
+    taskManager.removeById(StateThreeReportStandingAccl);
     startStateOne();
     // Remove the checkAxisConnection task.
     taskManager.remove(self, true);

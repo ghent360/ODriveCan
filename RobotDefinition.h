@@ -15,6 +15,7 @@
 // motor position coordinates and vice versa.
 constexpr float posToRad = 0.62831853071f; // 2 * pi / 10
 constexpr float radToPos = 1.59154943092f; // 10 / (2 * pi)
+constexpr float motorTorqueConstant = 8.27f / 90.0f; // (15 * sqrt(3) / M_PI) * kV^-1
 
 // We use these enums as indexes in arrays, so it is important that
 // they start from 0.
@@ -92,8 +93,12 @@ public:
   bool incrementZ(int16_t v, bool start = true) {
     return setPos(x_, y_, z_ + v, start);
   }
+
+  void calcStandingAccFromAxis(float &ax, float &ay, float &az) const;
 private:
   void calcPosFromAxis(float &x, float &y, float &z) const;
+  void calcVelFromAxis(float &vx, float &vy, float &vz) const;
+  void calcAccFromAxis(float &ax, float &ay, float &az) const;
 
   const uint8_t leg_id_;
   // Position accuracy is not that great that we allow sub 1mm position.
@@ -199,23 +204,29 @@ public:
     return result;
   }
 
-  void incrementAllX(DogLeg legId, int16_t v, bool start = true) {
+  void incrementAllX(int16_t v, bool start = true) {
     for (uint8_t idx = 0; idx < numberOfLegs; idx++) {
       legs_[idx].incrementX(v, start && isActiveAndIdle());
       leg_reference_pos_[idx][0] = legs_[idx].getPosX();
     }
   }
-  void incrementAllY(DogLeg legId, int16_t v, bool start = true) {
+  void incrementAllY(int16_t v, bool start = true) {
     for (uint8_t idx = 0; idx < numberOfLegs; idx++) {
       legs_[idx].incrementY(v, start && isActiveAndIdle());
       leg_reference_pos_[idx][1] = legs_[idx].getPosY();
     }
   }
-  void incrementAllZ(DogLeg legId, int16_t v, bool start = true) {
+  void incrementAllZ(int16_t v, bool start = true) {
     for (uint8_t idx = 0; idx < numberOfLegs; idx++) {
       legs_[idx].incrementZ(v, start && isActiveAndIdle());
       leg_reference_pos_[idx][2] = legs_[idx].getPosZ();
     }
+  }
+
+  float getLegAccZ(DogLeg legId) const {
+    float ax, ay, az;
+    legs_[legId].calcStandingAccFromAxis(ax, ay, az);
+    return az;
   }
 
   void startWalking();

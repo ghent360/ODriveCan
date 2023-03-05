@@ -195,6 +195,62 @@ void RobotLeg::calcPosFromAxis(float &x, float &y, float &z) const {
   }
 }
 
+void RobotLeg::calcVelFromAxis(float &vx, float &vy, float &vz) const {
+  float ha, ta, sa;
+  ha = -(getJointPos(hip_axis_) * posToRad);
+  ta = getJointPos(tie_axis_) * posToRad;
+  sa = getJointPos(shin_axis_) * posToRad;
+
+  float wh, wt, ws;
+  wh = -(getJointVel(hip_axis_) * posToRad);
+  wt = getJointVel(tie_axis_) * posToRad;
+  ws = getJointVel(shin_axis_) * posToRad;
+
+  forwardVelocities(ha, ta, sa, wh, wt, ws, vx, vy, vz);
+  if (reverse_x_) {
+    vx = -vx;
+  }
+}
+
+void RobotLeg::calcAccFromAxis(float &ax, float &ay, float &az) const {
+  float ha, ta, sa;
+  ha = -(getJointPos(hip_axis_) * posToRad);
+  ta = getJointPos(tie_axis_) * posToRad;
+  sa = getJointPos(shin_axis_) * posToRad;
+
+  float wh, wt, ws;
+  wh = -(getJointVel(hip_axis_) * posToRad);
+  wt = getJointVel(tie_axis_) * posToRad;
+  ws = getJointVel(shin_axis_) * posToRad;
+
+  float ah, at, as;
+  ah = -getJointTorque(hip_axis_);
+  at = getJointTorque(tie_axis_);
+  as = getJointTorque(shin_axis_);
+
+  forwardAcceleration(ha, ta, sa, wh, wt, ws, ah, at, as, ax, ay, az);
+  if (reverse_x_) {
+    ax = -ax;
+  }
+}
+
+void RobotLeg::calcStandingAccFromAxis(float &ax, float &ay, float &az) const {
+  float ha, ta, sa;
+  ha = -(getJointPos(hip_axis_) * posToRad);
+  ta = getJointPos(tie_axis_) * posToRad;
+  sa = getJointPos(shin_axis_) * posToRad;
+
+  float ah, at, as;
+  ah = -getJointTorque(hip_axis_);
+  at = getJointTorque(tie_axis_);
+  as = getJointTorque(shin_axis_);
+
+  forwardStandingAcceleration(ha, ta, sa, ah, at, as, ax, ay, az);
+  if (reverse_x_) {
+    ax = -ax;
+  }
+}
+
 float RobotLeg::getPosError() const {
   float x, y, z;
   calcPosFromAxis(x, y, z);
@@ -265,9 +321,29 @@ void RobotBody::setAllAxesActive() {
   radioController.setMotorState(true);
   axes_active_ = true;
   scheduleRecalculateLogPosition(100);
+  taskManager.removeById(StateThreeReportStandingAccl);
+  taskManager.addBack(taskManager.newPeriodicTask(
+    StateThreeReportStandingAccl,
+    500,
+    [](TaskNode*, uint32_t) {
+      float v;
+      v = robotBody.getLegAccZ(FRONT_LEFT);
+      Serial.print("FL ");
+      Serial.print(v);
+      v = robotBody.getLegAccZ(FRONT_RIGHT);
+      Serial.print(" FR ");
+      Serial.print(v);
+      v = robotBody.getLegAccZ(BACK_LEFT);
+      Serial.print(" BL ");
+      Serial.print(v);
+      v = robotBody.getLegAccZ(BACK_RIGHT);
+      Serial.print(" BR ");
+      Serial.println(v);
+    }));
 }
 
 void RobotBody::setAllAxesIdle() {
+  taskManager.removeById(StateThreeReportStandingAccl);
   for(auto& axis: axes) {
     axis.SetState(AxisState::AXIS_STATE_IDLE);
   }

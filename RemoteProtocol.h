@@ -31,6 +31,8 @@ enum ExtensionTypes {
   EXT_TYPE_NONE = 0,
   EXT_AXIS_ERROR = 1,
   EXT_GAIN_VALUES = 2,
+  EXT_FOOT_POS = 3,
+  EXT_AXIS_TORQUE = 4,
 };
 
 struct TxDataPacket {
@@ -123,11 +125,16 @@ struct RxFootPos {
   int16_t err; //  Fixed<int16_t, 16, 10>;
 } __attribute__((packed));
 
+struct RxAxisTorque {
+  int16_t iq_measured[12]; // Fixed<int16_t, 16, 8>;
+} __attribute__((packed));
+
 struct RxPacket {
   struct RxPacketHdr hdr;
   union {
     struct RxAxisError axis_err;
     struct RxGainValues gains;
     struct RxFootPos foot_pos;
+    struct RxAxisTorque axis_torque;
   } ext;
 } __attribute__((packed));

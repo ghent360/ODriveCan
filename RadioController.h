@@ -21,10 +21,7 @@ public:
 
   void setReady(bool);
 
-  void setMotorState(bool v) {
-    motors_engaged_ = v;
-  }
-
+  void setMotorState(bool v);
   void setWalkState(bool v) {
     walk_engaged_ = v;
   }
@@ -44,6 +41,7 @@ public:
   void reportAxisError(uint16_t axisCanId, uint32_t error);
   void reportMotorError(uint16_t axisCanId, uint64_t error);
   void reportEncoderError(uint16_t axisCanId, uint32_t error);
+  void reportAxisIq(uint16_t axisCanId, float iqSetpoint, float iqMeasured);
 private:
   void setNextTxPacket();
 
@@ -62,6 +60,8 @@ private:
   SW3POS sw1_;
   SW3POS sw2_;
   SW2POS sw5_;
+  float axis_iq_desired_[numAxes];
+  float axis_iq_measured_[numAxes];
 };
 
 extern RadioController radioController;

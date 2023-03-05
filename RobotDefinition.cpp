@@ -160,7 +160,7 @@ RobotLeg::RobotLeg(DogLeg legId)
 
 bool RobotLeg::startMove() {
   float ha, ta, sa;
-  inverseKinematics(
+  inverseKinematics_new(
     reverse_x_ ? -x_ : x_,
     y_,
     z_,

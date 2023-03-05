@@ -121,12 +121,12 @@ public:
     }
     return result;
   }
-private:
+
   static constexpr Fixed fromValue(T v) {
     Fixed r;
     r.value_ = v;
     return r;
   }
-
+private:
   T value_;
 };

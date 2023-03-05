@@ -22,6 +22,7 @@
 using odrive::EncoderError;
 using odrive::EncoderEstimate;
 using odrive::Heartbeat;
+using odrive::IqValues;
 using odrive::MotorError;
 using odrive::ODriveAxis;
 using odrive::VbusVoltage;
@@ -112,9 +113,11 @@ static void checkAxisConnection(TaskNode* self, uint32_t) {
       axis.hb.SetCallback(nullptr);
       axis.mot_err.SetCallback(nullptr);
       axis.enc_err.SetCallback(nullptr);
+      axis.iq.SetCallback(nullptr);
     }
     // Remove the checkAxisVbusVoltage task.
     taskManager.removeById(StateThreeODriveVoltage);
+    taskManager.removeById(StateThreeAxisIq);
     startStateOne();
     // Remove the checkAxisConnection task.
     taskManager.remove(self, true);
@@ -179,6 +182,12 @@ static void startStateThree() {
     axis.enc_err.SetCallback(
       [](ODriveAxis& axis, EncoderError&, EncoderError &newVal) {
         radioController.reportEncoderError(axis.node_id, newVal.err);
+      });
+
+    axis.iq.SetCallback(
+      [](ODriveAxis& axis, IqValues&, IqValues& newVal) {
+        radioController.reportAxisIq(
+          axis.node_id, newVal.iqSetpoint, newVal.iqMeasured);
       });
   }
 

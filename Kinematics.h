@@ -12,5 +12,14 @@ void inverseKinematics(
     float& tieAngle,
     float& shinAngle);
 
+void inverseKinematics_new(
+    float x,
+    float y,
+    float z,
+    bool posShinAngle,
+    float &h,
+    float &t,
+    float &s);
+
 void forwardKinematics(
     float h, float t, float s, float &x, float &y, float &z);

@@ -61,9 +61,9 @@ void inverseKinematics_new(
         (2 * tieLength * shinLength);
     float q = sqrtf(1 - d * d);
     if (posShinAngle) {
-        s = atan2(-q, d);
+        s = atan2f(-q, d);
     } else {
-        s = atan2(q, d);
+        s = atan2f(q, d);
     }
     t = atan2f(x, hyp) -
         atan2f(shinLength * sinf(s), tieLength + shinLength * cosf(s));
@@ -77,12 +77,107 @@ void forwardKinematics(
     float st = sinf(t);
     float cs = cosf(s);
     float ss = sinf(s);
-    y = -(tieLength * ct * sh - hipLength * ch +
-          tieLength * ct * cs * sh - shinLength * sh * st * ss);
-    z = shinLength * ch * st * ss - tieLength * ch * ct -
-        shinLength * ch * ct * cs - hipLength * sh;
-    x = tieLength * st + shinLength * ct * ss + shinLength * cs * st;
+    //y = -(tieLength * ct * sh - hipLength * ch +
+    //      tieLength * ct * cs * sh - shinLength * sh * st * ss);
+    y = hipLength * ch + shinLength * sh * st * ss - tieLength * ct * sh * (1 + cs);
+    //z = shinLength * ch * st * ss - tieLength * ch * ct -
+    //    shinLength * ch * ct * cs - hipLength * sh;
+    z = shinLength * ch * (st * ss - ct * cs) - tieLength * ch * ct - hipLength * sh;
+    //z = -shinLength * ch * cosf(t + s) - tieLength * ch * ct - hipLength * sh;
+    //x = tieLength * st + shinLength * ct * ss + shinLength * cs * st;
+    x = tieLength * st + shinLength * (ct * ss + cs * st);
+    //x = tieLength * st + shinLength * sinf(t + s);
 }
+
+/*
+z = - shinLength * ch * cos(t + s) - tieLength * ch * ct - hipLength * sh
+
+calculator input:
+- S * cos(func_h(t)) * cos(func_t(t) + func_s(t)) - T * cos(func_h(t)) * cos(func_t(t)) - H * sin(func_h(t))
+
+First derivative:
+S⋅(t′(t)+s′(t))cos(h(t))sin(t(t)+s(t))+Sh′(t)sin(h(t))cos(t(t)+s(t))+Tt′(t)cos(h(t))sin(t(t))+Th′(t)sin(h(t))cos(t(t))−Hh′(t)cos(h(t))
+
+S*(wt+ws)*cos(h)*sin(t + s) +
+S*wh*sin(h)*cos(t + s) +
+T*wt*cos(h)*sin(t) + 
+T*wh*sin(h)*cos(t) - 
+H*wh*cos(h)
+
+Second derivative
+((−2Sh′(t)t′(t)−2Sh′(t)s′(t))sin(h(t))+(St′′(t)+Ss′′(t))cos(h(t)))sin(t(t)+s)+(Sh′′(t)sin(h(t))+(S⋅(t′(t))2+2Ss′(t)t′(t)+S⋅(s′(t))2+S⋅(h′(t))2)cos(h(t)))cos(t(t)+s(t))+(Tt′′(t)cos(h(t))−2Th′(t)t′(t)sin(h(t)))sin(t(t))+(Th′′(t)sin(h(t))+(T⋅(t′(t))2+T⋅(h′(t))2)cos(h(t)))cos(t(t))+H⋅(h′(t))2sin(h(t))−Hh′′(t)cos(h(t))
+
+S * ((at + as) * cos(h) - 2 * wh * (wt + ws) * sin(h)) * sin(t + s) +
+S * (ah * sin(h) + 2 * (wt + ws * wt + ws + wh) * cos(h)) * cos(t + s) + 
+T * (at * cos(h) - 2 * wh * wt * sin(h)) * sin(t) +
+T * (ah * sin(h) + 2 * (wt + wh) * cos(h)) * cos(t) +
+2 * H * wh * sin(h) -
+H * ah * cos(h)
+
+Simplify for stationary position where wh, wt and ws are 0
+
+kT * (
+    S * (it + is) * cos(h) * sin(t + s) +
+    S * ih * sin(h) * cos(t + s) + 
+    T * it * cos(h) * sin(t) +
+    T * ih * sin(h) * cos(t) +
+    H * ih * cos(h)
+)
+-------------------------------------
+y = hipLength * ch + shinLength * sh * st * ss - tieLength * ct * sh * (1 + cs)
+
+calculator input
+H * cos(func_h(t)) + S * sin(func_h(t)) * sin(func_t(t)) * sin(func_s(t)) - T * cos(func_t(t)) * sin(func_h(t)) * (1 + cos(func_s(t)))
+
+First derivative
+(Sh′(t)cos(h(t))sin(s(t))+(Tt′(t)+Ss′(t))sin(h(t))cos(s(t))+Tt′(t)sin(h(t)))sin(t(t))+((St′(t)+Ts′(t))sin(h(t))sin(s(t))−Th′(t)cos(h(t))cos(s(t))−Th′(t)cos(h(t)))cos(t(t))−Hh′(t)sin(h(t))
+
+(S * wh * cos(h) * sin(s) + (T * wt + S * ws) * sin(h) * cos(s) + T * wt * sin(h)) * sin(t) + 
+((S * wt + T * ws) * sin(h) * sin(s) - T * wh * cos(h) * (cos(s) + 1)) * cos(t) -
+H * wh * sin(h)
+
+Second derivative
+(((−S⋅(t′(t))2−2Ts′(t)t′(t)−S⋅(s′(t))2−S⋅(h′(t))2)sin(h(t))+Sh′′(t)cos(h(t)))sin(s(t))+((Tt′′(t)+Ss′′(t))sin(h(t))+(2Th′(t)t′(t)+2Sh′(t)s′(t))cos(h(t)))cos(s(t))+Tt′′(t)sin(h(t))+2Th′(t)t′(t)cos(h(t)))sin(t(t))+(((St′′(t)+Ts′′(t))sin(h(t))+(2Sh′(t)t′(t)+2Th′(t)s′(t))cos(h(t)))sin(s(t))+((T⋅(t′(t))2+2Ss′(t)t′(t)+T⋅(s′(t))2+T⋅(h′(t))2)sin(h(t))−Th′′(t)cos(h(t)))cos(s(t))+(T⋅(t′(t))2+T⋅(h′(t))2)sin(h(t))−Th′′(t)cos(h(t)))cos(t(t))−Hh′′(t)sin(h(t))−H⋅(h′(t))2cos(h(t))
+
+ ((S * ah * cos(h) - 2 * (S * (wt + ws + wh) + T * ws * wt) * sin(h)) * sin(s) +
+  ((T * at + S * as) * sin(h) + 2 * (T * wh * wt + S * wh * ws) * cos(h)) * cos(s) + 
+  T * at * sin(h) + 2 * T * wh * wt * cos(h)) * sin(t) + 
+ (
+  ((S * at + T * as) * sin(h) + 2 * (S * wh * wt + T * wh * ws) * cos(h)) * sin(s) +
+  (2 * (T * (wt + ws + wh) + S * ws * wt) * sin(h) - T * ah * cos(h)) * cos(s) +
+  (2 * T * (wt + wh) * sin(h) - T * ah * cos(h))) * cos(t) -
+ H * ah * sin(h) - 
+ 2 * H * wh * cos(h)
+
+Simplify for stationary position where wh, wt and ws are 0
+
+(S * ah * cos(h) * sin(h) * sin(s) + (T * at + S * as) * sin(h) * cos(s) + T * at * sin(h)) * sin(t) + 
+((S * at + T * as) * sin(h) * sin(s) - T * ah * cos(h) * cos(s) - T * ah * cos(h)) * cos(t) -
+H * ah * sin(h)
+-------------------------------------
+x = tieLength * st + shinLength * sinf(t + s)
+
+calculator input
+T * sin(func_t(t)) + S * sin(func_t(t) + func_s(t))
+
+First derivative
+S⋅(t′(t)+s′(t))cos(t(t)+s(t))+Tt′(t)cos(t(t))
+
+S * (wt + ws) * cos(t + s) + T * wt * cos(t)
+
+Second derivative
+−S⋅(t′(t)+s′(t))2sin(t(t)+s(t))+S⋅(t′′(t)+s′′(t))cos(t(t)+s(t))−T⋅(t′(t))2sin(t(t))+Tt′′(t)cos(t(t))
+
+ S * (at + as) * cos(t + s) -
+ 2 * S * (wt + ws) * sin(t + s) -
+ 2 * T * wt * sin(t) +
+ T * at * cos(t)
+
+Simplify for stationary position where wh, wt and ws are 0
+
+ S * (at + as) * cos(t + s) +
+ T * at * cos(t)
+*/
 
 #if 0
 // A more forgiving asin and acos functions when the argument is slightly larger 

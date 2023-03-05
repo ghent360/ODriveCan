@@ -6,10 +6,34 @@
 #include "RadioController.h"
 #include "RemoteProtocol.h"
 #include "RobotDefinition.h"
+#include "TaskIds.h"
 #include <string.h>
 
 RadioController::RadioController()
   : ready_(false) {
+}
+
+void RadioController::setMotorState(bool v) {
+  if (motors_engaged_ != v) {
+    if (v) {
+      for(uint8_t idx = 0; idx < numAxes; idx++) {
+        axis_iq_desired_[idx] = 0;
+        axis_iq_measured_[idx] = 0;
+      }
+      // Request axis iq values report periodically.
+      taskManager.addBack(taskManager.newPeriodicTask(
+        StateThreeAxisIq,
+        20,
+        [](TaskNode*, uint32_t) {
+          for(auto& axis: axes) {
+            axis.RequestIq();
+          }
+        }));
+    } else {
+      taskManager.removeById(StateThreeAxisIq);
+    }
+  }
+  motors_engaged_ = v;
 }
 
 void RadioController::setReady(bool value) {
@@ -47,6 +71,13 @@ void RadioController::reportEncoderError(uint16_t axisCanId, uint32_t error) {
   }
 }
 
+void RadioController::reportAxisIq(uint16_t axisCanId, float iqSetpoint, float iqMeasured) {
+  int8_t axis_idx = (int8_t)getJointByAxisId(axisCanId);
+  if (axis_idx >= 0 && axis_idx < numAxes) {
+    axis_iq_desired_[axis_idx] = iqSetpoint;
+    axis_iq_measured_[axis_idx] = iqMeasured;
+  }
+}
 void RadioController::processRxData(const uint8_t *rxData, uint8_t len) {
   const struct TxDataPacket *tx_packet =
     reinterpret_cast<const struct TxDataPacket*>(rxData);
@@ -137,9 +168,9 @@ void RadioController::setNextTxPacket() {
   data.hdr.errors.a11error = axis_errors_[10] != 0;
   data.hdr.errors.a12error = axis_errors_[11] != 0;
   data.hdr.errors.reserved = 0;
-  data.hdr.b1_voltage = *b1_voltage_.to_bytes();
-  data.hdr.b2_voltage = *b2_voltage_.to_bytes();
-  data.hdr.rx_voltage = *rx_voltage_.to_bytes();
+  data.hdr.b1_voltage = b1_voltage_.value();
+  data.hdr.b2_voltage = b2_voltage_.value();
+  data.hdr.rx_voltage = rx_voltage_.value();
   data.hdr.ext_type = EXT_TYPE_NONE;
   for(uint8_t idx = 0; idx < numAxes; idx++) {
     if (axis_errors_[idx] != 0 && axis_errors_[idx].changed()) {
@@ -151,6 +182,14 @@ void RadioController::setNextTxPacket() {
       data.ext.axis_err.encoder_error.error = axis_encoder_errors_[idx];
       axis_errors_[idx].changeReset();
       break;
+    }
+  }
+  if (data.hdr.ext_type == EXT_TYPE_NONE) {
+    data.hdr.ext_type = EXT_AXIS_TORQUE;
+    len += sizeof(RxAxisTorque);
+    for(uint8_t idx = 0; idx < numAxes; idx++) {
+      Fixed<int16_t, 16, 8> value = axis_iq_measured_[idx];
+      data.ext.axis_torque.iq_measured[idx] = value.value();
     }
   }
   radio.writeTxData((const uint8_t*)&data, len);

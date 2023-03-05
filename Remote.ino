@@ -81,11 +81,11 @@ static void receiveRemotePacket(const uint8_t* data, uint8_t len) {
   if (len >= sizeof(RxPacketHdr)) {
     BatteryVoltage6S s6voltage;
     BatteryVoltage2S s2voltage;
-    s6voltage = BatteryVoltage6S::fromBytes(&rxPacket->hdr.b1_voltage, 1);
+    s6voltage = BatteryVoltage6S::fromValue(rxPacket->hdr.b1_voltage);
     remoteDisplay.setBus1BatteryVoltage(s6voltage);
-    s6voltage = BatteryVoltage6S::fromBytes(&rxPacket->hdr.b2_voltage, 1);
+    s6voltage = BatteryVoltage6S::fromValue(rxPacket->hdr.b2_voltage);
     remoteDisplay.setBus3BatteryVoltage(s6voltage);
-    s2voltage = BatteryVoltage2S::fromBytes(&rxPacket->hdr.rx_voltage, 1);
+    s2voltage = BatteryVoltage2S::fromValue(rxPacket->hdr.rx_voltage);
     remoteDisplay.setTeensyBatteryVoltage(s2voltage);
     remoteDisplay.setSW1Active(rxPacket->hdr.state.walk);
     remoteDisplay.setSW5Active(rxPacket->hdr.state.control);

@@ -94,11 +94,11 @@ public:
     return setPos(x_, y_, z_ + v, start);
   }
 
+  void calcVelFromAxis(float &vx, float &vy, float &vz) const;
+  void calcAccFromAxis(float &ax, float &ay, float &az) const;
   void calcStandingAccFromAxis(float &ax, float &ay, float &az) const;
 private:
   void calcPosFromAxis(float &x, float &y, float &z) const;
-  void calcVelFromAxis(float &vx, float &vy, float &vz) const;
-  void calcAccFromAxis(float &ax, float &ay, float &az) const;
 
   const uint8_t leg_id_;
   // Position accuracy is not that great that we allow sub 1mm position.
@@ -223,10 +223,16 @@ public:
     }
   }
 
-  float getLegAccZ(DogLeg legId) const {
-    float ax, ay, az;
+  void getLegVel(DogLeg legId, float& vx, float& vy,float& vz) const {
+    legs_[legId].calcVelFromAxis(vx, vy, vz);
+  }
+
+  void getLegAcc(DogLeg legId, float& ax, float& ay,float& az) const {
+    legs_[legId].calcAccFromAxis(ax, ay, az);
+  }
+
+  void getLegStandingAcc(DogLeg legId, float& ax, float& ay,float& az) const {
     legs_[legId].calcStandingAccFromAxis(ax, ay, az);
-    return az;
   }
 
   void startWalking();

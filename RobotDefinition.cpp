@@ -326,19 +326,35 @@ void RobotBody::setAllAxesActive() {
     StateThreeReportStandingAccl,
     500,
     [](TaskNode*, uint32_t) {
-      float v;
-      v = robotBody.getLegAccZ(FRONT_LEFT);
+      float ax, ay, az;
+      robotBody.getLegAcc(FRONT_LEFT, ax, ay, az);
       Serial.print("FL ");
-      Serial.print(v);
-      v = robotBody.getLegAccZ(FRONT_RIGHT);
-      Serial.print(" FR ");
-      Serial.print(v);
-      v = robotBody.getLegAccZ(BACK_LEFT);
-      Serial.print(" BL ");
-      Serial.print(v);
-      v = robotBody.getLegAccZ(BACK_RIGHT);
-      Serial.print(" BR ");
-      Serial.println(v);
+      Serial.print(ax);
+      Serial.print(", ");
+      Serial.print(ay);
+      Serial.print(", ");
+      Serial.print(az);
+      robotBody.getLegAcc(FRONT_RIGHT, ax, ay, az);
+      Serial.print("    FR ");
+      Serial.print(ax);
+      Serial.print(", ");
+      Serial.print(ay);
+      Serial.print(", ");
+      Serial.print(az);
+      robotBody.getLegAcc(BACK_LEFT, ax, ay, az);
+      Serial.print("    BL ");
+      Serial.print(ax);
+      Serial.print(", ");
+      Serial.print(ay);
+      Serial.print(", ");
+      Serial.print(az);
+      robotBody.getLegAcc(BACK_RIGHT, ax, ay, az);
+      Serial.print("    BR ");
+      Serial.print(ax);
+      Serial.print(", ");
+      Serial.print(ay);
+      Serial.print(", ");
+      Serial.println(az);
     }));
 }
 

@@ -260,9 +260,8 @@ void forwardStandingAcceleration(
   float cs = cosf(s);
   float ss = sinf(s);
   float cts = cosf(t + s);
-  float sts = sinf(t + s);
 
-  az = shinLength * ((at + as) * ch * sts + ah * sh * cts) +
+  az = shinLength * ((at + as) * ch * sinf(t + s) + ah * sh * cts) +
     tieLength * (at * ch * st + ah * sh * ct) -
     hipLength * ah * ch;
 

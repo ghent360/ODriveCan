@@ -4,6 +4,7 @@
  * This is my version of the control software for OpenDog V3 remote.
  */
 #include <Arduino.h>
+#include <SPI.h>
 
 //#define PROFILE_LOOP
 
@@ -15,6 +16,10 @@
 #include "RemoteTaskIds.h"
 #include "RemoteTouch.h"
 #include "TaskManager.hpp"
+
+#define SPI1_MISO 39
+#define SPI1_MOSI 26
+#define SPI1_SCK  27
 
 TaskManager taskManager;
 
@@ -169,6 +174,10 @@ void setup() {
   remoteRadio.initPins();
   remoteTouch.initPins();
 
+  SPI1.setMISO(SPI1_MISO);
+  SPI1.setMOSI(SPI1_MOSI);
+  SPI1.setSCK(SPI1_SCK);
+  SPI1.begin();
   remoteInputs.begin();
   remoteDisplay.begin();
   remoteRadio.begin();

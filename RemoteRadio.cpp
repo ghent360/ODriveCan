@@ -6,10 +6,11 @@
 #include "RemoteDisplay.h"
 #include "RemoteTaskIds.h"
 #include <RF24.h>
+#include <SPI.h>
 
-#define NRF_CE_PIN 2
-#define NRF_CS_PIN 3
-#define NRF_IRQ_PIN 4
+#define NRF_CE_PIN    2
+#define NRF_CS_PIN    3
+#define NRF_IRQ_PIN   4
 
 extern TaskManager taskManager;
 
@@ -28,7 +29,7 @@ void RemoteRadio::initPins() {
 void RemoteRadio::begin() {
   randomSeed(analogRead(A1) * micros());
 
-  radio.begin();
+  radio.begin(&SPI1, NRF_CE_PIN, NRF_CS_PIN);
   if (radio.failureDetected || !radio.isChipConnected()) {
     Serial.println("Radio begin failed");
   }

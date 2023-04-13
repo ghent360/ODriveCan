@@ -4,6 +4,7 @@
 
 #include "RemoteTouch.h"
 #include <XPT2046_Touchscreen.h>
+#include <SPI.h>
 
 #define TOUCH_CS   6
 #define TOUCH_IRQ  5
@@ -22,7 +23,7 @@ void RemoteTouch::initPins() {
 }
 
 void RemoteTouch::begin() {
-  ts.begin();
+  ts.begin(SPI1);
   ts.setRotation(2);
 }
 

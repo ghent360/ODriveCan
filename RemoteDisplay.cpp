@@ -67,7 +67,7 @@ void RemoteDisplay::begin() {
   tft.updateChangedAreasOnly(true);
   tft.setFont(FiraCodeRetina_14);
   tft.fillScreen(ILI9341_BLACK);
-  tft.updateScreen();
+  tft.updateScreenAsync();
   for(auto widget : widgets_) {
     widget->init();
   }
@@ -79,9 +79,9 @@ void RemoteDisplay::stopDisplay() {
 
 void RemoteDisplay::updateScreen() {
   if (dirty()) {
-    //tft.waitUpdateAsyncComplete();
+    tft.waitUpdateAsyncComplete();
     drawUi();
-    tft.updateScreen();
+    tft.updateScreenAsync();
   }
 }
 

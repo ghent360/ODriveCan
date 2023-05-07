@@ -20,6 +20,7 @@ void RadioController::setMotorState(bool v) {
         axis_iq_desired_[idx] = 0;
         axis_iq_measured_[idx] = 0;
       }
+#if 0
       // Request axis iq values report periodically.
       taskManager.addBack(taskManager.newPeriodicTask(
         StateThreeAxisIq,
@@ -29,8 +30,9 @@ void RadioController::setMotorState(bool v) {
             axis.RequestIq();
           }
         }));
+#endif
     } else {
-      taskManager.removeById(StateThreeAxisIq);
+      //taskManager.removeById(StateThreeAxisIq);
     }
   }
   motors_engaged_ = v;
@@ -78,6 +80,7 @@ void RadioController::reportAxisIq(uint16_t axisCanId, float iqSetpoint, float i
     axis_iq_measured_[axis_idx] = iqMeasured;
   }
 }
+
 void RadioController::processRxData(const uint8_t *rxData, uint8_t len) {
   const struct TxDataPacket *tx_packet =
     reinterpret_cast<const struct TxDataPacket*>(rxData);

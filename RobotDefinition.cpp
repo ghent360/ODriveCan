@@ -315,12 +315,13 @@ void RobotBody::modifyAxesGains() {
 
 void RobotBody::setAllAxesActive() {
   for(auto& axis: axes) {
-    axis.SetLimits(8.0f, 15.0f); // Should be 6000.0f, 20.0f
+    axis.SetLimits(8.0f, 20.0f); // Should be 6000.0f, 20.0f
     axis.SetState(AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL);
   }
   radioController.setMotorState(true);
   axes_active_ = true;
   scheduleRecalculateLogPosition(100);
+#if 0
   taskManager.removeById(StateThreeReportStandingAccl);
   taskManager.addBack(taskManager.newPeriodicTask(
     StateThreeReportStandingAccl,
@@ -356,10 +357,11 @@ void RobotBody::setAllAxesActive() {
       Serial.print(", ");
       Serial.println(az);
     }));
+#endif
 }
 
 void RobotBody::setAllAxesIdle() {
-  taskManager.removeById(StateThreeReportStandingAccl);
+  //taskManager.removeById(StateThreeReportStandingAccl);
   for(auto& axis: axes) {
     axis.SetState(AxisState::AXIS_STATE_IDLE);
   }

@@ -45,7 +45,7 @@ ARM_AS_DEFS =
 
 ARM_C_DEFS =  \
   -D__IMXRT1062__ \
-  -DTEENSYDUINO=157 \
+  -DTEENSYDUINO=158 \
   -DARDUINO=10819 \
   -DARDUINO_TEENSY41 \
   -DF_CPU=600000000 \
@@ -233,18 +233,16 @@ REMOTE_SOURCES = \
 LDSCRIPT = $(ARDUINO_TEENSY_CORE)/imxrt1062_t41.ld
 
 # Flags for the ARM cross compiler
-ARM_FPU = -mfpu=fpv5-d16
-ARM_FLOAT-ABI = -mfloat-abi=hard
 ARM_OPT = -O2
-ARM_CPU = -mcpu=cortex-m7
-ARM_MCU = $(ARM_CPU) -mthumb $(ARM_FPU) $(ARM_FLOAT-ABI)
+ARM_FPU = -mfpu=fpv5-d16 -mfloat-abi=hard
+ARM_CPU = -mcpu=cortex-m7 -mthumb $(ARM_FPU)
 
 ARM_ASFLAGS = \
-  $(ARM_MCU) $(ARM_AS_DEFS) $(ARM_AS_INCLUDES) $(ARM_OPT) \
+  $(ARM_CPU) $(ARM_AS_DEFS) $(ARM_AS_INCLUDES) $(ARM_OPT) \
   -Wall -fdata-sections -ffunction-sections -g -MMD
 
 ARM_CFLAGS  = \
-  $(ARM_MCU) $(ARM_C_DEFS) $(ARM_C_INCLUDES) $(ARM_OPT) \
+  $(ARM_CPU) $(ARM_C_DEFS) $(ARM_C_INCLUDES) $(ARM_OPT) \
   -Wall -fdata-sections -ffunction-sections -g -nostdlib -MMD
 
 ARM_CXXFLAGS = -std=gnu++14 -fno-exceptions -fno-rtti \
@@ -259,7 +257,7 @@ ARM_LIBS = -lc -lm
 
 ARM_LIBDIR = 
 ARM_LDFLAGS = \
-  $(ARM_OPT) $(ARM_MCU) -specs=nano.specs -T$(LDSCRIPT) \
+  $(ARM_OPT) $(ARM_CPU) -specs=nano.specs -T$(LDSCRIPT) \
   $(ARM_LIBDIR) $(ARM_LIBS) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref \
   -Wl,--gc-sections,--relax
 

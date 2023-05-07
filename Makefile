@@ -243,16 +243,13 @@ ARM_ASFLAGS = \
 
 ARM_CFLAGS  = \
   $(ARM_CPU) $(ARM_C_DEFS) $(ARM_C_INCLUDES) $(ARM_OPT) \
-  -Wall -fdata-sections -ffunction-sections -g -nostdlib -MMD
+  -Wall -fdata-sections -ffunction-sections -g -nostdlib -MMD -MP -MF"$(@:%.o=%.d)"
 
 ARM_CXXFLAGS = -std=gnu++14 -fno-exceptions -fno-rtti \
   -fno-threadsafe-statics -felide-constructors -Wno-error=narrowing
 
-# Generate dependency information
-ARM_CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
-
 ARM_LIBS = -lc -lm
-# library list used int he past for posterity if we need something from there
+# library list used in the past for posterity if we need something from there
 #-larm_cortexM7lfsp_math -lm -lstdc++ -lnosys
 
 ARM_LIBDIR = 

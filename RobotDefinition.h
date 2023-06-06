@@ -97,6 +97,7 @@ public:
   void calcVelFromAxis(float &vx, float &vy, float &vz) const;
   void calcAccFromAxis(float &ax, float &ay, float &az) const;
   void calcStandingAccFromAxis(float &ax, float &ay, float &az) const;
+  void getTorque(float &th, float &tt, float &ts) const;
 private:
   void calcPosFromAxis(float &x, float &y, float &z) const;
 
@@ -233,6 +234,10 @@ public:
 
   void getLegStandingAcc(DogLeg legId, float& ax, float& ay,float& az) const {
     legs_[legId].calcStandingAccFromAxis(ax, ay, az);
+  }
+
+  void getLegTorque(DogLeg legId, float& th, float& tt,float& ts) const {
+    legs_[legId].getTorque(th, tt, ts);
   }
 
   void startWalking();

@@ -9,6 +9,8 @@
 #include "TaskIds.h"
 #include <string.h>
 
+constexpr float iirAlpha = 1.0f/4.0f;
+
 RadioController::RadioController()
   : ready_(false) {
 }
@@ -20,7 +22,6 @@ void RadioController::setMotorState(bool v) {
         axis_iq_desired_[idx] = 0;
         axis_iq_measured_[idx] = 0;
       }
-#if 0
       // Request axis iq values report periodically.
       taskManager.addBack(taskManager.newPeriodicTask(
         StateThreeAxisIq,
@@ -30,9 +31,8 @@ void RadioController::setMotorState(bool v) {
             axis.RequestIq();
           }
         }));
-#endif
     } else {
-      //taskManager.removeById(StateThreeAxisIq);
+      taskManager.removeById(StateThreeAxisIq);
     }
   }
   motors_engaged_ = v;
@@ -76,8 +76,11 @@ void RadioController::reportEncoderError(uint16_t axisCanId, uint32_t error) {
 void RadioController::reportAxisIq(uint16_t axisCanId, float iqSetpoint, float iqMeasured) {
   int8_t axis_idx = (int8_t)getJointByAxisId(axisCanId);
   if (axis_idx >= 0 && axis_idx < numAxes) {
-    axis_iq_desired_[axis_idx] = iqSetpoint;
-    axis_iq_measured_[axis_idx] = iqMeasured;
+    // Simple IIR:
+    // Y[n] = a * X[n] + (1 - a) * (Y[n-1])
+    // Y[n] = Y[n-1] + a * (X[n] - Y[n-1])
+    axis_iq_desired_[axis_idx] += (iqSetpoint - axis_iq_desired_[axis_idx]) * iirAlpha;
+    axis_iq_measured_[axis_idx] += (iqMeasured - axis_iq_measured_[axis_idx]) * iirAlpha;
   }
 }
 

@@ -251,6 +251,12 @@ void RobotLeg::calcStandingAccFromAxis(float &ax, float &ay, float &az) const {
   }
 }
 
+void RobotLeg::getTorque(float &th, float &tt, float &ts) const {
+  th = getJointTorque(hip_axis_);
+  tt = getJointTorque(tie_axis_);
+  ts = getJointTorque(shin_axis_);
+}
+
 float RobotLeg::getPosError() const {
   float x, y, z;
   calcPosFromAxis(x, y, z);
@@ -321,47 +327,45 @@ void RobotBody::setAllAxesActive() {
   radioController.setMotorState(true);
   axes_active_ = true;
   scheduleRecalculateLogPosition(100);
-#if 0
   taskManager.removeById(StateThreeReportStandingAccl);
   taskManager.addBack(taskManager.newPeriodicTask(
     StateThreeReportStandingAccl,
     500,
     [](TaskNode*, uint32_t) {
-      float ax, ay, az;
-      robotBody.getLegAcc(FRONT_LEFT, ax, ay, az);
+      float th, tt, ts;
+      robotBody.getLegTorque(FRONT_LEFT, th, tt, ts);
       Serial.print("FL ");
-      Serial.print(ax);
+      Serial.print(th);
       Serial.print(", ");
-      Serial.print(ay);
+      Serial.print(tt);
       Serial.print(", ");
-      Serial.print(az);
-      robotBody.getLegAcc(FRONT_RIGHT, ax, ay, az);
+      Serial.print(ts);
+      robotBody.getLegTorque(FRONT_RIGHT, th, tt, ts);
       Serial.print("    FR ");
-      Serial.print(ax);
+      Serial.print(th);
       Serial.print(", ");
-      Serial.print(ay);
+      Serial.print(tt);
       Serial.print(", ");
-      Serial.print(az);
-      robotBody.getLegAcc(BACK_LEFT, ax, ay, az);
+      Serial.print(ts);
+      robotBody.getLegTorque(BACK_LEFT, th, tt, ts);
       Serial.print("    BL ");
-      Serial.print(ax);
+      Serial.print(th);
       Serial.print(", ");
-      Serial.print(ay);
+      Serial.print(tt);
       Serial.print(", ");
-      Serial.print(az);
-      robotBody.getLegAcc(BACK_RIGHT, ax, ay, az);
+      Serial.print(ts);
+      robotBody.getLegTorque(BACK_RIGHT, th, tt, ts);
       Serial.print("    BR ");
-      Serial.print(ax);
+      Serial.print(th);
       Serial.print(", ");
-      Serial.print(ay);
+      Serial.print(tt);
       Serial.print(", ");
-      Serial.println(az);
+      Serial.println(ts);
     }));
-#endif
 }
 
 void RobotBody::setAllAxesIdle() {
-  //taskManager.removeById(StateThreeReportStandingAccl);
+  taskManager.removeById(StateThreeReportStandingAccl);
   for(auto& axis: axes) {
     axis.SetState(AxisState::AXIS_STATE_IDLE);
   }

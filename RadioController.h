@@ -41,7 +41,7 @@ public:
   void reportAxisError(uint16_t axisCanId, uint32_t error);
   void reportMotorError(uint16_t axisCanId, uint64_t error);
   void reportEncoderError(uint16_t axisCanId, uint32_t error);
-  void reportAxisIq(uint16_t axisCanId, float iqSetpoint, float iqMeasured);
+  void reportAxisIq(uint16_t axisCanId, float iqSetpoint);
 private:
   void setNextTxPacket();
 

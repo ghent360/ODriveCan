@@ -72,7 +72,7 @@ void RadioController::reportEncoderError(uint16_t axisCanId, uint32_t error) {
   }
 }
 
-void RadioController::reportAxisIq(uint16_t axisCanId, float iqSetpoint, float iqMeasured) {
+void RadioController::reportAxisIq(uint16_t axisCanId, float iqSetpoint) {
   int8_t axis_idx = (int8_t)getJointByAxisId(axisCanId);
   if (axis_idx >= 0 && axis_idx < numAxes) {
     // Simple IIR:

@@ -77,16 +77,16 @@ void checkSerialInput(TaskNode*, uint32_t now) {
       case 'p':
           robotBody.printPositions();
           break;
-      case '7':
+      case '1':
           activateLeg(FRONT_LEFT);
           break;
-      case '8':
+      case '2':
           activateLeg(FRONT_RIGHT);
           break;
-      case '9':
+      case '3':
           activateLeg(BACK_LEFT);
           break;
-      case '0':
+      case '4':
           activateLeg(BACK_RIGHT);
           break;
       case '-':

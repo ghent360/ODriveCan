@@ -252,9 +252,9 @@ void RobotLeg::calcStandingAccFromAxis(float &ax, float &ay, float &az) const {
 }
 
 void RobotLeg::getTorque(float &th, float &tt, float &ts) const {
-  th = getJointTorque(hip_axis_);
-  tt = getJointTorque(tie_axis_);
-  ts = getJointTorque(shin_axis_);
+  th = getJointCurrent(hip_axis_);
+  tt = getJointCurrent(tie_axis_);
+  ts = getJointCurrent(shin_axis_);
 }
 
 float RobotLeg::getPosError() const {
@@ -335,32 +335,32 @@ void RobotBody::setAllAxesActive() {
       float th, tt, ts;
       robotBody.getLegTorque(FRONT_LEFT, th, tt, ts);
       Serial.print("FL ");
-      Serial.print(th);
-      Serial.print(", ");
-      Serial.print(tt);
-      Serial.print(", ");
-      Serial.print(ts);
+      Serial.print(fabs(th) + fabs(tt) + fabs(ts));
       robotBody.getLegTorque(FRONT_RIGHT, th, tt, ts);
       Serial.print("    FR ");
-      Serial.print(th);
-      Serial.print(", ");
-      Serial.print(tt);
-      Serial.print(", ");
-      Serial.print(ts);
+      Serial.print(fabs(th) + fabs(tt) + fabs(ts));
+//      Serial.print(th);
+//      Serial.print(", ");
+//      Serial.print(tt);
+//      Serial.print(", ");
+//      Serial.print(ts);
       robotBody.getLegTorque(BACK_LEFT, th, tt, ts);
       Serial.print("    BL ");
-      Serial.print(th);
-      Serial.print(", ");
-      Serial.print(tt);
-      Serial.print(", ");
-      Serial.print(ts);
+      Serial.print(fabs(th) + fabs(tt) + fabs(ts));
+//      Serial.print(th);
+//      Serial.print(", ");
+//      Serial.print(tt);
+//      Serial.print(", ");
+//      Serial.print(ts);
       robotBody.getLegTorque(BACK_RIGHT, th, tt, ts);
       Serial.print("    BR ");
-      Serial.print(th);
-      Serial.print(", ");
-      Serial.print(tt);
-      Serial.print(", ");
-      Serial.println(ts);
+      Serial.println(fabs(th) + fabs(tt) + fabs(ts));
+//      Serial.print(th);
+//      Serial.print(", ");
+//      Serial.print(tt);
+//      Serial.print(", ");
+//      Serial.print(ts);
+//      Serial.println(ts);
     }));
 }
 

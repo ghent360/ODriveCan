@@ -83,6 +83,7 @@ float getJointVel(DogLegJoint joint) {
 
 float getJointTorque(DogLegJoint joint) {
     float torque = axes[joint].iq.iqSetpoint * motorTorqueConstant;
+#if 0
     switch (joint) {
     case BACK_RIGHT_SHIN:
     case FRONT_RIGHT_SHIN:
@@ -95,5 +96,10 @@ float getJointTorque(DogLegJoint joint) {
     default:
         break;
     }
+#endif
     return torque;
+}
+
+float getJointCurrent(DogLegJoint joint) {
+    return axes[joint].iq.iqSetpoint;
 }

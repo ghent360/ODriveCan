@@ -187,8 +187,7 @@ static void startStateThree() {
 
     axis.iq.SetCallback(
       [](ODriveAxis& axis, IqValues&, IqValues& newVal) {
-        radioController.reportAxisIq(
-          axis.node_id, newVal.iqSetpoint);
+        radioController.reportAxisIq(axis.node_id, newVal.iqSetpoint);
       });
   }
 

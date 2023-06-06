@@ -126,7 +126,7 @@ struct RxFootPos {
 } __attribute__((packed));
 
 struct RxAxisTorque {
-  int16_t iq_measured[12]; // Fixed<int16_t, 16, 8>;
+  int16_t iq_desired[12]; // Fixed<int16_t, 16, 8>;
 } __attribute__((packed));
 
 struct RxPacket {

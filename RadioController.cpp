@@ -20,7 +20,6 @@ void RadioController::setMotorState(bool v) {
     if (v) {
       for(uint8_t idx = 0; idx < numAxes; idx++) {
         axis_iq_desired_[idx] = 0;
-        axis_iq_measured_[idx] = 0;
       }
       // Request axis iq values report periodically.
       taskManager.addBack(taskManager.newPeriodicTask(
@@ -80,7 +79,6 @@ void RadioController::reportAxisIq(uint16_t axisCanId, float iqSetpoint, float i
     // Y[n] = a * X[n] + (1 - a) * (Y[n-1])
     // Y[n] = Y[n-1] + a * (X[n] - Y[n-1])
     axis_iq_desired_[axis_idx] += (iqSetpoint - axis_iq_desired_[axis_idx]) * iirAlpha;
-    axis_iq_measured_[axis_idx] += (iqMeasured - axis_iq_measured_[axis_idx]) * iirAlpha;
   }
 }
 
@@ -194,8 +192,8 @@ void RadioController::setNextTxPacket() {
     data.hdr.ext_type = EXT_AXIS_TORQUE;
     len += sizeof(RxAxisTorque);
     for(uint8_t idx = 0; idx < numAxes; idx++) {
-      Fixed<int16_t, 16, 8> value = axis_iq_measured_[idx];
-      data.ext.axis_torque.iq_measured[idx] = value.value();
+      Fixed<int16_t, 16, 8> value = axis_iq_desired_[idx];
+      data.ext.axis_torque.iq_desired[idx] = value.value();
     }
   }
   radio.writeTxData((const uint8_t*)&data, len);

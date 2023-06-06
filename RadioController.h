@@ -61,7 +61,6 @@ private:
   SW3POS sw2_;
   SW2POS sw5_;
   float axis_iq_desired_[numAxes];
-  float axis_iq_measured_[numAxes];
 };
 
 extern RadioController radioController;

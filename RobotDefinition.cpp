@@ -321,7 +321,7 @@ void RobotBody::modifyAxesGains() {
 
 void RobotBody::setAllAxesActive() {
   for(auto& axis: axes) {
-    axis.SetLimits(8.0f, 20.0f); // Should be 6000.0f, 20.0f
+    axis.SetLimits(4.0f, 30.0f); // Should be 6000.0f, 20.0f
     axis.SetState(AxisState::AXIS_STATE_CLOSED_LOOP_CONTROL);
   }
   radioController.setMotorState(true);
@@ -330,7 +330,7 @@ void RobotBody::setAllAxesActive() {
   taskManager.removeById(StateThreeReportStandingAccl);
   taskManager.addBack(taskManager.newPeriodicTask(
     StateThreeReportStandingAccl,
-    500,
+    1000,
     [](TaskNode*, uint32_t) {
       float th, tt, ts;
       robotBody.getLegTorque(FRONT_LEFT, th, tt, ts);
